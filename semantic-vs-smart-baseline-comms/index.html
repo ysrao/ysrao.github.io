@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="light dark"/>
+<link rel="icon" href="data:,"/>
+<title>Semantic Communications Benchmark Harness — v7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f5f1;--surface:#ffffff;--surface2:#eeece6;--line:#ddd8cc;--text:#171a1e;--muted:#6b7280;--teal:#0e7c6b;--teal-bg:#e6f4f0;--amber:#b45309;--amber-bg:#fef3c7;--red:#b91c1c;--red-bg:#fee2e2;--blue:#1d4ed8;--chart-grid:#e5e0d3;--input:#fff;--stale:#15803d}
+@media(prefers-color-scheme:dark){:root{--bg:#121417;--surface:#1a1d21;--surface2:#23262b;--line:#33373e;--text:#eceef0;--muted:#9aa0a8;--teal:#2dd4bf;--teal-bg:#12332e;--amber-bg:#3a2a0a;--red-bg:#3a1414;--chart-grid:#2c2f35;--input:#1e2126;--stale:#16a34a}}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.5}
+a{color:var(--teal)} button,input,select{font:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 18px 40px}
+.hero{padding:18px 0 6px;border-bottom:2px solid var(--text);margin-bottom:18px}
+.hero h1{font-family:Newsreader,serif;font-size:clamp(28px,4vw,44px);line-height:.95;letter-spacing:-.02em;margin:0 0 10px;max-width:820px}
+.hero p{max-width:760px;color:var(--muted);font-size:15px;margin:0}
+.badge{display:inline-flex;gap:6px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);padding:5px 8px;border-radius:999px;background:var(--surface);margin-bottom:12px}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{font-size:13px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 12px;font-family:"IBM Plex Mono",monospace}
+.card h3{font-size:14px;margin:16px 0 8px}
+label{font-size:12.5px;font-weight:600;display:block;margin:10px 0 4px}
+label span{font-weight:400;color:var(--muted)}
+select,input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--input);color:var(--text)}
+.appMenu{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 10px}
+.appBtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;text-align:left;cursor:pointer;color:var(--text)}
+.appBtn b{display:block;font-size:14px;line-height:1.2}
+.appBtn small{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:3px}
+.appBtn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.appBtn.active small{color:var(--bg);opacity:.75}
+.codecMenu{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 6px}
+.codecBtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;text-align:left;cursor:pointer;color:var(--text)}
+.codecBtn b{display:block;font-size:14px;line-height:1.2}
+.codecBtn small{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:3px}
+.codecBtn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.codecBtn.active small{color:var(--bg);opacity:.75}
+.codecBtn.wide{grid-column:1/-1}
+.modeMenu{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 6px}
+.modeBtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;text-align:left;cursor:pointer;color:var(--text)}
+.modeBtn b{display:block;font-size:14px;line-height:1.2}
+.modeBtn small{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:3px}
+.modeBtn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.modeBtn.active small{color:var(--bg);opacity:.75}
+.codecPanel{display:block}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;font-weight:400;margin-top:10px}
+.check input{margin-top:3px}
+.hint{font-size:12px;color:var(--muted);line-height:1.45}
+.warn{background:var(--amber-bg);border:1px solid #f59e0b33;padding:10px 12px;border-radius:10px;font-size:12.5px}
+.runRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.run{flex:1 1 170px;background:var(--text);color:var(--bg);border:0;padding:13px;border-radius:10px;font-weight:700;cursor:pointer;transition:background-color .25s ease,color .25s ease}
+.run.dirty{background:var(--stale);color:#fff}
+.run:active{transform:scale(.99)}
+.runHint{flex:1 1 130px;font-size:12px;color:var(--muted);line-height:1.45;margin:0}
+.runHint.dirty{color:var(--stale);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:700px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--surface2);border-radius:12px;padding:12px}
+.kpi b{font-size:22px;display:block;line-height:1}
+.kpi span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.tab{border:1px solid var(--line);background:var(--surface);padding:7px 11px;border-radius:999px;cursor:pointer;font-size:13px}
+.tab.active{background:var(--text);color:var(--bg)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:8px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.win{color:var(--teal);font-weight:700}.lose{color:var(--red);font-weight:700}.tie{color:var(--amber);font-weight:700}
+/* Last column of the results table (and the verdict table's last column, where the brown/amber tie colour appeared) uses the same colour as the topmost header row (th) — var(--muted) — not brown. */
+#resTable td:last-child,#verdict table td:last-child{color:var(--muted)}
+#verdict table td:last-child.win,#verdict table td:last-child.lose,#verdict table td:last-child.tie{color:var(--muted)}
+.pill{font-size:11px;padding:2px 7px;border-radius:999px;background:var(--teal-bg);display:inline-block}
+.mono{font-family:"IBM Plex Mono",monospace;font-size:12px;word-break:break-word}
+.scroll{overflow:auto} .scroll table{min-width:760px} #verdict .scroll table{min-width:0} #verdict td{word-break:break-word}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:600}
+.assumption{border:2px solid var(--teal);background:var(--teal-bg);border-radius:14px;padding:16px 18px;margin:0 0 16px}
+.assumption strong{display:block;font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.assumption p{margin:0;font-size:15px;line-height:1.55;max-width:980px}
+.assumption-inline{border:1px solid var(--teal);background:var(--teal-bg);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin:0 0 10px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:5px}
+.switch-banner{border:3px solid var(--text)!important;background:var(--surface);padding:0!important;overflow:hidden}
+.switch-banner-top{background:var(--text);color:var(--bg);padding:14px 16px 12px}
+.switch-banner-top .switch-eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:0 0 6px}
+.switch-banner-top h2{font-family:Newsreader,serif;font-size:clamp(22px,3vw,30px);letter-spacing:0;text-transform:none;margin:0;line-height:1.05;color:var(--bg)}
+.switch-banner-body{padding:14px 16px 16px}
+.switch-plain{font-size:clamp(17px,2.2vw,21px);font-weight:700;line-height:1.35;border:2px solid var(--text);border-radius:12px;padding:12px 14px;margin:0 0 12px;background:var(--surface2)}
+.switch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 12px}
+@media(max-width:700px){.switch-grid{grid-template-columns:1fr}}
+.switch-stat{border-radius:12px;padding:12px;border:1px solid var(--line)}
+.switch-stat b{font-size:20px;display:block;line-height:1.1}
+.switch-stat span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;display:block;margin-bottom:6px}
+.switch-stat p{margin:6px 0 0;font-size:12.5px;line-height:1.45}
+.switch-stat.sem{background:var(--teal-bg);border-color:var(--teal)}
+.switch-stat.smart{background:var(--amber-bg);border-color:#b45309}
+.switch-stat.neither{background:var(--red-bg);border-color:var(--red)}
+.switch-strip{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.switch-chip{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;padding:6px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.switch-chip.sem{background:var(--teal-bg);border-color:var(--teal)}
+.switch-chip.smart{background:var(--amber-bg);border-color:#b45309}
+.switch-chip.neither{background:var(--red-bg);border-color:var(--red)}
+.auto-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;display:inline-block;white-space:nowrap;border:1px solid var(--line)}
+.auto-badge.sem{background:var(--teal-bg);border-color:var(--teal)}
+.auto-badge.smart{background:var(--amber-bg);border-color:#b45309}
+.auto-badge.neither{background:var(--red-bg);border-color:var(--red)}
+#resTable tbody tr.row-auto-semantic td,#autoPanel tbody tr.row-auto-semantic td,#errorSummary tbody tr.row-auto-semantic td,#effPerSnr tbody tr.row-auto-semantic td,#verdict tbody tr.row-auto-semantic td{background:var(--teal-bg)}
+#resTable tbody tr.row-auto-smart td,#autoPanel tbody tr.row-auto-smart td,#errorSummary tbody tr.row-auto-smart td,#effPerSnr tbody tr.row-auto-smart td,#verdict tbody tr.row-auto-smart td{background:var(--amber-bg)}
+#resTable tbody tr.row-auto-neither td,#autoPanel tbody tr.row-auto-neither td,#errorSummary tbody tr.row-auto-neither td,#effPerSnr tbody tr.row-auto-neither td,#verdict tbody tr.row-auto-neither td{background:var(--red-bg)}
+#resTable tbody tr.row-auto-semantic td:first-child,#errorSummary tbody tr.row-auto-semantic td:first-child,#effPerSnr tbody tr.row-auto-semantic td:first-child,#verdict tbody tr.row-auto-semantic td:first-child{box-shadow:inset 6px 0 0 var(--teal)}
+#resTable tbody tr.row-auto-smart td:first-child,#errorSummary tbody tr.row-auto-smart td:first-child,#effPerSnr tbody tr.row-auto-smart td:first-child,#verdict tbody tr.row-auto-smart td:first-child{box-shadow:inset 6px 0 0 #b45309}
+#resTable tbody tr.row-auto-neither td:first-child,#errorSummary tbody tr.row-auto-neither td:first-child,#effPerSnr tbody tr.row-auto-neither td:first-child,#verdict tbody tr.row-auto-neither td:first-child{box-shadow:inset 6px 0 0 var(--red)}
+.chart-marker-key{border:2px solid var(--red);background:var(--red-bg);border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.5;margin-top:8px}
+.chart-marker-key strong{text-transform:uppercase;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em}
+details{border-top:1px solid var(--line);padding-top:10px;margin-top:12px} summary{cursor:pointer;font-weight:600;font-size:13px}
+footer{font-size:12px;color:var(--muted);margin-top:16px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<div class="badge">● Simulated model — not a measured codec &nbsp;•&nbsp; AWGN example generalises, NTN differs</div>
+<p class="mono" style="font-size:13px;font-weight:600;letter-spacing:.04em;margin:0 0 8px">Semantic Communications Benchmark Harness — v7</p>
+<h1>Semantic communication gains, benchmarked head-to-head</h1>
+<p>A matched benchmark harness for task-oriented communication. Same task, same channel, same transmit power — <span data-coder-name>Semantic coder</span> against <strong>two conventional baselines</strong> — swept over SNR, with Monte Carlo variability, full provenance, and downloadable results. The <strong>headline baseline is the smart system</strong>: the smarter conventional system already used in real IoT and edge devices — still separate source + channel coding, bit-exact, with ARQ — which sends only a locally produced label / intent / command / event code where the task allows it, and most of the content where the task needs more than a label. The <strong>full-source conventional system</strong> — the whole source, bit-exact, every time — is kept alongside as a clearly labelled <strong>secondary reference</strong>. Semantic gains are headlined against the smart system, and the full-source comparison is shown alongside it, so both comparisons are visible and neither is hidden. Change any assumption and the gains move with it. The results below are presented as a <strong>showcase view</strong>: only the cases where the <span data-coder-name>Semantic coder</span> improves on the smart system headline baseline are displayed.</p>
+</header>
+
+<div class="assumption" role="note" aria-label="Core assumption — task success is assumed">
+<strong>Assumption — task success is assumed · Tasks are implemented gainfully</strong>
+<p><strong>Task success is assumed throughout this harness.</strong> Tasks are assumed to be implemented gainfully — the task succeeds — and <strong>efficiency metrics are gains under that assumption, each on a clearly labelled basis</strong>: success-based measures (successful tasks per joule, joules per successful task, transmit-power saving at matched success) are measured <strong>per successful task</strong>; cost measures labelled “per task” (energy, symbols, bandwidth, latency and compute per task) are measured <strong>per attempted task</strong> — the cost of sending one task — and are labelled that way wherever they appear. Under the assumption an attempted task is a task that succeeds, so those per-attempt costs are the costs of a successful task; outside it, they are attempt costs. They are <strong>not</strong> gains for a failed task: if a task does not succeed, its efficiency does not count as a gain. Read every efficiency result on this page, in every chart, table, verdict and download, on that basis.</p>
+</div>
+
+<div class="grid">
+<!-- CONFIG -->
+<aside class="card" id="configCard">
+<h2>1 — Configure experiment</h2>
+
+<label>Level 1 — Application / context</label>
+<div class="appMenu" id="appMenu" role="group" aria-label="Level 1 — Application / context">
+<button type="button" class="appBtn active" data-app="iot"><b>IoT</b><small>Context — connected devices &amp; sensors</small></button>
+<button type="button" class="appBtn" data-app="image"><b>Picture</b><small>Context — images</small></button>
+<button type="button" class="appBtn" data-app="text"><b>Text</b><small>Context — written messages</small></button>
+<button type="button" class="appBtn" data-app="video"><b>Video</b><small>Context — moving images</small></button>
+<button type="button" class="appBtn" data-app="speech"><b>Speech</b><small>Context — spoken audio</small></button>
+<button type="button" class="appBtn" data-app="control"><b>Control</b><small>Context — industrial control</small></button>
+</div>
+<p class="hint" style="margin:0 0 4px">The top level sets the <strong>application only</strong>. It does not pick a task by itself — the data type below does that, inside the application you chose. Switching application loads its presets but does <strong>not</strong> re-run by itself: the <strong>Run button turns green</strong> to show the results below are stale, until you click Run to update them for the new application.</p>
+<label for="dataType">Level 2 — Data type (inside the application above)</label>
+<select id="dataType"></select>
+<div id="thresholdBox" style="margin-top:10px;border:1px solid var(--teal);border-radius:10px;padding:10px 12px;background:var(--teal-bg)">
+<label for="passThreshold" style="margin-top:0">Task success rate threshold (pass mark) — <span id="passForLabel">this data type</span></label>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<select id="passThreshold" style="flex:1 1 150px;width:auto"><option value="80">80% success</option><option value="85">85% success</option><option value="90">90% success</option><option value="95">95% success</option><option value="98">98% success</option><option value="99">99% success</option></select>
+<span id="passErrorEq" class="mono" style="font-size:13px;font-weight:600">= task error ≤ 10%</span>
+</div>
+<p class="hint" style="margin:6px 0 0">One threshold per data type — and the Level 2 menu above shows it in every option, for example “Still image — pass 90% (error ≤10%)”. Selecting a data type sets this control to that data type’s threshold. Change it here, in this Level 2 area, and it <strong>stays for this data type until you change it again</strong> — switching to another data type and back does not reset it; each data type remembers its own threshold. A task counts as passing only when modelled task success is at or above this threshold <em>and</em> latency is within budget.</p>
+</div>
+<div class="hint" id="taskDef" style="margin-top:6px"></div>
+<div class="hint" id="dataTypeMeta" style="margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface2)"></div>
+<div id="refPresetBox" style="display:none;margin-top:10px;border:1px solid var(--amber);border-radius:10px;padding:10px 12px">
+<label style="margin-top:0">Reference preset — Picture › Still image only</label>
+<select id="refPreset">
+<option value="none">None — harness’s own simulated model</option>
+<option value="deepjscc2019">Reference preset: DeepJSCC — Bourtsoulatze, Kurka &amp; Gündüz (2019)</option>
+</select>
+<p class="hint" style="margin:6px 0 0">This preset points at <strong>published reference behaviour</strong> from the original DeepJSCC paper — it is <strong>not</strong> a result measured by this harness. Selecting it aligns the harness setup with the paper’s conditions (Picture task; AWGN or slow Rayleigh fading) and opens the reference panel at the top of the results, clearly separated from the harness’s own simulated results below. No training code is run in the browser.</p>
+<div id="refChannelWarn" class="warn" style="display:none;margin-top:8px"></div>
+</div>
+<div class="row2">
+<div><label>Classes / intents / events</label><select id="nClasses"><option value="2">2</option><option value="4" selected>4</option><option value="8">8</option><option value="10">10</option><option value="12">12</option><option value="16">16</option><option value="20">20</option><option value="32">32</option><option value="64">64</option><option value="100">100</option><option value="128">128</option></select></div>
+<div><label>Source size (bits / task)</label><select id="sourceBits"><option value="512">512 bits — tiny sensor reading</option><option value="1024">1,024 bits</option><option value="2048" selected>2,048 bits — sensor window</option><option value="4096">4,096 bits</option><option value="8192">8,192 bits</option><option value="9600">9,600 bits — short text utterance</option><option value="16384">16,384 bits</option><option value="32768">32,768 bits — short audio clip</option><option value="65536">65,536 bits</option><option value="131072">131,072 bits</option><option value="196608">196,608 bits — image frame</option><option value="262144">262,144 bits — video clip</option><option value="524288">524,288 bits — larger video clip</option></select></div>
+</div>
+<label>What counts as task success?</label><input type="text" id="successDef" value="Correct event detected within the decision window">
+
+<label>Channel type — choose from the menu</label>
+<select id="channel">
+<option value="awgn" selected>AWGN</option>
+<option value="fading">Fading</option>
+<option value="3gpp">3GPP — simplified 3GPP-style model (not a full 3GPP implementation)</option>
+<option value="ntn">Simple NTN — satellite (simplified NTN model, not a full 3GPP NTN implementation)</option>
+</select>
+<div id="fadingOpts" style="display:none">
+<label>Fading type</label>
+<select id="fadingType"><option value="rayleigh">Rayleigh fading</option><option value="rician">Rician fading (K = 6 dB)</option></select>
+<label>Fading — receiver channel knowledge (CSI)</label>
+<select id="csi"><option value="perfect">Perfect CSI at receiver</option><option value="estimated">Estimated CSI (penalty applies)</option><option value="none">No CSI (larger penalty applies)</option></select>
+<p class="hint">Shown only for Fading. Rayleigh has no line-of-sight path; Rician (K = 6 dB) has a line-of-sight component, so its penalty is smaller.</p>
+</div>
+<div id="gppOpts" style="display:none">
+<div class="row2"><div><label>Path-loss exponent</label><select id="pathLoss"><option value="2">2.0 — open / line-of-sight</option><option value="2.5">2.5</option><option value="2.8">2.8</option><option value="3.2" selected>3.2 — urban (default)</option><option value="3.5">3.5</option><option value="4">4.0 — dense urban / obstructed</option><option value="4.5">4.5</option><option value="5">5.0 — heavily obstructed</option></select></div><div><label>Shadowing σ (dB)</label><select id="shadowSigma"><option value="0">0 dB — none</option><option value="4">4 dB — light</option><option value="6">6 dB</option><option value="7" selected>7 dB — typical</option><option value="8">8 dB</option><option value="10">10 dB — heavy</option><option value="12">12 dB — very heavy</option></select></div></div>
+<p class="hint">Simplified log-distance + log-normal shadowing only. No full 3GPP TR 38.901 spatial / fast-fading implementation.</p>
+</div>
+<div id="ntnOpts" style="display:none">
+<div class="row2"><div><label>Orbit / altitude</label><select id="ntnOrbit"><option value="550" selected>LEO — 550 km</option><option value="1200">LEO — 1,200 km</option></select></div><div><label>Minimum elevation angle</label><select id="ntnElev"><option value="10">10° — near horizon (longest slant range)</option><option value="25">25°</option><option value="40" selected>40° (default)</option><option value="60">60°</option><option value="90">90° — directly overhead (shortest path)</option></select></div></div>
+<label>LEO Doppler — residual after compensation</label>
+<select id="ntnDoppler"><option value="comp">Well compensated — small residual penalty</option><option value="part" selected>Partially compensated (default)</option><option value="uncomp">Uncompensated — large penalty &amp; spread</option></select>
+<div class="row2"><div><label>Satellite pass duration</label><select id="ntnPass"><option value="4">4 min — short pass</option><option value="6">6 min</option><option value="8" selected>8 min (default)</option><option value="10">10 min — long pass</option></select></div><div><label>Gap between passes</label><select id="ntnGap"><option value="20">20 min — dense constellation</option><option value="45" selected>45 min (default)</option><option value="90">90 min</option><option value="180">180 min — sparse coverage</option></select></div></div>
+<p class="hint">Simplified NTN model only — not a full 3GPP NTN (TR 38.821) implementation. Effects included in simplified form: <strong>propagation delay</strong> from the slant range (added to latency, and multiplied by every ARQ retry on the baseline), <strong>large satellite path loss</strong> from the slant range vs. altitude, <strong>elevation-angle-dependent loss</strong> (low elevation = longer path = more loss), <strong>LEO Doppler</strong> as a residual SNR penalty and spread, and <strong>intermittent pass coverage</strong> — tasks attempted during a gap between passes fail, so both codecs' success is scaled by pass ÷ (pass + gap) availability. The orbit menu is LEO only (550 km and 1,200 km) — GEO is not offered, because its propagation delay is far beyond every latency budget in this harness.</p>
+<div class="mono" id="ntnSummary" style="padding:6px 0 2px">—</div>
+</div>
+
+<label>SNR points — choose a menu preset</label>
+<select id="snrList">
+<option value="-5, 0, 5, 10, 15, 20" selected>Standard sweep: −5, 0, 5, 10, 15, 20 dB</option>
+<option value="-10, -5, 0, 5, 10">Low-SNR focus: −10, −5, 0, 5, 10 dB</option>
+<option value="-10, -5, 0, 5, 10, 15, 20, 25">Wide sweep: −10 to 25 dB (step 5)</option>
+<option value="0, 5, 10, 15, 20">Mid / high SNR: 0, 5, 10, 15, 20 dB</option>
+<option value="5, 10, 15, 20, 25, 30">High SNR only: 5 to 30 dB (step 5)</option>
+<option value="-5, 0, 5">Quick check: −5, 0, 5 dB</option>
+</select>
+<div class="row2">
+<div><label>Random seed</label><select id="seed"><option value="1">1</option><option value="7">7</option><option value="42" selected>42 (default)</option><option value="123">123</option><option value="777">777</option><option value="2024">2024</option><option value="2026">2026</option></select></div>
+<div><label>Trials / SNR point</label><select id="trials"><option value="40">40 — quick, wider CI</option><option value="80">80</option><option value="120">120</option><option value="240" selected>240 (default)</option><option value="400">400</option><option value="800">800 — narrower CI</option><option value="1000">1,000</option><option value="2000">2,000 — narrowest CI</option></select></div>
+</div>
+
+<label>Codec — select a codec to inspect its settings &amp; results</label>
+<div class="codecMenu" id="codecMenu" role="group" aria-label="Codec selection">
+<button type="button" class="codecBtn" data-codec="smart"><b>Smart system — headline baseline</b><small>Smarter conventional — local label / intent / command / event code only where the task allows it, most of the content where it needs more · separate source + channel coding, bit-exact, ARQ</small></button>
+<button type="button" class="codecBtn" data-codec="baseline"><b>Full-source baseline — secondary reference</b><small>Conventional — sends the whole source bit-exactly · channel code + ARQ retransmissions</small></button>
+<button type="button" class="codecBtn" data-codec="semantic"><b id="codecBtnSemanticTitle">Semantic coder</b><small id="codecBtnSemanticDesc">Semantic coder — generic simulated semantic coder · joint source-channel coding</small></button>
+<button type="button" class="codecBtn wide active" data-codec="both"><b>Head-to-head — all three systems</b><small id="codecBtnBothDesc">Default view — smart system (headline baseline), full-source baseline (secondary reference) and Semantic coder settings &amp; results side by side</small></button>
+</div>
+<p class="hint" id="codecSelectionLine" style="margin:0 0 4px"></p>
+<div id="coderIdentityNote" class="hint" style="margin:0 0 8px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface2)"></div>
+<label>Mode — manual comparison or Auto-switch</label>
+<div class="modeMenu" id="modeMenu" role="group" aria-label="Mode selection">
+<button type="button" class="modeBtn active" data-mode="manual"><b>Manual comparison</b><small>All three systems compared head-to-head — smart system is the headline baseline, full-source the secondary reference</small></button>
+<button type="button" class="modeBtn" data-mode="auto"><b>Auto-switch</b><small>Only two candidates: Smart system vs <span data-coder-name>Semantic coder</span>. The full-source baseline is not a candidate in Auto mode</small></button>
+</div>
+<p class="hint" id="modeLine" style="margin:0 0 4px"></p>
+<div class="codecPanel" id="smartPanel">
+<h3>Baseline — smart system (headline baseline)</h3>
+<div id="smartDefBox" class="hint" style="border:1px solid var(--teal);border-radius:10px;padding:9px 11px;background:var(--teal-bg);margin:0 0 6px">—</div>
+<p class="hint">The smart system is <strong>conventional, not semantic</strong>: no joint source-channel coding and no learned feature extraction for transmission. A local, ordinary device function decides what is worth sending — a classifier, intent recogniser, command encoder or change detector of the kind already deployed in IoT and edge devices — and only that chosen payload is sent, with the <strong>same separate channel coding, modulation and ARQ settings as the full-source baseline below</strong>, delivered bit-exactly. Its local processing cost is counted (see the Efficiency panel’s compute row), and because it sends far fewer bits its packet crosses the same channel cliff as any coded system — it does not degrade gracefully.</p>
+</div>
+<div class="codecPanel" id="baselinePanel">
+<h3>Codec — conventional baselines (smart system &amp; full-source)</h3>
+<div class="row2">
+<div><label>Channel code rate</label><select id="codeRate"><option value="0.33">1/3</option><option value="0.5" selected>1/2</option><option value="0.67">2/3</option><option value="0.83">5/6</option></select></div>
+<div><label>Modulation</label><select id="modulation"><option value="bpsk">BPSK</option><option value="qpsk" selected>QPSK</option><option value="qam16">16-QAM</option></select></div>
+</div>
+<label>ARQ max retransmissions</label>
+<select id="arqMax"><option value="0">0 — no retransmission</option><option value="1">1 retransmission</option><option value="2">2 retransmissions</option><option value="3" selected>3 retransmissions (default)</option><option value="4">4 retransmissions</option><option value="5">5 retransmissions</option></select>
+<p class="hint">These channel-coding settings are shared by <strong>both</strong> conventional baselines: the smart system sends its small chosen payload through them, and the full-source baseline sends the whole source through them. Conventional source coding is assumed near-entropy (no extra loss). <span data-coder-name>Semantic coder</span> side has no ARQ by default — it relies on graceful degradation.</p>
+</div>
+<div class="codecPanel" id="semanticPanel">
+<h3>Codec — <span data-coder-name>Semantic coder</span></h3>
+<label><span data-coder-name>Semantic coder</span> feature dimension</label>
+<select id="semDim"><option value="4">4 symbols — most aggressive compression</option><option value="6">6 symbols — very aggressive</option><option value="8">8 symbols — aggressive</option><option value="12">12 symbols</option><option value="16" selected>16 symbols — balanced (default)</option><option value="24">24 symbols — more redundancy</option><option value="32">32 symbols</option><option value="48">48 symbols — high redundancy</option><option value="64">64 symbols — least compression</option></select>
+<div class="row2"><div><label>Compression vs. raw</label><div class="mono" id="compRatio" style="padding-top:8px">—</div></div><div><label>Encoder compute</label><select id="encComputeMs"><option value="0">0 ms / task</option><option value="1">1 ms / task</option><option value="2">2 ms / task</option><option value="4" selected>4 ms / task (default)</option><option value="8">8 ms / task</option><option value="16">16 ms / task</option><option value="32">32 ms / task</option></select></div></div>
+
+<h3>Knowledge base / model version</h3>
+<div class="row2">
+<div><label>Transmitter model</label><select id="txModel"><option>sem-v2.4</option><option>sem-v2.3</option><option>sem-v2.1</option></select></div>
+<div><label>Receiver model</label><select id="rxModel"><option>sem-v2.4</option><option>sem-v2.3</option><option>sem-v2.1</option></select></div>
+</div>
+<div id="mismatchWarn" class="warn" style="display:none;margin-top:8px">⚠ Model mismatch: transmitter and receiver versions differ. <span data-coder-name>Semantic coder</span> accuracy is penalised in the simulation (−12 points at mid SNR) — a shared knowledge base is required.</div>
+</div>
+
+<h3>System &amp; fairness</h3>
+<div class="row2">
+<div><label>Symbol rate (ksym/s)</label><select id="symRate"><option value="1">1 ksym/s</option><option value="5">5 ksym/s</option><option value="10" selected>10 ksym/s (default)</option><option value="20">20 ksym/s</option><option value="50">50 ksym/s</option><option value="100">100 ksym/s</option></select></div>
+<div><label>Energy / symbol (µJ)</label><select id="ePerSym"><option value="0.5">0.5 µJ</option><option value="1" selected>1 µJ (default)</option><option value="2">2 µJ</option><option value="5">5 µJ</option><option value="10">10 µJ</option></select></div>
+</div>
+<div class="row2">
+<div><label>Encoder energy (µJ/task)</label><select id="encEnergy"><option value="0">0 µJ</option><option value="5">5 µJ</option><option value="10">10 µJ</option><option value="18" selected>18 µJ (default)</option><option value="25">25 µJ</option><option value="50">50 µJ</option><option value="100">100 µJ</option></select></div>
+<div><label>Latency budget (ms)</label><select id="latBudget"><option value="20">20 ms — very tight</option><option value="50">50 ms</option><option value="120" selected>120 ms (default)</option><option value="250">250 ms</option><option value="500">500 ms</option><option value="1000">1,000 ms — relaxed</option></select></div>
+</div>
+<label>Fairness — comparison is matched by</label>
+<select id="fairness"><option value="power">Matched transmit power per symbol (default)</option><option value="energy">Matched total energy per task</option></select>
+<p class="hint">Taken out of this menu: “Matched symbols per task” and “Matched bits per task”. Matching by symbols or bits hands back every one of semantic’s efficiency gains — same symbols, same bandwidth, same or higher energy and latency — and at 10, 15 and 20 dB in the default run it produced results where semantic improved on nothing at all. A selection that cannot show a gain is not offered.</p>
+<label class="check"><input type="checkbox" id="matchedPower" checked><span><strong>Matched transmit power per symbol</strong> — both codecs use the same power per symbol. Untick only to explore an unmatched (unfair) comparison.</span></label>
+<p class="hint" id="fairNote">Verdicts below are only valid under the fairness setting you choose. Changing it rescales the semantic curve in the model.</p>
+
+<div class="runRow">
+<button class="run" id="runBtn">▶ Run matched benchmark</button>
+<p class="runHint" id="runHint">Green Run button = a setting changed and the results below are stale. Click Run to update the results.</p>
+</div>
+<p class="hint" style="margin-top:8px">Seeded RNG (mulberry32). Same seed + same config = same results. Model: analytic block-error / graceful-degradation curves sampled with Monte Carlo noise — illustrative, in the spirit of Ch. 12.3 &amp; 14.5.1 of the Telecom Memoir. <span id="coderWeightsNote">Generic simulated Semantic coder — not DeepJSCC, DeepSC or any other named paper coder; no paper weights are run.</span></p>
+</aside>
+
+<!-- RESULTS -->
+<main style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<div role="note" style="background:var(--teal-bg);border:1px solid var(--teal);border-radius:14px;padding:14px 16px">
+<strong style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase">Showcase view — filtered</strong>
+<p style="margin:6px 0 0;font-size:14px"><strong>Under the assumption stated above — task success is assumed and tasks are implemented gainfully — efficiency gains in this showcase are stated on two labelled bases: success-based measures per successful task, and costs labelled “per task” per attempted task (the Efficiency panel labels each metric's basis).</strong> <strong>Headline gains are against the smart system baseline</strong> — the smarter conventional system defined per data type in the Configure panel — and the <strong>full-source conventional baseline is shown alongside as a secondary reference</strong> in the charts, the Efficiency panel, the verdicts, the results table and the downloads, so both comparisons are visible and neither is hidden. The menus on this page only offer <strong>selections where the <span data-coder-name>Semantic coder</span> shows a gain against the smart system</strong> — on task success, and/or on energy, spectrum, bandwidth or latency efficiency. Menu choices that would produce a result where semantic improves on <em>nothing</em> against the smart system have been taken out of the menus, so they cannot be selected. <strong>High-SNR selections are kept on purpose:</strong> there, task success may only <em>tie</em> with the baseline — a tie is not a loss — because the <span data-coder-name>Semantic coder</span> still wins on energy efficiency, spectrum efficiency and bandwidth efficiency, and it can deliver the same task success for less transmit power. The different kinds of gain do not all move the same way as SNR rises — each follows its own curve, and the spectrum and bandwidth gains are fixed by the symbols per task — so the Efficiency panel below shows each kind of gain separately, point by point. <strong>Every result on this page is for the one Level 1 › Level 2 selection in the menu</strong> — one application, one data type inside it — because data types inside the same application (for example IoT picture vs. IoT text vs. IoT intermittent data) differ in size, urgency and what counts as success, so their gains are reported separately, never averaged together. <span id="showcaseCount"></span></p>
+</div>
+<section class="card switch-banner" id="switchBanner" aria-label="Smart unusable threshold and Auto switch point">
+<div class="switch-banner-top">
+<p class="switch-eyebrow">★ Do not miss this — Smart limit &amp; Auto switch</p>
+<h2>Where Smart becomes unusable — and where Auto switches to Semantic</h2>
+</div>
+<div class="switch-banner-body">
+<p class="hint" id="switchContext" style="margin:0 0 10px;font-size:13.5px;color:var(--text)"></p>
+<p class="switch-plain" id="switchPlain">Run the benchmark to see the switch point for this application, channel and SNR sweep.</p>
+<div class="switch-grid">
+<div class="switch-stat smart"><span>■ Smart usable</span><b id="switchSmartUsable">—</b><p id="switchSmartUsableDetail">Smart passes the task success threshold and the latency budget at these SNR points.</p></div>
+<div class="switch-stat sem"><span>■ Auto → Semantic from</span><b id="switchSemanticFrom">—</b><p id="switchSemanticDetail">Auto switches to Semantic only where Semantic passes <em>and</em> wins an efficiency metric per successful task. Full-source is never an Auto candidate.</p></div>
+<div class="switch-stat neither"><span>■ Smart unusable below / at</span><b id="switchSmartUnusable">—</b><p id="switchSmartUnusableDetail">Smart fails the task success threshold, or the latency budget, or the task needs more than a label — see the reason per SNR below.</p></div>
+</div>
+<div id="switchLabelAlert"></div>
+<p style="font-size:12.5px;font-weight:700;margin:10px 0 2px">Per-SNR marker — every SNR point in this run:</p>
+<div class="switch-strip" id="switchStrip"></div>
+<p class="hint" style="margin:6px 0 0">Colour key — the same colours tint every row of the Results table below (Section 5) and the Auto table: <span class="auto-badge sem">Semantic — Auto selects Semantic</span> &nbsp;<span class="auto-badge smart">Smart — Auto stays on Smart</span> &nbsp;<span class="auto-badge neither">✕ Neither passes</span>. A “Neither passes” point means <strong>both</strong> Smart and Semantic fail the pass check (success below the threshold for this data type, or latency over budget) — Auto does not pick a failing codec there. Smart is also marked unusable at any SNR when the task needs more than a label and only a label would be sent.</p>
+</div>
+</section>
+<section class="card" id="autoPanel" style="display:none;border:2px solid var(--teal)">
+<div class="badge" style="border-color:var(--teal)">Auto-switch mode — two candidates only</div>
+<h2 style="font-family:Newsreader,serif;font-size:22px;letter-spacing:0;text-transform:none;margin:0 0 8px">Auto-switch: Smart system vs <span data-coder-name>Semantic coder</span></h2>
+<p style="font-size:14px;margin:0 0 10px">For each SNR point in this run — for this one application › data type and this channel — Auto chooses between <strong>two candidates only: the Smart system and the <span data-coder-name>Semantic coder</span></strong>. It switches to the <span data-coder-name>Semantic coder</span> <strong>only where it passes</strong> — modelled task success at or above this data type’s task success rate threshold <em>and</em> latency within budget — <strong>and wins at least one efficiency metric per successful task</strong> against the Smart system (successful tasks per joule, joules per successful task, or transmit-power saving at matched success). <strong>Everywhere else it stays on the Smart system.</strong> The full-source baseline is <strong>not a candidate in Auto mode</strong> — it appears in the panels below and in the downloads only as the secondary reference it is in the manual comparison modes, and Auto never selects it.</p>
+<div id="autoSummary"></div>
+<p class="hint" id="autoNote" style="margin-top:8px"></p>
+</section>
+<section class="card" id="refPanel" style="display:none;border:2px solid var(--amber)">
+<div class="badge" style="border-color:var(--amber)">Reference preset — published behaviour · not measured by this harness</div>
+<h2 style="font-family:Newsreader,serif;font-size:22px;letter-spacing:0;text-transform:none;margin:0 0 8px">DeepJSCC for Picture — Bourtsoulatze, Kurka &amp; Gündüz (2019)</h2>
+<p style="font-size:14px;margin:0 0 10px">This panel describes <strong>published reference behaviour</strong> from the original Deep Joint Source-Channel Coding (DeepJSCC) paper, so the harness’s Picture setup can be read against the closest published reference system. It is a literature reference, not a harness run: <strong>no number in this panel was produced by this harness, and none of the paper’s numbers are reproduced here</strong> — the behaviour is summarised qualitatively, in words and in the schematic below.</p>
+<div class="scroll"><table style="min-width:640px"><tbody>
+<tr><td style="width:180px"><strong>Source</strong></td><td>E. Bourtsoulatze, D. Burth Kurka and D. Gündüz, “Deep Joint Source-Channel Coding for Wireless Image Transmission”, <em>IEEE Transactions on Cognitive Communications and Networking</em>, 2019. An open-source PyTorch implementation accompanies the paper; it is not embedded or run in this page.</td></tr>
+<tr><td><strong>Architecture</strong></td><td>A convolutional neural network (CNN) autoencoder. The encoder maps the image pixels <em>directly</em> to channel symbols — a fixed number of complex-valued symbols per image (set by the bandwidth ratio) — with no bits and no separate source or channel coding stage. The channel adds noise or fading, and the CNN decoder reconstructs the image from the received symbols. The pair is trained end-to-end through the channel model.</td></tr>
+<tr><td><strong>Task &amp; data in the paper</strong></td><td>Image <em>reconstruction</em>, evaluated on CIFAR-10 (32×32 colour images), with quality reported as PSNR. Note the difference: this harness’s Picture task is a task-success model, not PSNR reconstruction — the two results are not the same metric and are not merged anywhere on this page.</td></tr>
+<tr><td><strong>Channels in the paper</strong></td><td>AWGN, and slow (block) Rayleigh fading — which is why this preset applies only with the harness channel set to AWGN, or to Fading with Fading type = Rayleigh.</td></tr>
+<tr><td><strong>Baselines in the paper</strong></td><td>JPEG and JPEG2000 source coding followed by a <em>capacity-achieving</em> channel code — an idealised separation-based baseline (the best a separate source + channel scheme could do in theory), not a practical modem.</td></tr>
+<tr><td><strong>Published behaviour (qualitative)</strong></td><td><strong>Graceful degradation, no cliff:</strong> as SNR falls, DeepJSCC’s reconstruction quality falls smoothly. The separation baseline instead shows a <strong>cliff effect</strong> — once SNR drops below what its channel code needs, decoding fails and quality collapses. The paper reports DeepJSCC performing better than even that idealised baseline particularly at low SNR and low bandwidth ratios, and remaining competitive as SNR rises; a network trained at one SNR also degrades gracefully when the actual channel SNR differs, rather than failing abruptly.</td></tr>
+</tbody></table></div>
+<svg viewBox="0 0 340 190" width="100%" style="max-width:520px;margin-top:10px" role="img" aria-label="Schematic of published DeepJSCC behaviour versus the separation baseline">
+<line x1="42" y1="12" x2="42" y2="158" stroke="var(--muted)"/><line x1="42" y1="158" x2="322" y2="158" stroke="var(--muted)"/>
+<text x="8" y="20" font-size="10" fill="var(--muted)">Reconstruction</text><text x="8" y="32" font-size="10" fill="var(--muted)">quality (PSNR)</text>
+<text x="282" y="174" font-size="10" fill="var(--muted)">SNR →</text>
+<path d="M42,148 C110,140 175,105 235,72 C265,55 295,44 318,38" fill="none" stroke="#0e7c6b" stroke-width="2.5"/>
+<path d="M42,152 L168,148 L188,52 L318,44" fill="none" stroke="#64748b" stroke-width="2.5"/>
+<text x="120" y="86" font-size="10.5" fill="#0e7c6b">DeepJSCC — graceful, no cliff</text>
+<text x="196" y="140" font-size="10.5" fill="#64748b">JPEG / JPEG2000 + capacity-achieving code — cliff</text>
+<text x="42" y="186" font-size="10" fill="var(--muted)">Schematic only — curve shapes from the paper’s published behaviour; no values, not harness data.</text>
+</svg>
+<p class="hint" style="margin:4px 0 0"><strong>Kept separate:</strong> everything below this panel — charts, Efficiency panel, verdicts, tables and downloads — is this harness’s own simulated / modelled output under the menus on the left. Selecting this preset aligns the harness setup with the paper’s conditions and records the preset in the reproducibility log; it does not replace, rescale or validate the harness’s numbers.</p>
+</section>
+<section class="card">
+<h2>2 — Headline at a glance (showcase cases only)</h2>
+<p class="assumption-inline"><strong>Assumption applies here:</strong> task success is assumed — tasks are implemented gainfully. Efficiency figures in the KPIs, error summary and charts below are gains under that assumption, each on its labelled basis: <strong>per successful task</strong> for success-based measures (energy / success, transmit-power saving), <strong>per attempted task</strong> for costs labelled “per task” (symbols / task, latency, energy / task). They are not gains for failed tasks.</p>
+<p class="hint" id="selectionLine" style="margin:0 0 10px"></p>
+<p class="hint" id="coderResultLine" style="margin:0 0 10px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface2)"></p>
+<div class="kpis" id="kpis"></div>
+<h3 style="margin:16px 0 6px">Error rates — at a glance</h3>
+<p class="hint" style="margin:0 0 8px"><strong>Task error</strong> = 1 − task success. <strong>BER</strong> = uncoded bit error rate, modelled from the effective SNR and modulation (Q-function) — the same physical channel for all three systems. <strong>BLER</strong> = conventional block error rate, per single attempt and after ARQ retries — both conventional baselines (smart system and full-source) share the same channel code, modulation and ARQ model, so their per-attempt BLER is the same; they differ in how much they send, not in how each attempt is coded. <strong>SER</strong> = symbol error rate derived from BER. <strong>Feature error</strong> = share of <span data-coder-name>Semantic coder</span> features corrupted beyond tolerance — the <span data-coder-name>Semantic coder</span> has no blocks, so it has no BLER; its errors show up as feature and task errors instead. All error rates are simulated / modelled, not measured.</p>
+<div id="errorSummary"></div>
+<div class="tabs" id="chartTabs">
+<button class="tab active" data-chart="success">Task success vs SNR</button>
+<button class="tab" data-chart="error">Error rates vs SNR</button>
+<button class="tab" data-chart="gain">Gain vs SNR</button>
+<button class="tab" data-chart="effgain">Power saving vs SNR</button>
+<button class="tab" data-chart="energy">Energy / success</button>
+<button class="tab" data-chart="latency">Latency</button>
+</div>
+<div class="legend"><span><span class="dot" style="background:#0e7c6b"></span><span data-coder-name>Semantic coder</span></span><span><span class="dot" style="background:#b45309"></span>Smart system + ARQ — headline baseline</span><span><span class="dot" style="background:#475569"></span>Full-source baseline + ARQ — secondary reference</span><span>Shaded band / whiskers = 95% CI across trials</span></div>
+<div class="chart-marker-key" id="chartMarkerKey">Chart markers — same decision as the banner above and the tables below: the pale-red shaded region is where Smart is unusable, and the vertical line marks where Auto switches to Semantic. Run the benchmark to fill in the exact SNRs for this run.</div>
+<div id="chart" style="margin-top:10px"></div>
+<p class="hint" id="chartNote"></p>
+</section>
+
+<section class="card">
+<h2>3 — Efficiency panel — efficiency gains, each on its labelled basis (task success assumed)</h2>
+<p class="assumption-inline"><strong>Assumption — two labelled bases, do not mix them:</strong> task success is assumed and tasks are implemented gainfully. Success-based measures in this panel — <strong>successful tasks per joule, joules per successful task, and transmit-power saving at matched success</strong> — are gains <strong>per successful task</strong>. Cost measures labelled <strong>“per task”</strong> — joules per task, symbols per task, transmitted bits per task, latency per task and compute per task — are <strong>per attempted task</strong>: the cost of sending one task, whether or not it succeeds. “Per task” in this panel never means per successful task. Under the assumption an attempted task succeeds, so those per-attempt costs are the costs of a successful task — but an efficiency figure is not a gain for a failed task.</p>
+<p class="hint" style="margin:0 0 10px">“Efficiency” here is five different things, shown separately so no single number has to carry the whole story. Every gain in this panel is shown <strong>twice</strong>: the <strong>headline gain against the smart system</strong> baseline, and the <strong>gain against the full-source conventional baseline as a secondary reference</strong> — neither comparison is hidden. The headline energy measure is <strong>successful tasks per joule / joules per successful task</strong> (per successful task). <strong>Energy efficiency</strong> — how much transmit energy a task costs, as joules per attempted task and as joules per successful task. <strong>Spectrum efficiency</strong> — how much channel occupancy one attempted task costs. <strong>Bandwidth efficiency</strong> — how much transmitted data volume one attempted task costs. <strong>Latency efficiency</strong> — how many tasks per second the link delivers, from the latency of one attempted task. <strong>Compute efficiency</strong> — the encoder cost per attempted task that the <span data-coder-name>Semantic coder</span> pays to buy the other gains; it is shown as a cost, not hidden. Where task success only ties with the baseline — typically at high SNR — the panel marks exactly which efficiencies the <span data-coder-name>Semantic coder</span> still wins on.</p>
+<div id="effSummary"></div>
+<h3 style="margin:16px 0 6px">Efficiency per SNR</h3>
+<div id="effPerSnr"></div>
+<p class="hint" id="effNote" style="margin-top:8px"></p>
+</section>
+
+<section class="card">
+<h2>4 — Plain-language verdict (showcase cases only — gains on labelled bases)</h2>
+<p class="assumption-inline"><strong>Assumption applies to every verdict:</strong> task success is assumed — tasks are implemented gainfully — so each verdict’s efficiency win is a gain under that assumption on its labelled basis — per successful task for success-based measures, per attempted task for the energy and latency per-task figures shown — not a gain for a failed task.</p>
+<div id="verdict"></div>
+<p class="hint" style="margin-top:10px">Every row above is a showcased case, read under the assumption that task success is assumed and tasks are implemented gainfully: semantic improves on the baseline on task success, and/or on energy, spectrum, bandwidth or latency efficiency <strong>measured on each metric's labelled basis</strong> — per successful task for success-based measures, per attempted task for costs labelled “per task”. A row where task success only ties — or is lower in the raw success rate — is presented as an efficiency gain only on those labelled bases stated in the assumption; it is not claimed as a gain for failed tasks. SNR points where semantic improves on nothing at all are not shown in this view, and menu selections that would produce only such points have been removed from the menus.</p>
+</section>
+
+<section class="card">
+<h2>5 — Results table — showcase cases only (per SNR · per channel · per Application › Data type · each metric on its labelled basis)</h2>
+<p class="assumption-inline"><strong>Assumption applies to this table and to both downloads:</strong> task success is assumed — tasks are implemented gainfully. Efficiency columns are gains <strong>under that assumption, each on its labelled basis</strong>: energy / success, successful tasks per joule and Tx power saving are <strong>per successful task</strong>; energy / task, symbols / task, bandwidth / task, latency and compute / task are <strong>per attempted task</strong>. They must not be read as gains for failed tasks. The same assumption statement is written into the CSV (as opening comment lines) and into the JSON (as <span class="mono">config.assumption</span>) and the reproducibility log.</p>
+<p class="hint" style="margin:0 0 10px">Filtered to the SNR points where semantic improves on the <strong>smart system headline baseline</strong> — higher task success, and/or lower energy per successful task, and/or lower energy or latency per attempted task, and/or higher energy, spectrum or bandwidth efficiency on its labelled basis, including points where task success only ties. Downloads below export the showcased rows for <strong>all three systems</strong> — smart system, full-source baseline and <span data-coder-name>Semantic coder</span> (even when the table above is focused on one codec) — including every efficiency metric from the panel, with the smart-system definition for this data type, the assumption and the filter criteria recorded in the reproducibility log.</p>
+<p class="hint" id="codecFocusLine" style="margin:0 0 10px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface2)"></p>
+<div class="btns" style="margin-bottom:10px">
+<button class="btn" id="dlCsv">↓ Download CSV</button>
+<button class="btn" id="dlJson">↓ Download JSON (with full config)</button>
+<button class="btn" id="copyCfg">Copy reproducibility block</button>
+</div>
+<p class="hint" style="margin:0 0 8px"><strong>Row colours = Auto choice for that SNR</strong> (shown in every mode, so the switch is visible even in Manual comparison): <span class="auto-badge sem">Teal — Auto selects Semantic</span> <span class="auto-badge smart">Amber — Auto stays on Smart</span> <span class="auto-badge neither">Red — Neither passes</span>. The “Auto choice” column states the same decision in words for each row.</p>
+<div class="scroll"><table id="resTable"><thead><tr>
+<th>SNR</th><th>Auto choice</th><th>Codec</th><th>Task success</th><th>Task error ↓</th><th>BER / SER ↓</th><th>BLER (1 try) ↓</th><th>BLER after ARQ ↓</th><th>Feature error ↓</th><th>Distortion ↓</th><th>Symbols / task</th><th>Bandwidth / task</th><th>Latency</th><th>Energy / task</th><th>Energy / success</th><th>Energy eff. (succ. tasks / J)</th><th>Spectrum eff. (tasks / s / Hz)</th><th>Compute / task</th><th>Tx power saving at matched success (vs smart · vs full-source)</th><th>E[retx]</th><th>Meets budget?</th>
+</tr></thead><tbody></tbody></table></div>
+<details><summary>Reproducibility log — config, seed &amp; versions</summary><pre class="mono" id="reproLog" style="white-space:pre-wrap;margin-top:10px"></pre></details>
+</section>
+
+<section class="card">
+<h2>Try this</h2>
+<p style="font-size:14px;margin:0">1) Pick the <strong>Application at Level 1</strong> (IoT, Picture, Text, Video, Speech or Control), then pick the <strong>Data type at Level 2</strong> inside it — for example, inside IoT switch between <strong>Picture, Text and Intermittent data</strong> and run each one: each data type loads its own source size, urgency, latency budget and success definition, so the gains are shown separately for each data type, not lumped into one number for the application. &nbsp; 2) In the <span data-coder-name>Semantic coder</span> feature dimension menu pick <strong>6 symbols</strong> and run — watch low-SNR success fall: too little redundancy. &nbsp; 3) Set Channel type to <strong>Fading</strong>, Fading type to <strong>Rayleigh</strong>, CSI to <strong>No CSI</strong> — the baseline cliff moves right. &nbsp; 4) Mismatch the <strong>model versions</strong> — <span data-coder-name>Semantic coder</span> gains largely vanish. &nbsp; 5) Set fairness to <strong>Matched energy</strong> — the headline changes, which is why fairness must be stated. &nbsp; 6) Open the <strong>Error rates vs SNR</strong> chart tab and read the error-rates table under the headline — compare baseline BER / BLER (before and after ARQ) with <span data-coder-name>Semantic coder</span> SER / feature error and each side's task error at the same SNR. &nbsp; 7) Set Channel type to <strong>Simple NTN</strong> — watch latency jump by the satellite round-trip delay (and multiply with every baseline ARQ retry), success capped by pass availability, then switch orbit from <strong>LEO — 550 km</strong> to <strong>LEO — 1,200 km</strong> to see the longer delay and extra path loss of the higher LEO orbit, or drop the elevation angle to <strong>10°</strong> to see the extra path loss bite. &nbsp; 8) Pick <strong>Picture</strong> and select the <strong>DeepJSCC reference preset (Bourtsoulatze, Kurka &amp; Gündüz, 2019)</strong> — read the paper’s published graceful-degradation behaviour in the reference panel at the top of the results, then compare its shape with the harness’s own simulated curves below, keeping in mind the paper reports reconstruction quality (PSNR) on CIFAR-10 while the harness models task success. &nbsp; 9) Read the <strong>Efficiency panel’s two gain columns</strong> for any data type: the headline gain is against the <strong>smart system</strong> — for a label-only task (IoT Picture, Picture Still) it is far smaller than the gain against the <strong>full-source secondary reference</strong>, because the smart system already sends only a label; for a content task (Picture Document, Video Short clip) the two gains stay closer, because the smart system still sends most of the content. That difference is the honest size of the semantic advantage, per data type.</p>
+</section>
+</main>
+</div>
+<footer><strong>Semantic Communications Benchmark Harness — v7</strong><br><br><strong>Two baselines, both shown:</strong> the <strong>smart system</strong> is the headline baseline — the smarter conventional system already used in real IoT and edge devices. It is not semantic coding: it still uses separate source + channel coding, delivers what it sends bit-exactly, and retransmits with ARQ. What makes it smart is what it chooses to send: a locally produced classification / intent / command / event label only where the task allows it (IoT Picture and Picture Still: label only; Text Short intent, Speech Voice command and Keyword alert: intent / command code only; IoT Intermittent and Control Status / Alarm: event code only on change; Video Surveillance / Keyframes: event label or keyframe only), and most of the content where the task needs more than a label (Picture Document, Video Short clip). The <strong>full-source conventional system</strong> sends the whole source bit-exactly every time and is kept alongside as a secondary reference. Headline gains are semantic vs. smart system; gains vs. full-source are shown alongside in the Efficiency panel, the verdicts and the downloads.<br><br><strong>Assumption restated:</strong> task success is assumed — tasks are implemented gainfully — and efficiency metrics on this page and in its downloads are gains under that assumption on their labelled bases — success-based measures per successful task, costs labelled “per task” per attempted task — not gains for failed tasks.<br><br>Provenance for every number on this page: <strong>simulated / modelled</strong> — analytic channel &amp; codec curves with seeded Monte Carlo sampling in your browser. No real codec, dataset, or hardware was measured. Symbol, latency and energy gains follow arithmetically from the feature dimension and system parameters you set; if you change the dimension, the “gains” change — that transparency is the point of the harness. The simulated coder is labelled <strong>Semantic coder</strong> for all applications, and <strong>DeepJSCC</strong> only when Picture / image is selected. When Picture is selected, DeepJSCC is the image semantic coder reference — Bourtsoulatze, Kurka &amp; Gündüz (2019), Picture › Still image reference preset — published behaviour only, not measured by this harness and not altering the simulated results. For all other applications the coder is the generic simulated Semantic coder — not DeepJSCC, DeepSC or any other named paper coder. The DeepJSCC reference preset for the Picture application is a literature reference only — published behaviour from Bourtsoulatze, Kurka &amp; Gündüz (2019), summarised qualitatively — and is kept separate from the harness’s simulated results above.</footer>
+</div>
+
+<script>
+// Seeded RNG
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function randn(rng){let u=0,v=0;while(!u)u=rng();while(!v)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+const $=id=>document.getElementById(id);
+const HARNESS_NAME='Semantic Communications Benchmark Harness';
+const HARNESS_VERSION='v7';
+// Two-level menu model. Level 1 = application / context. Level 2 = data type inside that application.
+// Each data type carries its own source size, urgency (latency budget), classes and success definition,
+// so gains are computed and shown separately per data type — never lumped into one number per application.
+const APP_LABELS={iot:"IoT",image:"Picture",text:"Text",video:"Video",speech:"Speech",control:"Control"};
+const DEFAULT_DT={iot:"intermittent",image:"still",text:"intent",video:"clip",speech:"command",control:"status"};
+const DATA_TYPES={
+ iot:{
+  picture:{label:"Picture — camera image (e.g. trap / door camera)",classes:8,bits:65536,success:"Correct event / object detected from the camera frame",def:"IoT › Picture: a camera attached to a device sends a frame. Success = the right event or object is detected from that frame; the full photo does not need to be reconstructed perfectly.",rawDims:256,latencyBudget:250,urgency:"Medium — a frame stays useful for a few seconds; a late frame can still confirm an event."},
+  text:{label:"Text — device status report / message",classes:8,bits:9600,success:"Correct status / intent recovered from the device text report",def:"IoT › Text: a device sends a short written status report. Success = the correct status or intent is recovered — the meaning of the report, not its exact bits.",rawDims:96,latencyBudget:1000,urgency:"Low — status reports tolerate delay; getting the meaning right matters more than speed."},
+  intermittent:{label:"Intermittent data — bursty sensor readings (sent only on change / event)",classes:4,bits:2048,success:"Correct event detected within the decision window",def:"IoT › Intermittent data: a sensor is silent most of the time and sends a small reading only when something changes or an event fires (e.g. no-event / watch / warning / flood). Success = correct event label within the decision window; a missed flood and a false alarm both count as failure.",rawDims:128,latencyBudget:120,urgency:"High when an event fires — nothing is sent most of the time, then a small reading must get through inside the decision window."}
+ },
+ image:{
+  still:{label:"Still image — single photo / frame",classes:10,bits:196608,success:"Top-1 class correct AND distortion below threshold",def:"Picture › Still image: one photo or frame, 10 object classes. Success and distortion are reported separately: a task can succeed (right label) even with visible distortion, and vice-versa.",rawDims:256,latencyBudget:250,urgency:"Medium — interactive classification tolerates a short delay."},
+  document:{label:"Document image — scanned page / screenshot",classes:8,bits:262144,success:"Document type correct AND key text legible in the reconstruction",def:"Picture › Document image: a scanned page or screenshot. Success needs more than a label — the key text in the page must stay legible, so less detail can be thrown away than for a still photo.",rawDims:256,latencyBudget:1000,urgency:"Low — a page can take about a second; legibility of the recovered content is what counts."},
+  burst:{label:"Image burst — short sequence of frames",classes:10,bits:524288,success:"Correct class from at least one frame in the burst",def:"Picture › Image burst: several frames of the same scene. Success = the correct class from at least one frame, so one good frame can carry the task even if the others degrade.",rawDims:512,latencyBudget:250,urgency:"Medium — the burst is only useful briefly, but the decision can use any frame in it."}
+ },
+ text:{
+  intent:{label:"Short message — intent / command",classes:32,bits:9600,success:"Correct intent label (semantic similarity ≥ threshold)",def:"Text › Short message: 32 intents in a short utterance. Success = correct intent, not exact bit recovery — paraphrases that preserve intent count as success.",rawDims:96,latencyBudget:250,urgency:"Medium — a reply is expected promptly."},
+  long:{label:"Longer message — paragraph / email text",classes:16,bits:32768,success:"Correct topic / gist recovered (semantic similarity ≥ threshold)",def:"Text › Longer message: a paragraph or short email. Success = the correct topic and gist survive; exact wording does not need to, but more meaning must be carried than for a one-line intent.",rawDims:128,latencyBudget:1000,urgency:"Low — a longer message tolerates delay; losing the gist is the failure, not a slow delivery."},
+  structured:{label:"Structured text — form / record fields",classes:8,bits:4096,success:"All key fields correctly recovered",def:"Text › Structured text: a form or record made of named fields. Success is stricter than for free text — every key field must be recovered, so a correct gist with a missing field still counts as failure.",rawDims:64,latencyBudget:500,urgency:"Medium — fields feed a downstream record, so completeness matters as much as speed."}
+ },
+ video:{
+  clip:{label:"Short clip — action / event in a clip",classes:20,bits:262144,success:"Correct action / event label for the clip",def:"Video › Short clip: 20 action / event classes in a short clip. Success = correct action or event label for the clip; distortion is reported separately from task success.",rawDims:512,latencyBudget:250,urgency:"Medium — a clip decision is wanted soon after the clip ends."},
+  surveillance:{label:"Surveillance segment — event watch",classes:12,bits:524288,success:"Correct event detected within the segment window",def:"Video › Surveillance segment: a longer watch segment scanned for an event. Success = the right event is detected inside the segment window; a missed event and a false alarm both count as failure.",rawDims:512,latencyBudget:120,urgency:"High — surveillance is only useful if the event is flagged while it is still happening."},
+  keyframes:{label:"Keyframes only — low-rate preview",classes:20,bits:65536,success:"Correct action / event label from keyframes alone",def:"Video › Keyframes only: only sparse keyframes are sent, not the full clip. Success = the correct action or event label from those keyframes alone — the smallest, most compressed video data type.",rawDims:256,latencyBudget:500,urgency:"Low to medium — a preview can lag the live scene, as long as the label is right."}
+ },
+ speech:{
+  command:{label:"Voice command — short keyword / command",classes:12,bits:32768,success:"Correct keyword / command recognised",def:"Speech › Voice command: 12 voice commands / keywords in a short audio clip. Success = correct command recognised, not exact waveform recovery.",rawDims:128,latencyBudget:120,urgency:"High — a spoken command should act almost immediately."},
+  utterance:{label:"Spoken utterance — sentence intent",classes:32,bits:65536,success:"Correct intent from the spoken utterance",def:"Speech › Spoken utterance: a full spoken sentence. Success = the correct intent behind the sentence, so the wording can vary as long as the intent is recovered.",rawDims:128,latencyBudget:250,urgency:"Medium — a conversational reply is expected promptly, but not instantly."},
+  alert:{label:"Keyword alert — wake / alarm word spotting",classes:4,bits:16384,success:"Alert keyword detected within the deadline; a miss is a failure",def:"Speech › Keyword alert: continuous listening for one of a few alert words. Success = the alert word is spotted within the deadline; a missed alert is the costly failure.",rawDims:64,latencyBudget:50,urgency:"Very high — an alert that arrives late, or not at all, has failed at its only job."}
+ },
+ control:{
+  status:{label:"Status / telemetry — periodic decision",classes:8,bits:1024,success:"Correct control / status decision within the deadline",def:"Control › Status / telemetry: 8 control / status states from an industrial sensor / status window. Success = correct decision within the deadline; a late or wrong decision counts as failure.",rawDims:64,latencyBudget:50,urgency:"High — status feeds a control loop that runs on a deadline."},
+  command:{label:"Control command — actuation instruction",classes:8,bits:512,success:"Correct command delivered within the deadline",def:"Control › Control command: a small actuation instruction — the smallest data type in this application. Success = the correct command arrives within the deadline; a late command is a failed command.",rawDims:32,latencyBudget:20,urgency:"Very high — actuation runs against the tightest deadline in the harness."},
+  alarm:{label:"Alarm / fault event — intermittent",classes:4,bits:1024,success:"Correct fault / alarm raised within the deadline; a missed alarm is a failure",def:"Control › Alarm / fault event: silent until a fault occurs, like IoT intermittent data but inside a control loop. Success = the correct alarm is raised within the deadline; a missed alarm is the costly failure.",rawDims:64,latencyBudget:50,urgency:"Very high when it fires — nothing is sent until a fault occurs, then it must get through at once."}
+ }
+};
+// Smart system baseline (v7) — the smarter conventional system already used in real IoT and edge
+// devices, defined per Level 2 data type. It is NOT semantic coding: a local, ordinary device
+// function (classifier / intent recogniser / command encoder / change detector) chooses what is
+// worth sending, and only that payload is transmitted — with the same separate source + channel
+// coding, modulation and ARQ as the full-source baseline, delivered bit-exactly.
+// mode 'code'    = a fixed-size label / intent / command / event code only (bits independent of
+//                  the source size — that independence is the point of the smart system);
+// mode 'content' = most of the content (fraction of the current source size) — the task needs
+//                  more than a label, so the smart system can only trim, crop or compress;
+// mode 'same'    = the payload already IS a code (a control command) — no reduction is possible.
+// computeMs / computeE are the modelled local processing cost the smart system pays to choose
+// its payload (counted in its energy and latency, like the semantic encoder's compute).
+const SMART_TYPES={
+ iot:{
+  picture:{mode:'code',bits:64,computeMs:3,computeE:12,label:'Label only',desc:'A local classifier on the device reads the camera frame and sends only the event / object label code — the photo itself is not sent.'},
+  text:{mode:'code',bits:512,computeMs:2,computeE:8,label:'Status code + key fields only',desc:'The device summarises its status report locally and sends only a status code plus the key field values — not the full report text.'},
+  intermittent:{mode:'code',bits:64,computeMs:1,computeE:5,label:'Event code only, on change',desc:'The sensor is silent while nothing changes; on a change / event it sends only a short event code. A task here is one such event report.'}
+ },
+ image:{
+  still:{mode:'code',bits:64,computeMs:3,computeE:12,label:'Label only',desc:'A local classifier sends only the class label code — the photo itself is not sent.'},
+  document:{mode:'content',fraction:0.75,computeMs:2,computeE:8,label:'Most of the content',desc:'The task needs the key text legible, so a label is not enough: the smart system crops to the page region and standard-compresses it, still sending most of the content.'},
+  burst:{mode:'code',bits:64,computeMs:3,computeE:12,label:'Label only',desc:'A local classifier reads the burst, picks the clearest frame and sends only the class label code.'}
+ },
+ text:{
+  intent:{mode:'code',bits:64,computeMs:2,computeE:8,label:'Intent code only',desc:'A local intent recogniser sends only the intent code — the message text itself is not sent.'},
+  long:{mode:'content',fraction:0.25,computeMs:2,computeE:8,label:'Summary text — gist, not just a label',desc:'The task needs the gist, so the smart system sends a locally extracted summary text (about a quarter of the message) — more than a label, far less than the full text.'},
+  structured:{mode:'code',bits:1024,computeMs:2,computeE:8,label:'Key fields only',desc:'The device sends only the key field values of the record, without the form / record framing overhead.'}
+ },
+ video:{
+  clip:{mode:'content',fraction:0.75,computeMs:2,computeE:8,label:'Most of the content',desc:'The task needs more than a label, so the smart system standard-compresses the clip at a task-sufficient rate and still sends most of the content.'},
+  surveillance:{mode:'code',bits:16384,computeMs:2,computeE:8,label:'Event label + one keyframe only',desc:'A local event detector watches the segment and sends only an event label plus a single keyframe when something fires — not the segment.'},
+  keyframes:{mode:'code',bits:8192,computeMs:2,computeE:8,label:'Event label or single keyframe only',desc:'The device sends only an event label, or a single keyframe when the label alone is not enough — not the keyframe set.'}
+ },
+ speech:{
+  command:{mode:'code',bits:64,computeMs:2,computeE:8,label:'Command code only',desc:'A local keyword / command recogniser sends only the command code — the audio itself is not sent.'},
+  utterance:{mode:'code',bits:64,computeMs:2,computeE:8,label:'Intent code only',desc:'A local speech recogniser extracts the sentence intent and sends only the intent code — the audio itself is not sent.'},
+  alert:{mode:'code',bits:64,computeMs:2,computeE:8,label:'Keyword code only',desc:'A local wake / alert word spotter sends only the keyword code when the alert word fires — no audio is streamed.'}
+ },
+ control:{
+  status:{mode:'code',bits:64,computeMs:1,computeE:5,label:'Event code only, on change',desc:'The controller sends only a short status / event code when the status changes — not the full telemetry window.'},
+  command:{mode:'same',computeMs:1,computeE:2,label:'Command code — already the whole payload',desc:'A control command already IS a short code: there is nothing to trim, so the smart system sends the same payload as the full-source baseline for this data type.'},
+  alarm:{mode:'code',bits:64,computeMs:1,computeE:5,label:'Event code only, on change',desc:'Silent until a fault fires; then only a short alarm / event code is sent — not the sensor window around it.'}
+ }
+};
+function smartDef(app,dt){return (SMART_TYPES[app]&&SMART_TYPES[app][dt])||{mode:'code',bits:64,computeMs:2,computeE:8,label:'Label / code only',desc:'The device sends only a locally produced label / code for this task.'}}
+function smartBitsFor(app,dt,sourceBits){const d=smartDef(app,dt);if(d.mode==='content')return Math.round(sourceBits*(d.fraction||0.75));if(d.mode==='same')return sourceBits;return d.bits}
+function smartCurrent(){const dt=$('dataType').value;const src=+$('sourceBits').value;const d=smartDef(selectedApp,dt);return {def:d,bits:smartBitsFor(selectedApp,dt,src),sourceBits:src}}
+let selectedApp='iot';
+// Task success rate threshold (pass mark) — ONE variable per Level 2 data type.
+// DEFAULT_PASS is the starting value for each data type; passThresholds holds the
+// value currently set for each data type. Selecting a data type reads its value
+// from passThresholds; changing the threshold in the Level 2 area writes only
+// that data type's entry, so it stays as set until the user changes it again
+// for that same data type — switching data types never resets another type's value.
+const DEFAULT_PASS={iot:{picture:90,text:90,intermittent:95},image:{still:90,document:90,burst:90},text:{intent:90,long:90,structured:95},video:{clip:90,surveillance:95,keyframes:90},speech:{command:95,utterance:90,alert:99},control:{status:99,command:99,alarm:99}};
+const passThresholds={};
+function getPass(app,dt){const k=app+':'+dt;if(passThresholds[k]==null)passThresholds[k]=(DEFAULT_PASS[app]&&DEFAULT_PASS[app][dt]!=null)?DEFAULT_PASS[app][dt]:90;return passThresholds[k]}
+function currentPass(){return getPass(selectedApp,$('dataType').value)}
+function passLabel(app,dt){const p=getPass(app,dt);return 'pass '+p+'% (error \u2264'+(100-p)+'%)'}
+function dataTypeOptionLabel(app,dt){const preset=DATA_TYPES[app][dt];const parts=preset.label.split(' \u2014 ');const short=parts[0];const rest=parts.slice(1).join(' \u2014 ');return short+' \u2014 '+passLabel(app,dt)+(rest?' \u2014 '+rest:'')}
+function syncThresholdUI(){const sel=$('passThreshold');if(!sel)return;const p=currentPass();sel.value=String(p);const errEl=$('passErrorEq');if(errEl)errEl.textContent='= task error \u2264 '+(100-p)+'%';const forEl=$('passForLabel');if(forEl)forEl.textContent=selectionLabel()}
+function refreshDataTypeOptionLabels(){const cur=$('dataType').value;const types=DATA_TYPES[selectedApp];$('dataType').innerHTML=Object.keys(types).map(k=>'<option value="'+k+'">'+dataTypeOptionLabel(selectedApp,k)+'</option>').join('');$('dataType').value=cur}
+function getPreset(){return DATA_TYPES[selectedApp][$('dataType').value]||DATA_TYPES[selectedApp][DEFAULT_DT[selectedApp]]}
+function selectionLabel(){const p=getPreset();return APP_LABELS[selectedApp]+' › '+p.label.split(' — ')[0]}
+let lastResults=[], lastConfig={}, chartMode='success';
+let showcaseSnrs=new Set(), hiddenSnrs=[];
+// Showcase filter: an SNR point is showcased only when semantic improves on the baseline there —
+// task success higher, and/or energy per task lower, and/or latency lower.
+function improvesOn(s,b){return {success:s.success>b.success, energy:s.energy<b.energy, latency:s.latency<b.latency, spectrum:s.symbols<b.symbols, bandwidth:s.bandwidthBits<b.bandwidthBits, energyPerSuccess:(s.ePerSucc!=null&&b.ePerSucc!=null&&s.ePerSucc<b.ePerSucc), powerSaving:(s.powerSavingDb!=null&&s.powerSavingDb>0)}}
+function isSemRow(r){return !!(r.isSemCoder||r.codec.startsWith('Semantic')||r.codec.startsWith('DeepJSCC')||r.codec===coderName())}
+function isSmartRow(r){return r.codec.startsWith('Smart system')}
+function isFullRow(r){return r.codec.startsWith('Baseline')}
+function smartMap(){const m={};lastResults.filter(isSmartRow).forEach(r=>m[r.snr]=r);return m}
+function fullMap(){const m={};lastResults.filter(isFullRow).forEach(r=>m[r.snr]=r);return m}
+function computeShowcase(){
+ // Showcase is headlined against the SMART SYSTEM baseline (v7): an SNR point is showcased only
+ // when semantic improves on the smart system there. The full-source comparison is computed and
+ // shown alongside as a secondary reference — it never decides what is showcased.
+ const bas=smartMap();
+ showcaseSnrs=new Set(); hiddenSnrs=[];
+ lastResults.filter(isSemRow).forEach(s=>{const b=bas[s.snr]; if(!b)return; const im=improvesOn(s,b); if(im.success||im.energy||im.latency||im.spectrum||im.bandwidth||im.energyPerSuccess||im.powerSaving) showcaseSnrs.add(s.snr); else hiddenSnrs.push(s.snr);});
+}
+function VR(){return lastResults.filter(r=>showcaseSnrs.has(r.snr))}
+
+function syncAppMenu(){document.querySelectorAll('#appMenu .appBtn').forEach(b=>b.classList.toggle('active',b.dataset.app===selectedApp))}
+function populateDataTypes(){const types=DATA_TYPES[selectedApp];$('dataType').innerHTML=Object.keys(types).map(k=>'<option value="'+k+'">'+dataTypeOptionLabel(selectedApp,k)+'</option>').join('');$('dataType').value=DEFAULT_DT[selectedApp];syncThresholdUI()}
+// The Level 2 meta box and the results selection line must describe the run actually on screen, so
+// they are built from the CURRENT control values (source size, classes, latency budget, success
+// definition) — not only from the data-type preset. applyTask calls this after loading a preset to
+// update the config-side meta box only; the results selection line is updated only when forRun is
+// true (renderAll, on an actual run), so a Level 1 switch that has not been run yet does not make
+// the results header claim the new application while the results below still show the previous run.
+function refreshSelectionLines(forRun){const p=getPreset();const bits=+$('sourceBits').value,cls=$('nClasses').value,budget=$('latBudget').value,succ=$('successDef').value;const pass=currentPass();$('dataTypeMeta').innerHTML='<strong>'+selectionLabel()+'</strong> — gains below are for this data type only.<br>Source size: <strong>'+bits.toLocaleString()+' bits / task</strong> · Classes / intents / events: <strong>'+cls+'</strong><br>Task success rate threshold: <strong>pass '+pass+'% (error \u2264'+(100-pass)+'%)</strong> — set in Level 2 above, for this data type only.<br>Urgency: '+p.urgency+' (latency budget set to '+budget+' ms)<br>Counts as success: <em>'+succ+'</em>';if(forRun){const sl=$('selectionLine');if(sl)sl.innerHTML='Showing gains for <strong>'+selectionLabel()+'</strong> — '+bits.toLocaleString()+' bits / task · task success rate threshold: <strong>pass '+pass+'% (error \u2264'+(100-pass)+'%)</strong> · success = <em>'+succ+'</em> Switch the Level 2 data type to see this application\u2019s other data types separately.'}}
+function applyTask(){syncAppMenu();syncCoderLabel();const p=getPreset();$('nClasses').value=p.classes;$('sourceBits').value=p.bits;$('successDef').value=p.success;const lb=$('latBudget');for(let i=0;i<lb.options.length;i++){if(+lb.options[i].value===p.latencyBudget){lb.value=lb.options[i].value;break}}$('taskDef').textContent=p.def;syncThresholdUI();refreshSelectionLines();syncAppMenu();updateComp();syncRefPreset()}
+function selectApp(app){if(!DATA_TYPES[app])return;selectedApp=app;syncAppMenu();populateDataTypes();try{applyTask()}catch(err){syncAppMenu()}}
+// Codec selection. The benchmark always runs both codecs (the comparison panels need both), but the
+// codec buttons choose which codec the reader is inspecting: that codec's settings panel is shown
+// (the other codec's panel is hidden) and the Section 5 results table shows that codec's rows only.
+// 'both' is the head-to-head default: both panels and both sets of rows.
+let selectedCodec='both';
+// Mode: 'manual' = the head-to-head comparison of all three systems (smart system headline
+// baseline, full-source secondary reference). 'auto' = Auto-switch: only TWO candidates — the
+// smart system and the semantic coder — decided per SNR point for the current application /
+// data type / channel. Auto picks the semantic coder only where it passes (task success at or
+// above this data type's threshold AND latency within budget) AND wins at least one efficiency
+// metric per successful task against the smart system; otherwise it stays on the smart system.
+// The full-source baseline is never an Auto candidate — it stays a secondary reference in the
+// manual comparison modes (and in the panels / downloads) only.
+let mode='manual';
+function needsMoreThanLabel(){try{return smartDef(selectedApp,$('dataType').value).mode==='content'}catch(e){return false}}
+function failReasons(row,isSmartSide){
+ const passFrac=currentPass()/100; const budget=lastConfig.system?lastConfig.system.latencyBudgetMs:(+$('latBudget').value); const out=[];
+ if(row.success<passFrac)out.push('task success '+(row.success*100).toFixed(1)+'% is below the '+currentPass()+'% threshold (error '+((1-row.success)*100).toFixed(1)+'% > '+(100-currentPass())+'%)');
+ if(!row.meets)out.push('latency '+row.latency.toFixed(1)+' ms is over the '+budget+' ms budget');
+ if(isSmartSide&&needsMoreThanLabel())out.push('task needs more than a label — a label-only Smart system cannot do this task at any SNR (the harness Smart system here sends most of the content instead)');
+ return out;
+}
+function autoDecisions(){
+ const smt={}, sem={};
+ lastResults.forEach(r=>{if(isSmartRow(r))smt[r.snr]=r; if(isSemRow(r))sem[r.snr]=r});
+ const passFrac=currentPass()/100;
+ return Object.keys(sem).map(k=>+k).sort((a,b)=>a-b).map(snr=>{
+  const s=sem[snr], m=smt[snr]; if(!s||!m)return null;
+  const passes=s.success>=passFrac&&s.meets;
+  const smartPasses=m.success>=passFrac&&m.meets;
+  const smartFail=failReasons(m,true);
+  const semFail=failReasons(s,false);
+  const wins=[];
+  if(s.succTasksPerJoule!=null&&m.succTasksPerJoule!=null&&s.succTasksPerJoule>m.succTasksPerJoule)wins.push('successful tasks / joule ×'+(s.succTasksPerJoule/m.succTasksPerJoule).toFixed(1));
+  if(s.ePerSucc!=null&&m.ePerSucc!=null&&s.ePerSucc<m.ePerSucc)wins.push('joules / successful task '+(100*(1-s.ePerSucc/m.ePerSucc)).toFixed(1)+'% less');
+  if(s.powerSavingDb!=null&&s.powerSavingDb>0)wins.push('Tx power saving '+s.powerSavingDb.toFixed(1)+' dB at matched success');
+  const chosen=(passes&&wins.length)?'semantic':'smart';
+  const category=(!smartPasses&&!passes)?'neither':(chosen==='semantic'?'semantic':'smart');
+  const reason=!passes?((s.success<passFrac?'task success '+(s.success*100).toFixed(1)+'% is below the pass mark '+currentPass()+'%':'')+(s.success<passFrac&&!s.meets?' and ':'')+(!s.meets?'latency '+s.latency.toFixed(1)+' ms is over the '+(lastConfig.system?lastConfig.system.latencyBudgetMs:'—')+' ms budget':'')+(category==='neither'?' — NEITHER passes at this SNR: Smart also fails ('+smartFail.join('; ')+')':' — stays on Smart system')):(wins.length?'passes and wins per successful task: '+wins.join(' · '):'passes, but wins no efficiency metric per successful task against the Smart system — stays on Smart system');
+  return {snr,semSuccess:s.success,smartSuccess:m.success,semLatency:s.latency,smartLatency:m.latency,passes,semPasses:passes,smartPasses,smartUnusable:!smartPasses,smartFailReasons:smartFail,semFailReasons:semFail,needsMoreThanLabel:needsMoreThanLabel(),perSuccessWins:wins,chosen,category,categoryLabel:category==='semantic'?coderName():(category==='neither'?'Neither passes':'Smart system'),chosenLabel:chosen==='semantic'?coderName():'Smart system',reason};
+ }).filter(Boolean);
+}
+function autoCategoryBySnr(){const m={};autoDecisions().forEach(d=>m[d.snr]=d);return m}
+function autoBadgeHTML(d){if(!d)return '<span class="auto-badge smart">—</span>';return '<span class="auto-badge '+d.category+'">'+(d.category==='semantic'?'● Semantic — Auto selects Semantic':(d.category==='neither'?'✕ Neither passes':'● Smart — Auto stays on Smart'))+'</span>'}
+function autoWhyHTML(d){
+ if(!d)return '—';
+ const semTxt=d.semPasses?('Semantic ✓ passes ('+(d.semSuccess*100).toFixed(1)+'% ≥ '+currentPass()+'%, latency '+(d.semLatency!=null?d.semLatency.toFixed(1):'—')+' ms)')+ (d.perSuccessWins&&d.perSuccessWins.length?(' + wins: '+d.perSuccessWins.join('; ')):(' — but wins no efficiency metric per successful task, so Auto does not switch')):('Semantic ✗ fails — '+(d.semFailReasons&&d.semFailReasons.length?d.semFailReasons.join('; '):'does not pass'));
+ const smartTxt=d.smartPasses?('Smart ✓ usable ('+(d.smartSuccess*100).toFixed(1)+'% ≥ '+currentPass()+'%, latency '+(d.smartLatency!=null?d.smartLatency.toFixed(1):'—')+' ms)'):('Smart ✕ UNUSABLE — '+(d.smartFailReasons&&d.smartFailReasons.length?d.smartFailReasons.join('; '):'fails the pass check'));
+ return '<strong>'+(d.category==='semantic'?'Auto → Semantic':(d.category==='neither'?'Auto → neither passes':'Auto → Smart'))+'</strong><br>'+semTxt+'<br>'+smartTxt;
+}
+function fmtSnrList(a){return a.length?a.map(v=>v+' dB').join(', '):'none'}
+function renderSwitchBanner(){
+ const ctx=$('switchContext'); if(!ctx)return;
+ const dec=autoDecisions();
+ const budget=lastConfig.system?lastConfig.system.latencyBudgetMs:(+$('latBudget').value);
+ ctx.innerHTML='<strong>'+selectionLabel()+'</strong> · Channel: <strong>'+channelLabel()+'</strong> · Task success threshold: <strong>pass '+currentPass()+'% (error ≤ '+(100-currentPass())+'%)</strong> · Latency budget: <strong>'+budget+' ms</strong> · Mode: <strong>'+(mode==='auto'?'Auto-switch':'Manual comparison — Auto decision shown here and as row colours')+'</strong>. Candidates in Auto: <strong>Smart system vs '+coderName()+' only</strong> — full-source is <strong>not</strong> an Auto candidate.';
+ if(!dec.length){$('switchPlain').textContent='Run the benchmark to see the switch point for this application, channel and SNR sweep.';return}
+ const smartPass=dec.filter(d=>d.smartPasses).map(d=>d.snr);
+ const smartFail=dec.filter(d=>!d.smartPasses).map(d=>d.snr);
+ const semAuto=dec.filter(d=>d.category==='semantic').map(d=>d.snr);
+ const neither=dec.filter(d=>d.category==='neither').map(d=>d.snr);
+ const labelOnly=needsMoreThanLabel();
+ // Plain sentence — deliberately in the requested form, with the exact SNRs from this run.
+ let plain='';
+ if(labelOnly)plain+='Task needs more than a label — label-only Smart is unusable at any SNR for this data type. ';
+ if(smartPass.length&&smartFail.length){const below=smartFail.filter(v=>v<Math.min.apply(null,smartPass));plain+='Smart usable from '+Math.min.apply(null,smartPass)+' dB (usable at '+fmtSnrList(smartPass)+'), Semantic from '+(semAuto.length?Math.min.apply(null,semAuto)+' dB':'— never in this sweep')+', Smart unusable below '+(below.length?Math.min.apply(null,smartPass)+' dB ('+fmtSnrList(below)+')':Math.min.apply(null,smartPass)+' dB')+'.';}
+ else if(!smartPass.length){plain+='Smart unusable at every SNR in this sweep ('+fmtSnrList(smartFail)+') — it never reaches the '+currentPass()+'% threshold within the '+budget+' ms budget. Semantic from '+(semAuto.length?Math.min.apply(null,semAuto)+' dB ('+fmtSnrList(semAuto)+')':'no SNR in this sweep')+'.';}
+ else{plain+='Smart usable at every SNR in this sweep (from '+Math.min.apply(null,smartPass)+' dB, usable at '+fmtSnrList(smartPass)+'), Semantic from '+(semAuto.length?Math.min.apply(null,semAuto)+' dB ('+fmtSnrList(semAuto)+')':'no SNR — Auto never switches')+', Smart unusable below none in this sweep.';}
+ if(semAuto.length&&smartPass.length){const lastSem=Math.max.apply(null,semAuto);plain+=' In words: Auto uses Semantic at '+fmtSnrList(semAuto)+' and Smart at '+fmtSnrList(dec.filter(d=>d.category==='smart').map(d=>d.snr))+'.';}
+ if(neither.length)plain+=' Neither Smart nor Semantic passes at '+fmtSnrList(neither)+' — Auto picks neither there.';
+ $('switchPlain').textContent=plain;
+ $('switchSmartUsable').textContent=smartPass.length?('From '+Math.min.apply(null,smartPass)+' dB · '+fmtSnrList(smartPass)):'No SNR in this sweep';
+ $('switchSmartUsableDetail').textContent=smartPass.length?('Smart reaches ≥ '+currentPass()+'% success within '+budget+' ms at: '+fmtSnrList(smartPass)+'. Highest usable point in this sweep: '+Math.max.apply(null,smartPass)+' dB (Smart usable up to '+Math.max.apply(null,smartPass)+' dB in this sweep).'):('Smart reaches the '+currentPass()+'% threshold within budget at no point in this sweep.');
+ $('switchSemanticFrom').textContent=semAuto.length?(Math.min.apply(null,semAuto)+' dB · '+fmtSnrList(semAuto)):'Never in this sweep';
+ $('switchSemanticDetail').textContent=semAuto.length?('Auto selects '+coderName()+' at '+fmtSnrList(semAuto)+' — there Semantic passes and wins per successful task. Everywhere else Auto stays on Smart, except where neither passes.'):('Semantic never both passes and wins per successful task in this sweep, so Auto stays on Smart wherever Smart passes.');
+ $('switchSmartUnusable').textContent=smartFail.length?fmtSnrList(smartFail):'None in this sweep';
+ const firstFail=dec.find(d=>!d.smartPasses);
+ $('switchSmartUnusableDetail').textContent=smartFail.length?('Smart fails at '+fmtSnrList(smartFail)+'. Example at '+firstFail.snr+' dB: '+firstFail.smartFailReasons.join('; ')+'.'):('Smart passes at every SNR in this sweep — no unusable point to mark.');
+ $('switchLabelAlert').innerHTML=labelOnly?'<div class="warn" style="font-size:14px"><strong>⚠ Needs more than a label:</strong> for '+selectionLabel()+' a label alone cannot do the task, so a label-only Smart system is <strong>unusable at any SNR</strong>. The harness Smart system for this data type therefore sends most of the content — its per-SNR pass / fail above is for that content-sending Smart system.</div>':'<p class="hint" style="margin:0">For this data type a label / code alone <strong>can</strong> do the task, so Smart usability is decided per SNR by the pass check above — success threshold and latency budget — not by the needs-more-than-a-label rule.</p>';
+ $('switchStrip').innerHTML=dec.map(d=>'<span class="switch-chip '+d.category+'" title="'+(d.category==='neither'?'Neither passes — Smart: '+d.smartFailReasons.join('; ')+' | Semantic: '+d.semFailReasons.join('; '):(d.category==='semantic'?'Auto selects Semantic':'Auto stays on Smart')+(d.smartUnusable?' — Smart unusable here: '+d.smartFailReasons.join('; '):''))+'">'+d.snr+' dB: '+(d.category==='semantic'?'● Semantic':(d.category==='neither'?'✕ Neither passes':'● Smart'))+(d.smartUnusable&&d.category!=='neither'?' · Smart ✕':'')+'</span>').join('');
+ // Record the switch summary where a checker will find it, alongside the Auto decisions.
+ lastConfig.switchSummary={application:selectionLabel(),channel:channelLabel(),passPercent:currentPass(),latencyBudgetMs:budget,needsMoreThanLabel:labelOnly,smartUsableSnrs:smartPass,smartUnusableSnrs:smartFail,semanticFromSnr:semAuto.length?Math.min.apply(null,semAuto):null,autoSemanticSnrs:semAuto,neitherPassesSnrs:neither,plain:plain,rowColourKey:'Results-table rows are tinted by Auto category for that SNR: semantic = teal, smart = amber, neither passes = red. Full-source is never an Auto candidate.'};
+}
+function renderAuto(){
+ const panel=$('autoPanel'); if(!panel)return;
+ panel.style.display=mode==='auto'?'block':'none';
+ const line=$('modeLine');
+ if(line)line.innerHTML=mode==='auto'?'<strong>Mode: Auto-switch.</strong> Candidates: Smart system and '+coderName()+' only — the full-source baseline is <strong>not</strong> a candidate in Auto mode; it remains a secondary reference in the manual comparison panels below and in the downloads. Decisions for this run are in the Auto-switch panel at the top of the results.':'<strong>Mode: Manual comparison.</strong> All three systems are compared head-to-head below: smart system (headline baseline), full-source baseline (secondary reference) and '+coderName()+'. Switch to Auto-switch to let the harness choose between the Smart system and '+coderName()+' point by point.';
+ renderSwitchBanner();
+ if(mode!=='auto'){lastConfig.mode='manual';delete lastConfig.autoSwitch;return}
+ const dec=autoDecisions();
+ lastConfig.mode='auto';
+ lastConfig.autoSwitch={candidates:['Smart system + ARQ',coderName()],notACandidate:'Full-source baseline + ARQ — secondary reference only in the manual comparison modes; never selected by Auto-switch',scope:'Per SNR point, for the current Level 1 application / Level 2 data type and channel of this run, over all SNR points in the run (including points the showcase view hides)',rule:'Choose '+coderName()+' only where it passes — modelled task success at or above the task success rate threshold for this data type ('+currentPass()+'%) AND latency within the latency budget — AND wins at least one efficiency metric per successful task against the Smart system (successful tasks per joule higher, and/or joules per successful task lower, and/or positive transmit-power saving at matched success). Otherwise stay on the Smart system. Where neither Smart nor Semantic passes, the category is "neither passes" and no failing codec is presented as the Auto choice.',decisions:dec};
+ const nSem=dec.filter(d=>d.category==='semantic').length;
+ const nNeither=dec.filter(d=>d.category==='neither').length;
+ $('autoSummary').innerHTML='<p class="hint" style="margin:0 0 8px"><strong>'+selectionLabel()+'</strong> · channel: '+channelLabel()+' · pass mark '+currentPass()+'% · latency budget '+(lastConfig.system?lastConfig.system.latencyBudgetMs:'—')+' ms — Auto switches to '+coderName()+' at <strong>'+nSem+' of '+dec.length+'</strong> SNR points, stays on the Smart system at <strong>'+(dec.length-nSem-nNeither)+'</strong>, and <strong>neither passes at '+nNeither+'</strong>. Row colours match the banner and the Results table: teal = Semantic, amber = Smart, red = neither passes.</p><div class="scroll"><table style="min-width:720px"><thead><tr><th>SNR</th><th>Auto choice</th><th>'+coderName()+' success</th><th>Smart system success</th><th>Smart usable?</th><th>Semantic passes?</th><th>Why</th></tr></thead><tbody>'+dec.map(d=>'<tr class="row-auto-'+d.category+'"><td><strong>'+d.snr+' dB</strong></td><td><span class="auto-badge '+d.category+'">'+(d.category==='semantic'?coderName():(d.category==='neither'?'✕ Neither passes':'Smart system'))+'</span></td><td>'+(d.semSuccess*100).toFixed(1)+'%</td><td>'+(d.smartSuccess*100).toFixed(1)+'%</td><td>'+(d.smartPasses?'✓ usable':'✕ unusable — '+d.smartFailReasons.join('; '))+'</td><td>'+(d.passes?'✓ passes':'✗ does not pass')+'</td><td>'+d.reason+'</td></tr>').join('')+'</tbody></table></div>';
+ $('autoNote').textContent='Auto-switch is a selection rule over this harness\u2019s simulated run — not a measured controller. Its two candidates are the Smart system and '+coderName()+'; the full-source baseline\u2019s rows in the panels below and in the downloads are the secondary reference from the manual comparison and are never an Auto choice. Decisions cover every SNR point in the run, including any the showcase view hides because '+coderName()+' did not improve on the smart system there.';
+}
+function syncModeMenu(){document.querySelectorAll('#modeMenu .modeBtn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderAuto()}
+function coderName(){return selectedApp==='image'?'DeepJSCC':'Semantic coder'}
+function coderKindNote(){return selectedApp==='image'?'DeepJSCC is the image semantic coder reference — Bourtsoulatze, Kurka & Gündüz 2019, Picture › Still image reference preset. Published behaviour only — not measured by this harness and it does not alter the simulated results; the curves below remain the harness\u2019s own simulated model, labelled DeepJSCC for the Picture application.':'Semantic coder is the generic simulated semantic coder for this application — not DeepJSCC, DeepSC or any other named paper coder. No paper weights are run; the curves are the harness\u2019s own simulated model.'}
+let CODEC_LABELS={smart:'Smart system + ARQ — headline baseline (conventional)',baseline:'Full-source baseline + ARQ — secondary reference (conventional)',semantic:'Semantic coder',both:'Head-to-head — all three systems'};
+function syncCoderLabel(){const name=coderName();CODEC_LABELS={smart:'Smart system + ARQ — headline baseline (conventional)',baseline:'Full-source baseline + ARQ — secondary reference (conventional)',semantic:name,both:'Head-to-head — all three systems'};document.querySelectorAll('[data-coder-name]').forEach(el=>{el.textContent=name});const bt=$('codecBtnSemanticTitle');if(bt)bt.textContent=name;const bd=$('codecBtnSemanticDesc');if(bd)bd.textContent=selectedApp==='image'?'DeepJSCC — image semantic coder · joint source-channel coding':'Semantic coder — generic simulated semantic coder · joint source-channel coding';const bothD=$('codecBtnBothDesc');if(bothD)bothD.textContent='Default view — smart system (headline baseline), full-source baseline (secondary reference) and '+name+' settings & results side by side';const note=$('coderIdentityNote');if(note)note.innerHTML='<strong>Coder: '+name+'.</strong> '+coderKindNote();const rn=$('coderResultLine');if(rn)rn.innerHTML='<strong>Coder: '+name+'.</strong> '+coderKindNote();const w=$('coderWeightsNote');if(w)w.textContent=selectedApp==='image'?'For Picture, the coder is labelled DeepJSCC as the image semantic coder reference (Bourtsoulatze, Kurka & Gündüz 2019, Picture › Still image reference preset) — published behaviour only, not measured by this harness and not altering the simulated results; no DeepJSCC weights are run.':'Generic simulated Semantic coder — not DeepJSCC, DeepSC or any other named paper coder; no paper weights are run.'}
+function smartSettingsText(){const sc=smartCurrent();return 'Smart system definition for this data type: '+sc.def.label+' — sends '+sc.bits.toLocaleString()+' bits / task (vs '+sc.sourceBits.toLocaleString()+' bits full-source) through the shared conventional settings: channel code rate '+$('codeRate').selectedOptions[0].textContent+' · modulation '+$('modulation').selectedOptions[0].textContent+' · ARQ max '+$('arqMax').selectedOptions[0].textContent+'.'}
+function codecSettingsSummary(){
+ if(selectedCodec==='smart')return smartSettingsText()+' Results table below shows Smart system rows only.';
+ if(selectedCodec==='baseline')return 'Full-source baseline settings shown: the whole source ('+(+$('sourceBits').value).toLocaleString()+' bits / task) through channel code rate '+$('codeRate').selectedOptions[0].textContent+' · modulation '+$('modulation').selectedOptions[0].textContent+' · ARQ max '+$('arqMax').selectedOptions[0].textContent+'. Results table below shows full-source baseline rows only.';
+ if(selectedCodec==='semantic')return coderName()+' settings shown: feature dimension '+$('semDim').value+' symbols · encoder compute '+$('encComputeMs').selectedOptions[0].textContent+' · transmitter / receiver models '+$('txModel').value+' / '+$('rxModel').value+'. Results table below shows '+coderName()+' rows only.';
+ return 'All three systems shown: smart system ('+smartCurrent().bits.toLocaleString()+' bits / task, headline baseline), full-source baseline ('+(+$('sourceBits').value).toLocaleString()+' bits / task, secondary reference — both conventional systems share channel code rate '+$('codeRate').selectedOptions[0].textContent+', '+$('modulation').selectedOptions[0].textContent+', ARQ max '+$('arqMax').selectedOptions[0].textContent+') and '+coderName()+' (feature dimension '+$('semDim').value+' symbols). Results table below shows all three systems, head-to-head.';
+}
+function syncCodecMenu(){
+ syncCoderLabel();
+ document.querySelectorAll('#codecMenu .codecBtn').forEach(b=>b.classList.toggle('active',b.dataset.codec===selectedCodec));
+ const bp=$('baselinePanel'), sp=$('semanticPanel'), smp=$('smartPanel');
+ if(smp)smp.style.display=(selectedCodec==='smart'||selectedCodec==='both')?'block':'none';
+ if(bp)bp.style.display=(selectedCodec==='smart'||selectedCodec==='baseline'||selectedCodec==='both')?'block':'none';
+ if(sp)sp.style.display=(selectedCodec==='semantic'||selectedCodec==='both')?'block':'none';
+ const line=$('codecSelectionLine'); if(line)line.innerHTML='<strong>Selected codec: '+CODEC_LABELS[selectedCodec]+'.</strong> '+codecSettingsSummary();
+ const fl=$('codecFocusLine'); if(fl)fl.innerHTML='<strong>Codec in this table: '+CODEC_LABELS[selectedCodec]+'.</strong> '+(selectedCodec==='both'?'The table shows Smart system, full-source baseline and '+coderName()+' rows for each showcased SNR point.':(selectedCodec==='smart'?'The table shows Smart system rows only — the BER / BLER (before and after ARQ) columns are the conventional side\u2019s, shared with the full-source baseline. The comparison panels above still use all three systems.':(selectedCodec==='baseline'?'The table shows full-source baseline rows only — the BER / BLER (before and after ARQ) columns are the baseline\u2019s. The comparison panels above still use all three systems.':'The table shows '+coderName()+' rows only — the SER / feature-error columns are the '+coderName()+' side\u2019s; '+coderName()+' has no BLER. The comparison panels above still use all three systems.')))+' Downloads still export all three systems for the head-to-head record, with this codec selection recorded in the reproducibility log.';
+}
+function selectCodec(c){if(!CODEC_LABELS[c])return;selectedCodec=c;syncCodecMenu()}
+// Reference preset (Picture only): shows/hides the preset menu and the reference panel, and warns when the
+// harness channel leaves the paper's conditions (AWGN or slow Rayleigh fading). It never touches the model:
+// the reference panel describes published behaviour; the harness's simulated results stay separate.
+function syncRefPreset(){
+ const isImage=selectedApp==='image'&&$('dataType').value==='still';
+ $('refPresetBox').style.display=isImage?'block':'none';
+ if(!isImage)$('refPreset').value='none';
+ const active=isImage&&$('refPreset').value==='deepjscc2019';
+ $('refPanel').style.display=active?'block':'none';
+ let warn='';
+ if(active){const ch=$('channel').value;
+  if(ch==='3gpp'||ch==='ntn')warn='Channel mismatch: this reference preset covers AWGN and slow Rayleigh fading only — the channels in the paper. The harness channel is currently '+(ch==='3gpp'?'3GPP':'Simple NTN')+'. Switch Channel type to AWGN, or to Fading with Fading type = Rayleigh, to match the paper\u2019s conditions.';
+  else if(ch==='fading'&&$('fadingType').value!=='rayleigh')warn='Fading type mismatch: the paper\u2019s fading results use slow (block) Rayleigh fading — set Fading type to Rayleigh to match the preset.';}
+ $('refChannelWarn').style.display=warn?'block':'none'; if(warn)$('refChannelWarn').textContent='⚠ '+warn;
+}
+function renderSmartDef(){const box=$('smartDefBox');if(!box)return;const sc=smartCurrent();const bitsPerSym={bpsk:1,qpsk:2,qam16:4}[$('modulation').value];const smartSym=Math.ceil(sc.bits/((+$('codeRate').value)*bitsPerSym));const fullSym=Math.ceil(sc.sourceBits/((+$('codeRate').value)*bitsPerSym));box.innerHTML='<strong>Smart system for '+selectionLabel()+': '+sc.def.label+'.</strong> '+sc.def.desc+'<br>Sends <strong>'+sc.bits.toLocaleString()+' bits / task → '+smartSym.toLocaleString()+' coded symbols / task</strong> (full-source: '+sc.sourceBits.toLocaleString()+' bits → '+fullSym.toLocaleString()+' symbols) · local processing cost counted: '+sc.def.computeMs+' ms · '+sc.def.computeE+' µJ per task. Still conventional: separate source + channel coding, bit-exact, ARQ.'}
+function updateComp(){const p=getPreset();const bitsPerSym={bpsk:1,qpsk:2,qam16:4}[$('modulation').value];const baseSym=Math.ceil((+$('sourceBits').value)/((+$('codeRate').value)*bitsPerSym));
+ // Menu guard: a semantic dimension at or above the baseline's coded symbols per task leaves no compression,
+ // so it can show no spectrum, bandwidth or energy gain — such options are not available to select.
+ let largestEnabled=null;document.querySelectorAll('#semDim option').forEach(o=>{const dis=(+o.value)>=baseSym;o.disabled=dis;if(!dis)largestEnabled=o.value});
+ if($('semDim').selectedOptions[0]&&$('semDim').selectedOptions[0].disabled&&largestEnabled!=null)$('semDim').value=largestEnabled;
+ const sc=smartCurrent();const smartSym=Math.ceil(sc.bits/((+$('codeRate').value)*bitsPerSym));
+ const d=+$('semDim').value;$('compRatio').textContent=d+' symbols vs '+smartSym+' smart-system symbols/task ('+(100*(1-d/smartSym)).toFixed(1)+'% fewer) · vs '+baseSym+' full-source symbols/task ('+(100*(1-d/baseSym)).toFixed(1)+'% fewer) · feature dims: '+d+' of '+p.rawDims+' raw dims';renderSmartDef()}
+function ntnParams(){
+ const alt=+$('ntnOrbit').value, elevDeg=+$('ntnElev').value, el=elevDeg*Math.PI/180, Re=6371;
+ const slant=Math.sqrt(Math.pow(Re+alt,2)-Math.pow(Re*Math.cos(el),2))-Re*Math.sin(el);
+ const delayMs=slant/299.792458; // one-way propagation delay, ms (c ≈ 299.79 km/ms)
+ const pass=+$('ntnPass').value, gap=+$('ntnGap').value;
+ const avail= pass/(pass+gap); // LEO only: coverage exists only while a satellite pass lasts
+ return {alt, elevDeg, slant, delayMs, pass, gap, avail, doppler:$('ntnDoppler').value};
+}
+function updateNtnSummary(){ if($('channel').value!=='ntn')return; const n=ntnParams(); $('ntnSummary').textContent='Slant range '+Math.round(n.slant).toLocaleString()+' km · one-way delay '+n.delayMs.toFixed(1)+' ms (round trip '+(2*n.delayMs).toFixed(1)+' ms) · extra path loss vs. overhead pass '+(20*Math.log10(n.slant/n.alt)).toFixed(1)+' dB · coverage availability '+(n.avail*100).toFixed(0)+'%'; }
+function channelAdj(snr){
+ const ch=$('channel').value; let shift=0, spread=0;
+ if(ch==='fading'){const ft=$('fadingType').value; if(ft==='rician'){shift=1.4;spread=1.4; if($('csi').value==='estimated')shift+=1.0; if($('csi').value==='none')shift+=2.5;} else {shift=3.2;spread=2.6; if($('csi').value==='estimated')shift+=1.5; if($('csi').value==='none')shift+=4;}}
+ if(ch==='3gpp'){const pl=+$('pathLoss').value; shift=(pl-2.2)*2.2; spread=+$('shadowSigma').value*0.35;}
+ if(ch==='ntn'){const n=ntnParams(); const dop={comp:[0.3,0.4],part:[1.5,1.6],uncomp:[3.5,3.0]}[n.doppler]; shift=20*Math.log10(n.slant/n.alt)+dop[0]; spread=dop[1]; return {eff:snr-shift, spread, propMs:n.delayMs, avail:n.avail};}
+ return {eff:snr-shift, spread, propMs:0, avail:1};
+}
+function channelLabel(){const ch=$('channel').value; if(ch==='fading')return 'fading-'+$('fadingType').value; if(ch==='3gpp')return '3gpp-simplified'; if(ch==='ntn')return 'simple-ntn-satellite'; return 'awgn'}
+function erfApprox(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y}
+function berApprox(effDb,modKind){const snrLin=Math.pow(10,effDb/10);let ber;if(modKind==='qam16'){ber=0.375*(1-erfApprox(Math.sqrt(snrLin/5)))}else{ber=0.5*(1-erfApprox(Math.sqrt(snrLin)))}return Math.max(1e-7,Math.min(0.5,ber))}
+function pct(v,d){if(v==null||isNaN(v))return '—';const p=v*100;if(p>0&&p<0.01)return '<0.01%';return p.toFixed(d==null?(p>=10?1:2):d)+'%'}
+function simulate(){
+ const rng=mulberry32(+$('seed').value||42);
+ const trials=+$('trials').value, snrs=$('snrList').value.split(',').map(s=>parseFloat(s)).filter(x=>!isNaN(x));
+ const p=getPreset(); const rawDims=p.rawDims; const semDim=+$('semDim').value; const appKey=selectedApp, dtKey=$('dataType').value;
+ const codeRate=+$('codeRate').value; const mod=$('modulation').value; const bitsPerSym={bpsk:1,qpsk:2,qam16:4}[mod]; const modPenalty={bpsk:-2,qpsk:0,qam16:3.5}[mod];
+ const arqMax=+$('arqMax').value; const symRate=+$('symRate').value*1000; const eSym=+$('ePerSym').value;
+ const mismatch=$('txModel').value!==$('rxModel').value;
+ const fairness=$('fairness').value;
+ // Baseline symbols: source bits / (codeRate * bitsPerSym)
+ const baseSym=Math.ceil((+$('sourceBits').value)/(codeRate*bitsPerSym));
+ // Smart system symbols: the smart payload for this data type (SMART_TYPES) through the SAME
+ // channel code and modulation — only what is sent differs, not how each attempt is coded.
+ const smartInfo=smartCurrent(); const smartSym=Math.ceil(smartInfo.bits/(codeRate*bitsPerSym));
+ // Semantic symbols: feature dim (each feature = 1 symbol, 16-bit quantised payload equivalent)
+ let semSym=semDim;
+ if(fairness==='symbols'||fairness==='bits') semSym=baseSym; // matched channel occupancy: no bandwidth gain by construction
+ const results=[];
+ snrs.forEach(snr=>{
+   const {eff,spread,propMs,avail}=channelAdj(snr);
+   // --- baseline: steep cliff ---
+   const thresh=2+modPenalty+(codeRate-0.5)*6; // dB threshold
+   const pBlockBase=1/(1+Math.exp((eff-thresh)/1.1));
+   // ARQ: success after retries; NTN pass gaps scale both codecs (task attempted in a gap fails)
+   const pSuccBase=(1-Math.pow(pBlockBase,arqMax+1))*avail;
+   const eRetxBase=(()=>{let e=0,pp=1;for(let k=0;k<arqMax;k++){pp*=pBlockBase;e+=pp}return e})();
+   // --- semantic: graceful, ceiling < 1, redundancy depends on dim ---
+   const redundancy=Math.min(1, semDim/24); // low dim -> fragile
+   const mid=6-4*redundancy + (mismatch?3:0);
+   let pSuccSem=0.965/(1+Math.exp(-(eff-mid)/3.4));
+   if(mismatch) pSuccSem*=0.88;
+   if(!$('matchedPower').checked) pSuccSem=Math.min(0.99,pSuccSem*1.04); // unmatched power flatters semantic
+   if(fairness==='energy'){ /* matched energy: semantic may repeat features */ pSuccSem=Math.min(0.97,pSuccSem+0.02); }
+   pSuccSem*=avail; // NTN: no satellite in view = no delivery, semantic included
+   // Monte Carlo sampling for CI
+   function mc(pSuccess){let succ=0;const vals=[];for(let i=0;i<trials;i++){const jitter=randn(rng)*spread*0.12;const pp=Math.max(0,Math.min(1,pSuccess+jitter*0.02));const ok=rng()<pp?1:0;succ+=ok;vals.push(ok)}const mean=succ/trials;const sd=Math.sqrt(mean*(1-mean));const ci=1.96*sd/Math.sqrt(trials);return{mean,ci}}
+   const b=mc(pSuccBase), m=mc(pSuccBase), s=mc(pSuccSem);
+   // Both conventional systems share the same analytic cliff (same channel code, modulation and
+   // ARQ model); they are sampled separately, so their sampled success differs only by Monte
+   // Carlo noise — the smart system's advantage is its tiny payload, not a kinder channel curve.
+   // distortion: conventional binary (0 if ok, 1 if fail); semantic continuous
+   const distBase=1-b.mean; const distSmart=1-m.mean;
+   const distSem=Math.max(0.02, Math.min(0.95, 0.55/(1+Math.exp((eff-mid)/3)) + (1-redundancy)*0.12 ));
+   // --- error rates (modelled, same physical channel for both codecs) ---
+   const ber=berApprox(eff,mod); // uncoded bit error rate from effective SNR + modulation
+   const ser=1-Math.pow(1-ber,bitsPerSym); // symbol error rate derived from BER
+   const blerSingle=pBlockBase; // baseline block error, single attempt
+   const blerAfterArq=Math.pow(pBlockBase,arqMax+1); // residual block error after ARQ retries
+   const featureError=1/(1+Math.exp((eff-mid)/2.8)); // share of semantic features corrupted beyond tolerance
+   function row(codec,succ,dist,syms,eRetx,computeMs,computeE,errs,kind){
+     const isSem=(kind==='semantic');
+     const txTime=syms/symRate*1000*(1+eRetx);
+     // NTN propagation delay: one round trip per delivery attempt — ARQ retries each pay it again
+     const propDelay=2*propMs*(isSem?1:(1+eRetx));
+     const latency=txTime+computeMs*(isSem?1:0.3)+propDelay;
+     const energy=syms*eSym*(1+eRetx)+computeE;
+     const ePerSucc=succ>0.03? energy/succ : null;
+     return {snr,codec,kind,isSemCoder:isSem,isSmart:kind==='smart',isFullSource:kind==='full',coderLabel:isSem?coderName():(kind==='smart'?'Smart system':'Full-source baseline'),application:appKey,applicationLabel:APP_LABELS[appKey],dataType:dtKey,dataTypeLabel:p.label,success:succ,taskError:1-succ,ber:errs.ber,ser:errs.ser,blerSingle:errs.blerSingle,blerAfterArq:errs.blerAfterArq,featureError:errs.featureError,ci:isSem?s.ci:(kind==='smart'?m.ci:b.ci),distortion:dist,symbols:syms,bandwidthBits:syms*bitsPerSym,latency,energy,ePerSucc,eRetx,meets:latency<=(+$('latBudget').value),
+     // Efficiency metrics (see the Efficiency panel for plain definitions of each)
+     joulesPerTask:energy/1e6, joulesPerSuccess:ePerSucc?ePerSucc/1e6:null, tasksPerJoule:1e6/energy, succTasksPerJoule:ePerSucc?1e6/ePerSucc:null, spectrumEff:1/syms, tasksPerSecond:1000/latency, computeMs:computeMs, computeEnergy_uJ:computeE, compressionRatio:1, compressionRatioVsFull:1, powerSavingDb:null, powerSavingVsFullDb:null}
+   }
+   const bRow=row('Baseline + ARQ',b.mean,distBase,baseSym,eRetxBase,1,2,{ber,ser,blerSingle,blerAfterArq,featureError:null},'full');
+   const mRow=row('Smart system + ARQ',m.mean,distSmart,smartSym,eRetxBase,smartInfo.def.computeMs,smartInfo.def.computeE,{ber,ser,blerSingle,blerAfterArq,featureError:null},'smart');
+   const sRow=row(coderName(),s.mean,distSem,semSym,0,+$('encComputeMs').value,+$('encEnergy').value,{ber,ser,blerSingle:null,blerAfterArq:null,featureError},'semantic');
+   // Compression / bandwidth efficiency of semantic: headline vs the smart system's transmitted
+   // volume; secondary reference vs the full-source baseline's transmitted volume.
+   sRow.compressionRatio=smartSym/semSym;
+   sRow.compressionRatioVsFull=baseSym/semSym;
+   mRow.compressionRatio=baseSym/smartSym; mRow.compressionRatioVsFull=baseSym/smartSym;
+   // Transmit-power saving at matched task success (derived, modelled): semantic spends less energy per
+   // successful task, so it could turn its transmit power down by this many dB and still deliver a successful
+   // task for the same total transmit energy. Headline: vs the smart system. Secondary: vs full-source.
+   // 10*log10(baseline J/success / semantic J/success), using the analytic (pre-Monte-Carlo) success
+   // rates so the metric exists even where sampled successes are rare. Both conventional systems share
+   // the same analytic success rate, so each saving uses its own system's energy per task.
+   if(pSuccBase>0.001&&pSuccSem>0.001){const sJs=sRow.energy/pSuccSem; sRow.powerSavingDb=+(10*Math.log10((mRow.energy/pSuccBase)/sJs)).toFixed(2); sRow.powerSavingVsFullDb=+(10*Math.log10((bRow.energy/pSuccBase)/sJs)).toFixed(2);}
+   results.push(bRow); results.push(mRow); results.push(sRow);
+ });
+ lastResults=results;
+ lastConfig={harness:HARNESS_NAME,harnessVersion:HARNESS_VERSION,version:HARNESS_VERSION,mode:mode,coder:{label:coderName(),name:coderName(),kind:selectedApp==='image'?'DeepJSCC — image semantic coder reference':'Semantic coder — generic simulated semantic coder',isImage:selectedApp==='image',reference:selectedApp==='image'?'Bourtsoulatze, Kurka & Gündüz 2019, Picture › Still image reference preset — published behaviour, not measured by this harness, does not alter the simulated results':null,note:coderKindNote()},assumption:{statement:'Task success is assumed — tasks are implemented gainfully. Efficiency metrics are gains under that assumption on two labelled bases: success-based measures (successful tasks per joule, joules per successful task, transmit-power saving at matched success) are per successful task; metrics labelled per task (energy, symbols, bandwidth, latency, compute per task) are per attempted task. They are not gains for failed tasks; if a task does not succeed, its efficiency does not count as a gain.',basis:'per successful task',appliesTo:'All efficiency metrics in the Efficiency panel, KPIs, verdicts, charts, results table, CSV and JSON downloads — energy, spectrum, bandwidth, latency, compute and transmit-power saving at matched success.'},referencePreset:(selectedApp==='image'&&$('dataType').value==='still'&&$('refPreset').value==='deepjscc2019')?{id:'deepjscc-2019',label:'Reference preset — DeepJSCC, Bourtsoulatze, Kurka & Gunduz (2019), Picture › Still image only',status:'Published reference behaviour, described qualitatively in the reference panel. NOT measured by this harness; selecting it aligns the harness setup (Picture › Still image; AWGN or slow Rayleigh fading) and does not alter, replace or validate the harness simulated results in this export.'}:null,application:selectedApp,applicationLabel:APP_LABELS[selectedApp],dataType:$('dataType').value,dataTypeLabel:getPreset().label,selection:selectionLabel(),urgency:getPreset().urgency,classes:+$('nClasses').value,sourceBits:+$('sourceBits').value,successDefinition:$('successDef').value,taskSuccessThreshold:{label:'Task success rate threshold (pass mark)',passPercent:currentPass(),maxTaskErrorPercent:100-currentPass(),forDataType:selectionLabel(),setIn:'Level 2 — shown in the Level 2 menu option for this data type and changed in the Level 2 area; one value per data type, retained for that data type until changed for that data type',definition:'A task counts as passing when modelled task success is at or above passPercent and latency is within the latency budget.'},channel:$('channel').value,channelDetail:channelLabel(),fadingType:$('channel').value==='fading'?$('fadingType').value:null,csi:$('channel').value==='fading'?$('csi').value:null,pathLoss:+$('pathLoss').value,shadowingSigma:+$('shadowSigma').value,ntn:$('channel').value==='ntn'?(()=>{const n=ntnParams();return {model:'simplified NTN — not a full 3GPP NTN (TR 38.821) implementation',altitudeKm:n.alt,minElevationDeg:n.elevDeg,slantRangeKm:Math.round(n.slant),oneWayDelayMs:+n.delayMs.toFixed(2),roundTripDelayMs:+(2*n.delayMs).toFixed(2),extraPathLossVsOverhead_dB:+(20*Math.log10(n.slant/n.alt)).toFixed(2),dopplerResidual:n.doppler,passMinutes:n.pass,gapMinutes:n.gap,coverageAvailability:+n.avail.toFixed(3)}})():null,snrPoints:snrs,seed:+$('seed').value,trials:+$('trials').value,comparison:{headlineBaseline:'smart system',secondaryReference:'full-source conventional system',statement:'Headline gains are semantic vs the smart system baseline. Gains vs the full-source conventional baseline are shown alongside as a secondary reference in the Efficiency panel, verdicts, results table and downloads. Neither comparison is hidden.'},baseline:{codeRate,modulation:mod,arqMax},fullSourceBaseline:{label:'Full-source baseline + ARQ — secondary reference (conventional)',sourceBits:+$('sourceBits').value,codedSymbolsPerTask:baseSym,description:'Sends the whole source bit-exactly every time, through the shared conventional channel code, modulation and ARQ.'},smartSystem:{label:'Smart system + ARQ — headline baseline (conventional)',forDataType:selectionLabel(),mode:smartInfo.def.mode,modeLabel:smartInfo.def.label,definition:smartInfo.def.desc,sentBitsPerTask:smartInfo.bits,sourceBits:+$('sourceBits').value,codedSymbolsPerTask:smartSym,localComputeMs:smartInfo.def.computeMs,localComputeEnergy_uJ:smartInfo.def.computeE,description:'The smarter conventional system already used in real IoT and edge devices. NOT semantic coding: a local device function chooses what is worth sending (label / intent / command / event code only where the task allows it; most of the content where the task needs more than a label), and only that payload is sent — separate source + channel coding, bit-exact, same channel code, modulation and ARQ as the full-source baseline. Its success curve shares the conventional cliff model; its advantage is payload size, and its local processing cost is counted.'},semantic:{featureDim:semDim,rawDims},semanticCoder:{label:coderName(),featureDim:semDim,rawDims},models:{tx:$('txModel').value,rx:$('rxModel').value,mismatch},system:{symbolRateKsym:+$('symRate').value,energyPerSymbol_uJ:eSym,encoderComputeMs:+$('encComputeMs').value,encoderEnergy_uJ:+$('encEnergy').value,latencyBudgetMs:+$('latBudget').value},fairness:{matchedBy:fairness,matchedPowerPerSymbol:$('matchedPower').checked},errorRates:{definitions:'taskError = 1 - taskSuccess; ber = uncoded bit error rate from effective SNR and modulation (Q-function approximation); ser = 1-(1-ber)^bitsPerSymbol; blerSingle = baseline block error per attempt; blerAfterArq = blerSingle^(arqMax+1); featureError = selected coder share of features corrupted beyond tolerance, logistic in effective SNR. The selected coder has no blocks, so BLER is null for it.',provenance:'Modelled, not measured.'},efficiency:{assumption:'Task success is assumed — tasks are implemented gainfully. Success-based efficiency metrics are gains per successful task; metrics labelled per task are per attempted task, as defined below. Neither basis is a gain for a failed task.',definitions:'Two bases, labelled per metric — per attempted task: tasksPerJoule = attempted tasks per joule of total (transmit + codec compute) energy; joulesPerTask / joulesPerSuccess = total energy per attempted / successful task; succTasksPerJoule = successful tasks per joule; spectrumEff (per attempted task) = tasks per second per Hz of channel bandwidth (bandwidth approximated by the symbol rate, so this equals 1 / symbols per attempted task); bandwidthBits = transmitted bits per attempted task; compressionRatio = smart system coded symbols per task / selected coder symbols per task (headline; selected coder rows; for smart rows it is full-source symbols / smart symbols); compressionRatioVsFull = full-source baseline coded symbols per task / selected coder symbols per task (secondary reference); powerSavingDb is vs the smart system (headline) and powerSavingVsFullDb vs the full-source baseline (secondary); tasksPerSecond = 1000 / latency per attempted task in ms; computeMs / computeEnergy_uJ = codec compute cost per attempted task (selected coder encoder cost vs the baseline codec\u2019s modelled 1 ms / 2 \u00b5J); powerSavingDb (selected coder rows) = 10*log10(baseline joules per successful task / selected coder joules per successful task) from analytic success rates \u2014 the transmit-power reduction the selected coder could take at matched task success for equal total transmit energy per successful task.',provenance:'Modelled / derived from the same simulated run, not measured.'},provenance:'Simulated analytic model with seeded Monte Carlo sampling. Not a measured codec.',timestamp:new Date().toISOString()};
+ renderAll();
+ clearStale();
+}
+// Run-button staleness convention: changing any menu or input in the config card turns the Run
+// button green (results below are stale); running the benchmark returns it to its normal colour.
+// Controls that re-run automatically on change (data type, reference preset) are excluded — their
+// results are already up to date the moment they change. Level 1 application buttons do NOT
+// auto-run: switching application loads its presets and marks the results stale (green Run)
+// until Run is clicked, so a changed application never sits beside a normal-coloured Run button.
+function markStale(){const b=$('runBtn');if(b)b.classList.add('dirty');const h=$('runHint');if(h)h.classList.add('dirty')}
+function clearStale(){const b=$('runBtn');if(b)b.classList.remove('dirty');const h=$('runHint');if(h)h.classList.remove('dirty')}
+function fmt(v,d=3){return v==null?'—':v.toFixed(d)}
+function renderErrorSummary(){
+ const bas=fullMap(), smt=smartMap(); const cats=autoCategoryBySnr();
+ const rows=VR().filter(isSemRow).map(s=>{const b=bas[s.snr], m=smt[s.snr]; const d=cats[s.snr];return `<tr class="row-auto-${d?d.category:'smart'}"><td><strong>${s.snr} dB</strong></td><td>${autoBadgeHTML(d)}</td><td>${pct(b.ber)}</td><td>${pct(b.blerSingle)}</td><td>${pct(b.blerAfterArq)}</td><td>${pct(b.taskError)}</td><td>${pct(m.blerAfterArq)}</td><td>${pct(m.taskError)}</td><td>${pct(s.ser)}</td><td>${pct(s.featureError)}</td><td>${pct(s.taskError)}</td><td>${autoWhyHTML(d)}</td></tr>`}).join('');
+ $('errorSummary').innerHTML=`<div class="scroll"><table style="min-width:1060px"><thead><tr><th>SNR</th><th>Auto choice — Smart / Semantic / neither</th><th>Full-source BER</th><th>Conventional BLER (1 try)</th><th>Full-source BLER after ARQ</th><th>Full-source task error</th><th>Smart system BLER after ARQ</th><th>Smart system task error</th><th>${coderName()} SER</th><th>${coderName()} feature error</th><th>${coderName()} task error</th><th>Why Auto chose this — passes / fails · wins / loses · Smart unusable reason</th></tr></thead><tbody>${rows}</tbody></table></div><p class="hint" style="margin-top:6px">Row colours and the “Auto choice” / “Why” columns are the <strong>same Auto decision as the banner at the top and the chart markers</strong> — same switch point, same Smart-unusable SNRs. Read across a row: both conventional systems share the same per-attempt BLER model (same channel code, modulation and ARQ), so at low SNR their BLER is high and ARQ only partly rescues it, and both task errors stay high — the smart system sends far less, but what it sends still falls off the same cliff. The ${coderName()} side has no block to lose — errors appear gradually as feature error, and its task error follows that slope. At high SNR all error rates fall, and the conventional task error can fall below the ${coderName()} one because ${coderName()} success is capped by lossy features.</p>`;
+}
+function renderEfficiency(){
+ const ful=fullMap(), smt=smartMap();
+ const sems=VR().filter(isSemRow);
+ if(!sems.length){$('effSummary').innerHTML='';$('effPerSnr').innerHTML='';$('effNote').textContent='';return}
+ const fJ=v=>v==null?'—':(v>=1000?Math.round(v).toLocaleString():v>=10?v.toFixed(1):v.toFixed(2));
+ const fSpec=v=>v<0.01?v.toExponential(1):v.toFixed(3);
+ const succLabel=(s,b)=>{const d=s.success-b.success;return d>0.03?coderName()+' higher':(d>=-0.05?'tie':'baseline higher — '+coderName()+' wins on efficiency')};
+ const mid=sems[Math.floor(sems.length/2)], midS=smt[mid.snr], midF=ful[mid.snr];
+ // Each row: [metric, meaning, smart value, semantic value, headline gain vs smart, full-source value, secondary gain vs full-source]
+ const rows=[];
+ rows.push(['Task success (context, not an efficiency)','Did the receiver get the task right? Every efficiency below is only worth having alongside this.',(midS.success*100).toFixed(1)+'%',(mid.success*100).toFixed(1)+'%',((mid.success-midS.success)*100>=0?'+':'')+((mid.success-midS.success)*100).toFixed(1)+' points vs smart',(midF.success*100).toFixed(1)+'%',((mid.success-midF.success)*100>=0?'+':'')+((mid.success-midF.success)*100).toFixed(1)+' points vs full-source']);
+ rows.push(['Energy efficiency — successful tasks per joule','How many successful tasks one joule of total energy buys. Higher is better.',fJ(midS.succTasksPerJoule),fJ(mid.succTasksPerJoule),(midS.succTasksPerJoule&&mid.succTasksPerJoule)?'×'+(mid.succTasksPerJoule/midS.succTasksPerJoule).toFixed(1)+' more':'— (too few smart-system successes sampled here — see power saving in the per-SNR table)',fJ(midF.succTasksPerJoule),(midF.succTasksPerJoule&&mid.succTasksPerJoule)?'×'+(mid.succTasksPerJoule/midF.succTasksPerJoule).toFixed(1)+' more':'—']);
+ rows.push(['Energy efficiency — joules per attempted task','Total energy (transmit + local / codec compute) spent on one attempted task. Lower is better.',midS.energy.toFixed(0)+' µJ',mid.energy.toFixed(0)+' µJ',(100*(1-mid.energy/midS.energy)).toFixed(1)+'% less energy',midF.energy.toFixed(0)+' µJ',(100*(1-mid.energy/midF.energy)).toFixed(1)+'% less energy']);
+ rows.push(['Energy efficiency — joules per successful task','Energy per task divided by task success: what one delivered success actually costs. Lower is better.',midS.ePerSucc?midS.ePerSucc.toFixed(0)+' µJ':'— (no successes)',mid.ePerSucc?mid.ePerSucc.toFixed(0)+' µJ':'—',(midS.ePerSucc&&mid.ePerSucc)?(100*(1-mid.ePerSucc/midS.ePerSucc)).toFixed(1)+'% less':'—',midF.ePerSucc?midF.ePerSucc.toFixed(0)+' µJ':'— (no successes)',(midF.ePerSucc&&mid.ePerSucc)?(100*(1-mid.ePerSucc/midF.ePerSucc)).toFixed(1)+'% less':'—']);
+ rows.push(['Energy efficiency — transmit power saved at matched task success','Derived from joules per successful task: how far the selected coder could turn its transmit power down and still deliver the same task success for the same total transmit energy. A saving is an energy-efficiency gain, not a loss.','— (headline reference)',mid.powerSavingDb!=null?mid.powerSavingDb.toFixed(1)+' dB vs smart':'—',mid.powerSavingDb!=null?(100*(1-Math.pow(10,-mid.powerSavingDb/10))).toFixed(1)+'% less power for the same success':'—','— (secondary reference)',mid.powerSavingVsFullDb!=null?mid.powerSavingVsFullDb.toFixed(1)+' dB vs full-source':'—']);
+ rows.push(['Spectrum efficiency — tasks per second per Hz','Tasks delivered per second for each hertz of channel bandwidth (bandwidth ≈ symbol rate here, so this equals 1 ÷ symbols per task). Higher is better.',fSpec(midS.spectrumEff),fSpec(mid.spectrumEff),'×'+(mid.spectrumEff/midS.spectrumEff).toFixed(1)+' more',fSpec(midF.spectrumEff),'×'+(mid.spectrumEff/midF.spectrumEff).toFixed(1)+' more']);
+ rows.push(['Spectrum efficiency — symbols per task','Channel symbols one attempted task occupies. Fewer symbols = less spectrum-time used. Lower is better.',midS.symbols.toLocaleString(),mid.symbols.toLocaleString(),(100*(1-mid.symbols/midS.symbols)).toFixed(1)+'% less occupancy',midF.symbols.toLocaleString(),(100*(1-mid.symbols/midF.symbols)).toFixed(1)+'% less occupancy']);
+ rows.push(['Bandwidth efficiency — transmitted data volume per task','Bits actually put on the channel for one attempted task. The source task is the same size for all three systems. Lower is better.',midS.bandwidthBits.toLocaleString()+' bits',mid.bandwidthBits.toLocaleString()+' bits',(100*(1-mid.bandwidthBits/midS.bandwidthBits)).toFixed(1)+'% less data volume',midF.bandwidthBits.toLocaleString()+' bits',(100*(1-mid.bandwidthBits/midF.bandwidthBits)).toFixed(1)+'% less data volume']);
+ rows.push(['Bandwidth efficiency — compression ratio','Coded symbols per task of the comparison system ÷ '+coderName()+' symbols per task: how many times less data '+coderName()+' sends to deliver the same task. Headline ratio is against the smart system; the secondary ratio is against full-source.','1.0× (itself)',mid.compressionRatio.toFixed(1)+'× vs smart','Sends '+mid.compressionRatio.toFixed(1)+'× less than smart','1.0× (itself)',mid.compressionRatioVsFull.toFixed(1)+'× vs full-source']);
+ rows.push(['Latency efficiency — tasks per second','Completed tasks per second, from the latency per attempted task (transmission + compute + propagation + ARQ retries). Higher is better.',midS.tasksPerSecond.toFixed(1),mid.tasksPerSecond.toFixed(1),'×'+(mid.tasksPerSecond/midS.tasksPerSecond).toFixed(1)+' more',midF.tasksPerSecond.toFixed(1),'×'+(mid.tasksPerSecond/midF.tasksPerSecond).toFixed(1)+' more']);
+ rows.push(['Latency efficiency — latency per task','Time from first symbol to delivered decision for one attempted task. Lower is better.',midS.latency.toFixed(1)+' ms',mid.latency.toFixed(1)+' ms',(100*(1-mid.latency/midS.latency)).toFixed(1)+'% faster',midF.latency.toFixed(1)+' ms',(100*(1-mid.latency/midF.latency)).toFixed(1)+'% faster']);
+ rows.push(['Compute efficiency — local / codec compute cost per task','Compute spent per attempted task: '+coderName()+'\u2019s encoder, the smart system\u2019s local label / intent / event processing, and the full-source codec\u2019s modelled compute, side by side. These are costs each system pays — shown so the transmit savings above are never presented without them.',midS.computeMs+' ms · '+midS.computeEnergy_uJ+' µJ',mid.computeMs+' ms · '+mid.computeEnergy_uJ+' µJ','Smart system pays local compute to shrink its payload; '+coderName()+' pays encoder compute',midF.computeMs+' ms · '+midF.computeEnergy_uJ+' µJ','Full-source pays codec compute only']);
+ const midD=autoCategoryBySnr()[mid.snr];
+ $('effSummary').innerHTML=`<p style="margin:0 0 8px">${autoBadgeHTML(midD)} <span style="font-size:12.5px">at the ${mid.snr} dB point below — ${autoWhyHTML(midD)}</span></p><p class="hint" style="margin:0 0 8px">Side by side at <strong>${mid.snr} dB</strong> (middle showcased point of this run) — <strong>task success assumed; success-based gains are per successful task, costs labelled “per task” are per attempted task</strong>. The <strong>headline gain is against the smart system</strong>; the full-source column and its gain are the <strong>secondary reference</strong>, shown alongside — neither is hidden:</p><div class="scroll"><table style="min-width:900px"><thead><tr><th>Metric — what it means</th><th>Smart system (headline baseline)</th><th>${coderName()}</th><th>Headline gain vs smart</th><th>Full-source (secondary reference)</th><th>Gain vs full-source</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${r[0]}</strong><br><span style="color:var(--muted)">${r[1]}</span></td><td>${r[2]}</td><td>${r[3]}</td><td><strong>${r[4]}</strong></td><td>${r[5]}</td><td>${r[6]}</td></tr>`).join('')}</tbody></table></div>`;
+ const catsE=autoCategoryBySnr();
+ const prows=sems.map(s=>{const m=smt[s.snr], b=ful[s.snr]; const d=catsE[s.snr];return `<tr class="row-auto-${d?d.category:'smart'}"><td><strong>${s.snr} dB</strong></td><td>${autoBadgeHTML(d)}</td><td>${(s.success*100).toFixed(1)}% vs ${(m.success*100).toFixed(1)}% smart (${succLabel(s,m)}) · vs ${(b.success*100).toFixed(1)}% full</td><td>${(m.succTasksPerJoule&&s.succTasksPerJoule)?'×'+(s.succTasksPerJoule/m.succTasksPerJoule).toFixed(1):'—'}</td><td>${(b.succTasksPerJoule&&s.succTasksPerJoule)?'×'+(s.succTasksPerJoule/b.succTasksPerJoule).toFixed(1):'—'}</td><td>${s.powerSavingDb!=null?s.powerSavingDb.toFixed(1)+' dB':'—'}</td><td>${s.powerSavingVsFullDb!=null?s.powerSavingVsFullDb.toFixed(1)+' dB':'—'}</td><td>${(100*(1-s.energy/m.energy)).toFixed(1)}% less</td><td>×${(s.spectrumEff/m.spectrumEff).toFixed(1)}</td><td>×${(s.spectrumEff/b.spectrumEff).toFixed(1)}</td><td>×${(s.tasksPerSecond/m.tasksPerSecond).toFixed(1)}</td><td>${autoWhyHTML(d)}</td></tr>`}).join('');
+ $('effPerSnr').innerHTML=`<div class="scroll"><table style="min-width:1100px"><thead><tr><th>SNR</th><th>Auto choice — Smart / Semantic / neither</th><th>Task success (${coderName()} vs smart · vs full-source)</th><th>Energy eff. gain vs smart (succ. tasks/J)</th><th>Energy eff. gain vs full-source</th><th>Tx power saving vs smart</th><th>Tx power saving vs full-source</th><th>Energy / task vs smart</th><th>Spectrum eff. gain vs smart</th><th>Spectrum eff. gain vs full-source</th><th>Latency eff. gain vs smart (tasks/s)</th><th>Why Auto chose this — passes / fails · wins / loses · Smart unusable reason</th></tr></thead><tbody>${prows}</tbody></table></div><p class="hint" style="margin-top:6px">Row colours, the “Auto choice” column and the “Why” column are the <strong>same Auto decision as the banner and the chart markers</strong> — same switch point, same Smart-unusable SNRs, computed once from this run. Full-source is never the Auto choice.</p>`;
+ const last=sems[sems.length-1], lastS=smt[last.snr], lastF=ful[last.snr];
+ $('effNote').textContent='Assumption: task success is assumed — tasks are implemented gainfully. Bases in this panel: successful tasks per joule, joules per successful task and transmit-power saving are per successful task; energy, symbols, bandwidth, latency and compute per task are per attempted task. No figure here is a gain for a failed task. Headline gains are against the smart system; gains against the full-source baseline are the secondary reference, in the right-hand columns. Read down the table column by column: the different gains do not all move the same way with SNR — the task-success, latency, power-saving and energy-efficiency columns each follow their own curve, while the spectrum and bandwidth gains are set by symbols per task and stay constant across SNR. At the top of this sweep ('+last.snr+' dB) the headline figures against the smart system are: transmit-power saving '+(last.powerSavingDb!=null?last.powerSavingDb.toFixed(1)+' dB':'—')+', energy per task '+(100*(1-last.energy/lastS.energy)).toFixed(1)+'% lower, spectrum efficiency ×'+(last.spectrumEff/lastS.spectrumEff).toFixed(1)+' — still gains, with task success there a '+succLabel(last,lastS)+'. Against full-source at the same point: transmit-power saving '+(last.powerSavingVsFullDb!=null?last.powerSavingVsFullDb.toFixed(1)+' dB':'—')+', spectrum efficiency ×'+(last.spectrumEff/lastF.spectrumEff).toFixed(1)+'. Compute cost does not vary with SNR: '+coderName()+' spends '+last.computeMs+' ms and '+last.computeEnergy_uJ+' µJ of encoder compute per task; the smart system spends '+lastS.computeMs+' ms and '+lastS.computeEnergy_uJ+' µJ of local processing per task; the full-source codec\u2019s modelled compute is '+lastF.computeMs+' ms / '+lastF.computeEnergy_uJ+' µJ. All efficiency figures are simulated / modelled, not measured.';
+}
+function renderAll(){
+ syncCodecMenu();
+ refreshSelectionLines(true);
+ lastConfig.coder={label:coderName(),name:coderName(),kind:selectedApp==='image'?'DeepJSCC — image semantic coder reference':'Semantic coder — generic simulated semantic coder',isImage:selectedApp==='image',reference:selectedApp==='image'?'Bourtsoulatze, Kurka & Gündüz 2019, Picture › Still image reference preset — published behaviour, not measured by this harness, does not alter the simulated results':null,note:coderKindNote()};lastConfig.codecSelection={selected:selectedCodec,label:CODEC_LABELS[selectedCodec],coder:coderName(),resultsTableShows:selectedCodec==='both'?'Smart system, full-source baseline and '+coderName()+' rows':CODEC_LABELS[selectedCodec]+' rows only',settings:codecSettingsSummary()};
+ computeShowcase();
+ renderAuto();
+ const totalSnrs=new Set(lastResults.map(r=>r.snr)).size;
+ lastConfig.showcaseView={filtered:true,assumption:'Task success is assumed — tasks are implemented gainfully. Success-based efficiency metrics are per successful task; metrics labelled per task are per attempted task; neither is a gain for a failed task.',criteria:'Headline baseline: the smart system. An SNR point is shown only when the selected coder (Semantic coder, or DeepJSCC for Picture) improves on the SMART SYSTEM there (efficiency measured on the labelled basis of each metric under the assumption): task success higher, and/or energy per task or per successful task lower, and/or latency lower, and/or fewer symbols / transmitted bits per task, and/or a positive transmit-power saving at matched task success. A task-success tie at high SNR is not a loss and does not hide the point, because the efficiency gains remain. Points improving on none of these against the smart system are hidden. The full-source conventional baseline is exported and displayed alongside as a secondary reference at every shown point; it does not decide the filter. Menu selections that would produce only hidden points (matched-by-symbols and matched-by-bits fairness; Semantic coder dimensions with no compression left) have been removed or disabled in the menus.',shownSnrs:[...showcaseSnrs],hiddenSnrs:hiddenSnrs.slice()};
+ const sc=$('showcaseCount'); if(sc) sc.textContent='Showing '+showcaseSnrs.size+' of '+totalSnrs+' SNR points in this run'+(hiddenSnrs.length?'; '+hiddenSnrs.length+' hidden ('+hiddenSnrs.join(', ')+' dB) because '+coderName()+' did not improve on the smart system headline baseline there.':'; every SNR point in this run has at least one '+coderName()+' improvement over the smart system headline baseline, so none are hidden.');
+ const sem=VR().filter(isSemRow); const smtA=VR().filter(isSmartRow); const basA=VR().filter(isFullRow);
+ if(!sem.length){
+  $('kpis').innerHTML='<div class="kpi" style="grid-column:1/-1"><span>Showcase</span><b style="font-size:16px">No cases to showcase in this run</b><small>No SNR point in this configuration has '+coderName()+' improving on the smart system headline baseline in task success, energy, or latency — so the showcase view is empty. Try a larger '+coderName()+' feature dimension, a different channel, or a wider SNR sweep.</small></div>';
+  $('errorSummary').innerHTML=''; $('effSummary').innerHTML=''; $('effPerSnr').innerHTML=''; $('effNote').textContent=''; $('chart').innerHTML=''; $('chartNote').textContent='';
+  $('verdict').innerHTML='<p class="hint">No showcased cases in this run.</p>';
+  document.querySelector('#resTable tbody').innerHTML='';
+  $('reproLog').textContent=JSON.stringify(lastConfig,null,2);
+  return;
+ }
+ const symGainSmart=100*(1-sem[0].symbols/smtA[0].symbols);
+ const symGainFull=100*(1-sem[0].symbols/basA[0].symbols);
+ const mid=sem[Math.floor(sem.length/2)], midS=smtA[Math.floor(smtA.length/2)], midF=basA[Math.floor(basA.length/2)];
+ $('kpis').innerHTML=`
+  <div class="kpi"><span>Symbols / task — vs smart (headline)</span><b>${sem[0].symbols} <small style="font-size:13px;color:var(--muted)">vs ${smtA[0].symbols} smart</small></b><small>${symGainSmart.toFixed(1)}% fewer than the smart system · ${symGainFull.toFixed(1)}% fewer than full-source (${basA[0].symbols})</small></div>
+  <div class="kpi"><span>Success @ ${mid.snr} dB</span><b>${(mid.success*100).toFixed(1)}%</b><small>${coderName()} vs ${(midS.success*100).toFixed(1)}% smart system · vs ${(midF.success*100).toFixed(1)}% full-source</small></div>
+  <div class="kpi"><span>Energy / success @ ${mid.snr} dB</span><b>${mid.ePerSucc?mid.ePerSucc.toFixed(0)+' µJ':'—'}</b><small>smart system ${midS.ePerSucc?midS.ePerSucc.toFixed(0)+' µJ':'— (no successes)'} · full-source ${midF.ePerSucc?midF.ePerSucc.toFixed(0)+' µJ':'— (no successes)'}</small></div>
+  <div class="kpi"><span>Latency @ ${mid.snr} dB</span><b>${mid.latency.toFixed(1)} ms</b><small>smart system ${midS.latency.toFixed(1)} ms incl. ARQ · full-source ${midF.latency.toFixed(1)} ms incl. ARQ</small></div>`;
+ renderErrorSummary(); renderEfficiency(); renderChart(); renderVerdict(); renderTable();
+ $('reproLog').textContent=JSON.stringify(lastConfig,null,2);
+}
+function renderChart(){
+ const W=720,H=300,pl=48,pr=16,pt=16,pb=38; const iw=W-pl-pr, ih=H-pt-pb;
+ const snrs=[...new Set(VR().map(r=>r.snr))]; const xmin=Math.min(...snrs), xmax=Math.max(...snrs);
+ let ymax=1, ylabel='Task success';
+ if(chartMode==='gain'){ymax=100;ylabel='Gain of '+coderName()+' vs smart system (headline baseline) (%)'}
+ if(chartMode==='error'){ymax=100;ylabel='Task error rate (% — lower is better)'}
+ if(chartMode==='energy'){ymax=Math.max(...VR().map(r=>r.ePerSucc||0),100)*1.1;ylabel='Energy per successful task (µJ, log-ish scale capped)'}
+ if(chartMode==='latency'){ymax=Math.max(...VR().map(r=>r.latency))*1.15;ylabel='Latency (ms)'}
+ if(chartMode==='effgain'){const ps=VR().filter(r=>r.powerSavingDb!=null).map(r=>r.powerSavingDb);ymax=(ps.length?Math.max(...ps):10)*1.15;ylabel='Transmit-power saving at matched success (dB)'}
+ const X=v=>pl+(v-xmin)/((xmax-xmin)||1)*iw; const Y=v=>pt+ih-(Math.min(v,ymax)/ymax)*ih;
+ let g='';
+ for(let i=0;i<=4;i++){const y=pt+ih*i/4;const val=ymax*(1-i/4);g+=`<line x1="${pl}" y1="${y}" x2="${W-pr}" y2="${y}" stroke="var(--chart-grid)"/><text x="4" y="${y+4}" font-size="11" fill="var(--muted)">${chartMode==='success'?val.toFixed(2):Math.round(val)}</text>`}
+ snrs.forEach(s=>{g+=`<text x="${X(s)}" y="${H-12}" font-size="11" text-anchor="middle" fill="var(--muted)">${s} dB</text>`});
+ function series(codec,color){
+   const rows=VR().filter(r=>r.codec===codec);
+   let pts=rows.map(r=>{let v= chartMode==='success'?r.success: chartMode==='error'?r.taskError*100: chartMode==='energy'?(r.ePerSucc||ymax): chartMode==='latency'?r.latency:0; return [X(r.snr),Y(v),r]});
+   if(chartMode==='gain'||chartMode==='effgain') return '';
+   // CI band for success mode
+   let band='';
+   if(chartMode==='success'){const top=rows.map(r=>`${X(r.snr)},${Y(Math.min(1,r.success+r.ci))}`).join(' ');const bot=rows.slice().reverse().map(r=>`${X(r.snr)},${Y(Math.max(0,r.success-r.ci))}`).join(' ');band=`<polygon points="${top} ${bot}" fill="${color}" opacity="0.13"/>`}
+   const line=pts.map(p=>p[0]+','+p[1]).join(' ');
+   const dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${color}"><title>${codec} @ ${p[2].snr} dB</title></circle>`).join('');
+   return band+`<polyline points="${line}" fill="none" stroke="${color}" stroke-width="2.5"/>`+dots;
+ }
+ // --- Chart markers: Smart-unusable shading + Auto switch line — SAME source as banner & tables ---
+ // Decisions come from autoDecisions() over the full run (the banner's source); the chart shades
+ // the displayed (showcased) SNR points that fall in that same unusable / switch set, so the three
+ // surfaces cannot disagree. Full-source is never an Auto candidate and gets no marker.
+ const decAll=autoDecisions(); const decBySnr={}; decAll.forEach(d=>decBySnr[d.snr]=d);
+ const dispDec=snrs.map(s=>decBySnr[s]).filter(Boolean);
+ const smartFailAll=decAll.filter(d=>!d.smartPasses).map(d=>d.snr);
+ const smartPassAll=decAll.filter(d=>d.smartPasses).map(d=>d.snr);
+ const semAutoAll=decAll.filter(d=>d.category==='semantic').map(d=>d.snr);
+ const neitherAll=decAll.filter(d=>d.category==='neither').map(d=>d.snr);
+ const semFrom=semAutoAll.length?Math.min.apply(null,semAutoAll):null;
+ const smartFrom=smartPassAll.length?Math.min.apply(null,smartPassAll):null;
+ let overlayBack='', overlayFront='';
+ snrs.forEach((s,idx)=>{const d=decBySnr[s]; if(!d||d.smartPasses)return; const xl=idx>0?(X(s)-X(snrs[idx-1]))/2:((snrs.length>1?(X(snrs[1])-X(s)):40)/2); const xr=idx<snrs.length-1?(X(snrs[idx+1])-X(s))/2:((snrs.length>1?(X(s)-X(snrs[snrs.length-2])):40)/2); overlayBack+=`<rect x="${X(s)-xl}" y="${pt}" width="${xl+xr}" height="${ih}" fill="#b91c1c" opacity="${d.category==='neither'?0.20:0.13}"><title>Smart unusable at ${s} dB — ${d.smartFailReasons.join('; ')}</title></rect>`;});
+ if(smartFailAll.length){const fx=snrs.length?X(snrs[0]):pl; overlayBack+=`<text x="${fx+4}" y="${pt+ih-6}" font-size="10.5" font-weight="700" fill="#b91c1c">▓ SMART UNUSABLE${needsMoreThanLabel()?' + NEEDS MORE THAN A LABEL':''}</text>`;}
+ // Horizontal pass-threshold line, in the units of the current chart.
+ const budgetMs=lastConfig.system?lastConfig.system.latencyBudgetMs:(+$('latBudget').value);
+ if(chartMode==='success'){const ty=Y(currentPass()/100); overlayFront+=`<line x1="${pl}" y1="${ty}" x2="${W-pr}" y2="${ty}" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 4"/><text x="${W-pr-4}" y="${ty-5}" font-size="10.5" font-weight="700" text-anchor="end" fill="#b91c1c">PASS MARK ${currentPass()}% — BELOW THIS, A CODEC FAILS THE TASK</text>`;}
+ if(chartMode==='error'){const ty=Y(100-currentPass()); overlayFront+=`<line x1="${pl}" y1="${ty}" x2="${W-pr}" y2="${ty}" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 4"/><text x="${W-pr-4}" y="${ty-5}" font-size="10.5" font-weight="700" text-anchor="end" fill="#b91c1c">MAX TASK ERROR ${100-currentPass()}% — ABOVE THIS, A CODEC FAILS THE TASK</text>`;}
+ if(chartMode==='latency'&&budgetMs<=ymax){const ty=Y(budgetMs); overlayFront+=`<line x1="${pl}" y1="${ty}" x2="${W-pr}" y2="${ty}" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 4"/><text x="${W-pr-4}" y="${ty-5}" font-size="10.5" font-weight="700" text-anchor="end" fill="#b91c1c">LATENCY BUDGET ${budgetMs} ms — ABOVE THIS, A CODEC FAILS</text>`;}
+ // Vertical switch / threshold lines with labels (labels clamped inside the plot).
+ function vMarker(snr,color,label,yOff){if(snr==null||snr<xmin||snr>xmax)return ''; const x=X(snr); const lx=Math.max(pl+86,Math.min(W-pr-86,x)); return `<line x1="${x}" y1="${pt}" x2="${x}" y2="${pt+ih}" stroke="${color}" stroke-width="3" stroke-dasharray="6 3"><title>${label}</title></line><rect x="${lx-84}" y="${pt+yOff}" width="168" height="15" rx="4" fill="var(--surface)" stroke="${color}"/><text x="${lx}" y="${pt+yOff+11}" font-size="9.5" font-weight="700" text-anchor="middle" fill="${color}">${label}</text>`;}
+ if(smartFrom!=null&&smartFailAll.some(v=>v<smartFrom))overlayFront+=vMarker(smartFrom,'#b91c1c','✕ SMART UNUSABLE BELOW '+smartFrom+' dB',2);
+ overlayFront+=vMarker(semFrom,'#0e7c6b','▼ AUTO → SEMANTIC FROM '+(semFrom!=null?semFrom:'—')+' dB',(semFrom!=null&&smartFrom!=null&&semFrom===smartFrom)?19:19);
+ // Coloured dot under each SNR tick = Auto choice at that SNR (same colours as banner & tables).
+ dispDec.forEach(d=>{const col=d.category==='semantic'?'#0e7c6b':(d.category==='neither'?'#b91c1c':'#b45309'); overlayFront+=`<circle cx="${X(d.snr)}" cy="${H-24}" r="5" fill="${col}"><title>Auto at ${d.snr} dB: ${d.categoryLabel} — ${d.reason}</title></circle>`;});
+ const mk=$('chartMarkerKey'); if(mk)mk.innerHTML='<strong>On this chart — Smart unusable region &amp; Auto switch (same as banner &amp; tables):</strong> pale-red shading = Smart unusable at '+(smartFailAll.length?fmtSnrList(smartFailAll):'no SNR in this sweep')+(smartFrom!=null?(' · red dashed line = Smart unusable below '+smartFrom+' dB'):' · Smart never becomes usable in this sweep')+' · teal dashed line = '+(semFrom!=null?('Auto switches to Semantic from '+semFrom+' dB (Semantic at '+fmtSnrList(semAutoAll)+')'):'Auto never switches to Semantic in this sweep')+(neitherAll.length?(' · neither passes at '+fmtSnrList(neitherAll)):'')+' · dot under each SNR = Auto choice there (teal Semantic · amber Smart · red neither). '+(lastConfig.switchSummary&&lastConfig.switchSummary.plain?('Banner wording: “'+lastConfig.switchSummary.plain+'”'):'');
+ let inner='';
+ if(chartMode==='gain'){
+   const bas=VR().filter(isSmartRow);
+   const pts=semGainPoints().map(p=>`${X(p.snr)},${Y(Math.max(0,p.gain))}`).join(' ');
+   inner=`<line x1="${pl}" y1="${Y(0)}" x2="${W-pr}" y2="${Y(0)}" stroke="var(--muted)"/><polyline points="${pts}" fill="none" stroke="#0e7c6b" stroke-width="2.5"/>`+semGainPoints().map(p=>`<circle cx="${X(p.snr)}" cy="${Y(Math.max(0,p.gain))}" r="4" fill="#0e7c6b"/>`).join('');
+   $('chartNote').textContent='Assumption: task success is assumed — tasks are implemented gainfully — and efficiency gains are stated on their labelled bases (per successful task for success-based measures, per attempted task for costs labelled per task), not for failed tasks. Gain = (smart system − '+coderName()+') / smart system success gap expressed as % improvement in success at each SNR — the headline comparison, against the smart system baseline. Negative gains ('+coderName()+' worse) are clamped at 0 on this view — see the success chart and verdict table for losses.';
+ } else if(chartMode==='effgain'){
+   const pts2=VR().filter(r=>r.powerSavingDb!=null);
+   const line2=pts2.map(p=>`${X(p.snr)},${Y(p.powerSavingDb)}`).join(' ');
+   inner=`<line x1="${pl}" y1="${Y(0)}" x2="${W-pr}" y2="${Y(0)}" stroke="var(--muted)"/><polyline points="${line2}" fill="none" stroke="#0e7c6b" stroke-width="2.5"/>`+pts2.map(p=>`<circle cx="${X(p.snr)}" cy="${Y(p.powerSavingDb)}" r="4" fill="#0e7c6b"><title>Power saving @ ${p.snr} dB: ${p.powerSavingDb.toFixed(1)} dB</title></circle>`).join('');
+   $('chartNote').textContent='Assumption: task success is assumed — tasks are implemented gainfully — and this power saving is a gain per successful task, not a gain for a failed task. Transmit-power saving at matched task success, derived from energy per successful task: 10·log₁₀(smart system J/success ÷ selected coder J/success) — the headline comparison, against the smart system. (The saving against the full-source secondary reference is larger and is tabulated in the Efficiency panel.) Read it as: at this SNR, the selected coder could turn its transmit power down by this many dB and still deliver the same task success for the same total transmit energy as the smart system. The saving follows its own curve with SNR — read it point by point in the Efficiency panel\u2019s per-SNR table — and it stays positive at every point shown; where task success ties with the smart system, this saving is the energy-efficiency gain.';
+ } else {
+   inner=series('Baseline + ARQ','#64748b')+series('Smart system + ARQ','#b45309')+series(coderName(),'#0e7c6b');
+   $('chartNote').textContent= chartMode==='success' ? 'Assumption: task success is assumed — tasks are implemented gainfully — and any efficiency reading from this chart follows the labelled basis of that metric (per successful task, or per attempted task for costs labelled per task), and is not a gain for a failed task. Shaded bands are 95% confidence intervals across the Monte Carlo trials — widen the trials control to narrow them. Note the baseline cliff and the selected coder ceiling.' : chartMode==='error' ? 'Assumption: task success is assumed for the efficiency gains shown elsewhere on this page — those gains are per successful task, not for failed tasks. Task error rate = 1 − task success, in %. Lower is better. The baseline error falls off a cliff in reverse — near 100% below its threshold, near 0% above it — while the selected coder error falls gradually and levels off at its lossy-feature floor (about 3.5%). BER, BLER, SER and feature error for every SNR are in the error-rates table above and the results table below.' : 'Assumption: task success is assumed — tasks are implemented gainfully — so these efficiency curves are gains under that assumption on their labelled basis (energy per successful task is per successful task; latency is per attempted task), not gains for failed tasks. Derived arithmetically from symbols / task, symbol rate, energy per symbol, ARQ retries and encoder compute — change any system parameter and these curves move.';
+ }
+ $('chartNote').textContent+=' CHART MARKERS — same switch point and Smart-unusable threshold as the banner and every table: pale-red shading marks the SNR points where Smart is unusable ('+(smartFailAll.length?fmtSnrList(smartFailAll):'none in this sweep')+'); the teal dashed line marks '+(semFrom!=null?('Auto switching to Semantic from '+semFrom+' dB'):'that Auto never switches to Semantic in this sweep')+'; the red dashed line marks '+(smartFrom!=null?('Smart unusable below '+smartFrom+' dB'):'Smart unusable at every SNR in this sweep')+'; the coloured dot under each SNR is the Auto choice there (teal Semantic, amber Smart, red neither passes).';
+ $('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${ylabel} chart — Smart-unusable region shaded, Auto switch point marked"><text x="${pl}" y="12" font-size="11" fill="var(--muted)">${ylabel}</text>${g}${overlayBack}${inner}${overlayFront}</svg>`;
+}
+function semGainPoints(){const bas={};VR().filter(isSmartRow).forEach(r=>bas[r.snr]=r.success);return VR().filter(isSemRow).map(r=>({snr:r.snr,gain: bas[r.snr]>0? (r.success-bas[r.snr])/bas[r.snr]*100 : 0}))}
+function verdictFor(s,b){
+ const d=s.success-b.success; const U=coderName().toUpperCase();
+ if(d>0.03) return [U+' WINS — success + efficiency','win'];
+ if(d>=-0.05) return ['SUCCESS TIE — '+U+' WINS ON EFFICIENCY','win'];
+ return ['SMART SYSTEM HIGHER SUCCESS — '+U+' WINS ON EFFICIENCY','tie'];
+}
+function renderVerdict(){
+ const bas=smartMap(), ful=fullMap(); const cats=autoCategoryBySnr();
+ let rows=VR().filter(isSemRow).map(s=>{const b=bas[s.snr];const f=ful[s.snr];const d=cats[s.snr];const [v,c]=verdictFor(s,b);const im=improvesOn(s,b);const badges=[im.success?'<span class="pill">↑ task success</span>':'',im.energy?'<span class="pill">↓ energy / task</span>':'',im.energyPerSuccess?'<span class="pill">↓ energy / success</span>':'',im.spectrum?'<span class="pill">↓ symbols &amp; bandwidth / task</span>':'',im.latency?'<span class="pill">↓ latency</span>':'',im.powerSaving?'<span class="pill">Tx power saving '+s.powerSavingDb.toFixed(1)+' dB</span>':''].filter(Boolean).join(' ');return `<tr class="row-auto-${d?d.category:'smart'}"><td><strong>${s.snr} dB</strong></td><td>${autoBadgeHTML(d)}</td><td>Success ${(s.success*100).toFixed(1)}% vs ${(b.success*100).toFixed(1)}% smart<br><span>Task error ${pct(s.taskError)} vs ${pct(b.taskError)} smart · BER ${pct(b.ber)} · BLER ${pct(b.blerSingle)} → ${pct(b.blerAfterArq)} after ARQ · ${coderName()} feature error ${pct(s.featureError)}</span><br><span style="font-size:11.5px">Secondary reference — vs full-source: success ${(f.success*100).toFixed(1)}% · latency ${f.latency.toFixed(1)} ms · energy ${f.energy.toFixed(0)} µJ · Tx power saving ${s.powerSavingVsFullDb!=null?s.powerSavingVsFullDb.toFixed(1)+' dB':'—'}</span><br><span style="font-size:11.5px">Showcased because ${coderName()} improves on the smart system: ${badges}</span></td><td>Latency ${s.latency.toFixed(1)} vs ${b.latency.toFixed(1)} ms smart</td><td>Energy ${s.energy.toFixed(0)} vs ${b.energy.toFixed(0)} µJ smart</td><td>${autoWhyHTML(d)}</td><td class="${c}">${v}<br><span style="font-size:11px;font-weight:400">vs smart system — headline</span></td></tr>`}).join('');
+ $('verdict').innerHTML=`<div class="scroll"><table><thead><tr><th>SNR</th><th>Auto choice — Smart / Semantic / neither</th><th>Task success &amp; error rates (vs smart system)</th><th>Latency</th><th>Energy / task</th><th>Why Auto chose this — passes / fails · wins / loses · Smart unusable reason</th><th>Verdict — headline, vs smart</th></tr></thead><tbody>${rows}</tbody></table></div><p class="hint" style="margin-top:6px">Row colours, the “Auto choice” column and the “Why” column are the <strong>same Auto decision as the banner and the chart markers</strong> — same switch point, same Smart-unusable SNRs.</p>`;
+}
+function renderTable(){
+ const tb=document.querySelector('#resTable tbody');
+ const cats=autoCategoryBySnr();
+ const rows=VR().filter(r=>selectedCodec==='both'||(selectedCodec==='baseline'?isFullRow(r):selectedCodec==='smart'?isSmartRow(r):isSemRow(r)));
+ tb.innerHTML=rows.map(r=>{const d=cats[r.snr];return `<tr class="row-auto-${d?d.category:'smart'}"><td>${r.snr} dB</td><td>${autoBadgeHTML(d)}<br><span style="font-size:11.5px">${autoWhyHTML(d)}</span></td><td>${isSemRow(r)?'<span class="pill">'+coderName()+'</span>':(isSmartRow(r)?'<span class="pill">Smart system</span>':'Full-source baseline')}</td><td><strong>${(r.success*100).toFixed(1)}%</strong> ±${(r.ci*100).toFixed(1)}</td><td><strong>${pct(r.taskError)}</strong></td><td>${isSemRow(r)?pct(r.ser)+' SER':pct(r.ber)+' BER'}</td><td>${pct(r.blerSingle)}</td><td>${pct(r.blerAfterArq)}</td><td>${pct(r.featureError)}</td><td>${r.distortion.toFixed(3)}</td><td>${r.symbols}</td><td>${r.bandwidthBits.toLocaleString()} bits</td><td>${r.latency.toFixed(1)} ms</td><td>${r.energy.toFixed(0)} µJ</td><td>${r.ePerSucc?r.ePerSucc.toFixed(0)+' µJ':'—'}</td><td>${r.succTasksPerJoule?(r.succTasksPerJoule>=1000?Math.round(r.succTasksPerJoule).toLocaleString():r.succTasksPerJoule.toFixed(1)):'—'}</td><td>${r.spectrumEff<0.01?r.spectrumEff.toExponential(1):r.spectrumEff.toFixed(3)}</td><td>${r.computeMs} ms · ${r.computeEnergy_uJ} µJ</td><td>${r.powerSavingDb!=null?'<strong>'+r.powerSavingDb.toFixed(1)+' dB</strong>'+(r.powerSavingVsFullDb!=null?'<br><span style="color:var(--muted)">'+r.powerSavingVsFullDb.toFixed(1)+' dB vs full</span>':''):'—'}</td><td>${r.eRetx.toFixed(2)}</td><td>${r.meets?'✓ within':'✗ over'} ${lastConfig.system.latencyBudgetMs} ms</td></tr>`}).join('');
+}
+function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+$('dlCsv').onclick=()=>{const sc=smartCurrent();const head='# '+HARNESS_NAME+' — '+HARNESS_VERSION+'\n# Harness version: '+HARNESS_VERSION+'\n# Mode: '+(mode==='auto'?'Auto-switch - candidates are the Smart system and '+coderName()+' ONLY; the full-source baseline is NOT a candidate in Auto mode and its rows here are secondary-reference data from the manual comparison':'Manual comparison - all three systems compared; smart system is the headline baseline, full-source the secondary reference')+'\n# Baselines: headline baseline = Smart system + ARQ (smarter conventional system, per data type below); secondary reference = Baseline + ARQ (full-source conventional system, whole source bit-exact). Rows for all three systems are exported. transmit_power_saving_dB_at_matched_success and compression_ratio_vs_smart_system are vs the smart system (headline); transmit_power_saving_vs_full_source_dB and compression_ratio_vs_full_source are vs the full-source baseline (secondary reference).\n# Smart system for this data type: '+sc.def.label+' - '+sc.def.desc+' Sends '+sc.bits+' bits per task (full-source: '+sc.sourceBits+' bits). NOT semantic coding: separate source + channel coding, bit-exact, same channel code, modulation and ARQ as the full-source baseline; local processing cost '+sc.def.computeMs+' ms, '+sc.def.computeE+' uJ per task.\n# Assumption: Task success is assumed - tasks are implemented gainfully. Success-based columns (successful_tasks_per_joule, joules_per_successful_task, transmit_power_saving_dB_at_matched_success, transmit_power_saving_vs_full_source_dB) are per successful task; columns labelled per task (energy_uJ, symbols_per_task, bandwidth_bits, latency_ms, tasks_per_joule, joules_per_task, compute per task) are per attempted task. They are not gains for failed tasks.\n# Coder: '+coderName()+' - '+(selectedApp==='image'?'DeepJSCC is the image semantic coder reference (Bourtsoulatze, Kurka & Gunduz 2019, Picture > Still image reference preset) - published behaviour, not measured by this harness, does not alter the simulated results.':'Semantic coder is the generic simulated semantic coder - not DeepJSCC, DeepSC or any other named paper coder.')+'\n# Basis: two labelled bases - per successful task for success-based columns (successful_tasks_per_joule, joules_per_successful_task, transmit_power_saving_dB_at_matched_success, transmit_power_saving_vs_full_source_dB); per attempted task for columns labelled per task (energy_uJ, symbols_per_task, bandwidth_bits, latency_ms, tasks_per_joule, joules_per_task, compute_ms_per_task, compute_energy_uJ_per_task).\n# Task success rate threshold (pass mark) for this data type: '+currentPass()+'% (task error <= '+(100-currentPass())+'%) - one threshold per data type, set in Level 2, retained for that data type until changed for that data type.\n'+'application,data_type,snr_dB,codec,task_success,task_error_rate,ci95,ber,ser,bler_single_attempt,bler_after_arq,feature_error_rate,distortion,symbols_per_task,bandwidth_bits,latency_ms,energy_uJ,energy_per_success_uJ,tasks_per_joule,successful_tasks_per_joule,joules_per_task,joules_per_successful_task,spectrum_efficiency_tasks_per_s_per_Hz,compression_ratio_vs_smart_system,compression_ratio_vs_full_source,tasks_per_second,compute_ms_per_task,compute_energy_uJ_per_task,transmit_power_saving_dB_at_matched_success,transmit_power_saving_vs_full_source_dB,expected_retransmissions,meets_latency_budget\n';download('semantic-benchmark-results.csv',head+VR().map(r=>[r.applicationLabel,'"'+r.dataTypeLabel+'"',r.snr,'"'+r.codec+'"',r.success.toFixed(4),r.taskError.toFixed(4),r.ci.toFixed(4),r.ber.toExponential(4),r.ser.toExponential(4),r.blerSingle==null?'':r.blerSingle.toFixed(4),r.blerAfterArq==null?'':r.blerAfterArq.toFixed(6),r.featureError==null?'':r.featureError.toFixed(4),r.distortion.toFixed(4),r.symbols,r.bandwidthBits,r.latency.toFixed(2),r.energy.toFixed(2),r.ePerSucc??'',r.tasksPerJoule.toFixed(2),r.succTasksPerJoule??'',r.joulesPerTask.toExponential(4),r.joulesPerSuccess==null?'':r.joulesPerSuccess.toExponential(4),r.spectrumEff.toExponential(4),r.compressionRatio.toFixed(3),r.compressionRatioVsFull.toFixed(3),r.tasksPerSecond.toFixed(3),r.computeMs,r.computeEnergy_uJ,r.powerSavingDb??'',r.powerSavingVsFullDb??'',r.eRetx.toFixed(3),r.meets].join(',')).join('\n'),'text/csv')};
+$('dlJson').onclick=()=>download('semantic-benchmark-results.json',JSON.stringify({harness:HARNESS_NAME,harnessVersion:HARNESS_VERSION,version:HARNESS_VERSION,config:lastConfig,results:VR()},null,2),'application/json');
+$('copyCfg').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(lastConfig,null,2));$('copyCfg').textContent='✓ Copied'}catch(e){$('copyCfg').textContent='Copy failed — use JSON download'} setTimeout(()=>$('copyCfg').textContent='Copy reproducibility block',1800)};
+document.querySelectorAll('#chartTabs .tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('#chartTabs .tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');chartMode=t.dataset.chart;renderChart()});
+$('dataType').onchange=()=>{applyTask();simulate()};
+// Task success rate threshold — changing it in the Level 2 area writes only the
+// currently selected data type's entry in passThresholds, updates that type's
+// Level 2 menu label and the error equivalent, and marks the results stale
+// (green Run) like other Configure controls, so the new threshold is recorded
+// in the reproducibility log and downloads on the next Run. It is NOT in the
+// auto-run list and it is never reset by selecting a different data type.
+$('passThreshold').addEventListener('change',function(){const v=parseInt(this.value,10);if(isNaN(v))return;passThresholds[selectedApp+':'+$('dataType').value]=v;refreshDataTypeOptionLabels();syncThresholdUI();refreshSelectionLines()});
+$('refPreset').onchange=()=>{ if($('refPreset').value==='deepjscc2019'){ const ch=$('channel').value; if(ch==='3gpp'||ch==='ntn'){$('channel').value='awgn';syncChannelOpts();} if($('channel').value==='fading'){$('fadingType').value='rayleigh';} } syncRefPreset(); simulate(); };
+$('fadingType').onchange=()=>syncRefPreset();
+// Level 1 application buttons — one delegated click listener on the whole menu, so a click anywhere
+// on a button (label text included) selects that application, loads its Level 2 data types and applies
+// its presets (classes, source size, latency budget, success definition). It does NOT re-run by
+// itself: the results below still show the previous application, so the Run button is marked stale
+// (green) until the user clicks Run, which re-runs for the new application and returns Run to its
+// normal colour. Clicking the already-selected application changes nothing and does not mark stale.
+$('appMenu').addEventListener('click',function(e){let b=e.target;while(b&&!(b.classList&&b.classList.contains('appBtn')))b=b.parentNode;if(!b||!b.dataset||!b.dataset.app)return;if(b.dataset.app===selectedApp)return;selectApp(b.dataset.app);markStale()});
+// Codec buttons — one delegated click listener on the whole codec menu, so a click anywhere on a
+// button (its <b> label or <small> description text included) selects that codec, shows its settings
+// panel, hides the other codec's panel, re-renders the results table with that codec's rows only,
+// records the selection in the reproducibility log, and re-runs immediately (auto-run, like the
+// Level 1 buttons: Run does not stay green afterwards).
+$('codecMenu').addEventListener('click',function(e){let b=e.target;while(b&&!(b.classList&&b.classList.contains('codecBtn')))b=b.parentNode;if(!b||!b.dataset||!b.dataset.codec)return;selectCodec(b.dataset.codec);simulate()});
+// Mode buttons — manual comparison vs Auto-switch. Switching mode does not re-run the model:
+// Auto decisions are a selection rule over the current run's rows, so they are recomputed from
+// the results already on screen and the reproducibility log is refreshed in place (no stale Run).
+$('modeMenu').addEventListener('click',function(e){let b=e.target;while(b&&!(b.classList&&b.classList.contains('modeBtn')))b=b.parentNode;if(!b||!b.dataset||!b.dataset.mode)return;if(b.dataset.mode===mode)return;mode=b.dataset.mode;syncModeMenu();$('reproLog').textContent=JSON.stringify(lastConfig,null,2)});
+function syncChannelOpts(){ $('gppOpts').style.display=$('channel').value==='3gpp'?'block':'none'; $('fadingOpts').style.display=$('channel').value==='fading'?'block':'none'; $('ntnOpts').style.display=$('channel').value==='ntn'?'block':'none'; updateNtnSummary(); syncRefPreset(); }
+['ntnOrbit','ntnElev','ntnDoppler','ntnPass','ntnGap'].forEach(id=>{$(id).addEventListener('change',updateNtnSummary)});
+$('channel').onchange=syncChannelOpts;
+['semDim','arqMax'].forEach(id=>{$(id).onchange=updateComp;$(id).oninput=updateComp});
+['modulation','codeRate','sourceBits','nClasses'].forEach(id=>{$(id).onchange=updateComp;$(id).oninput=updateComp});
+['txModel','rxModel'].forEach(id=>$(id).onchange=()=>{$('mismatchWarn').style.display=$('txModel').value!==$('rxModel').value?'block':'none'});
+$('runBtn').onclick=simulate;
+(function(){const autoRunIds={dataType:1,refPreset:1};function onCfgChange(e){if(e.target===$('runBtn')||autoRunIds[e.target.id])return;markStale()}$('configCard').addEventListener('change',onCfgChange);$('configCard').addEventListener('input',onCfgChange);})();
+syncChannelOpts(); populateDataTypes(); applyTask(); updateComp(); simulate();
+</script>
+</body>
+</html>
