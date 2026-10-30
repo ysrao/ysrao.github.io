@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Dimensioning the Bank's LLMs — v2 — interactive calculator for the AI Architecture note</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --surface: #ffffff;
+        --surface-2: #eef2f5;
+        --ink: #16222c;
+        --ink-2: #43566a;
+        --ink-3: #71808f;
+        --line: #d7dfe6;
+        --accent: #0e6e5c;
+        --accent-ink: #0a5748;
+        --accent-soft: #e2f1ec;
+        --warn: #9a5b00;
+        --warn-soft: #fdf0da;
+        --range-track: #cfd9e1;
+        --shadow: 0 1px 2px rgba(18, 34, 48, .06), 0 4px 14px rgba(18, 34, 48, .05);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0d141a;
+          --surface: #16212a;
+          --surface-2: #1c2a35;
+          --ink: #e8eef3;
+          --ink-2: #a9bac8;
+          --ink-3: #7d90a1;
+          --line: #2b3c49;
+          --accent: #3ec9a7;
+          --accent-ink: #7fe0c6;
+          --accent-soft: #123129;
+          --warn: #f0b75a;
+          --warn-soft: #3a2c10;
+          --range-track: #334655;
+          --shadow: 0 1px 2px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.3);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 26px 18px 56px; }
+
+      header.page-head { margin-bottom: 20px; }
+      header.page-head h1 {
+        font-size: clamp(21px, 3.4vw, 30px);
+        line-height: 1.2;
+        font-weight: 700;
+        margin: 0 0 8px;
+        letter-spacing: -0.01em;
+      }
+      header.page-head p { margin: 0; color: var(--ink-2); max-width: 74ch; }
+      .est-tag {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .02em;
+        color: var(--accent-ink);
+        background: var(--accent-soft);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 3px 11px;
+      }
+
+      .layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
+      @media (max-width: 880px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        padding: 18px 18px 8px;
+        margin-bottom: 20px;
+      }
+      .panel h2 {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .09em;
+        color: var(--ink-2);
+        margin: 2px 0 14px;
+      }
+      .panel h2 .sub { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--ink-3); }
+
+      /* ---- inputs ---- */
+      .field { margin-bottom: 16px; }
+      .field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
+      .field label { font-weight: 600; font-size: 14px; }
+      .field .hint { display: block; font-weight: 400; font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+      .num-wrap { display: flex; align-items: center; gap: 5px; flex: none; }
+      .num-wrap input[type="number"] {
+        width: 92px;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 14px;
+        text-align: right;
+        color: var(--ink);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 4px 7px;
+      }
+      .num-wrap .unit { font-size: 12px; color: var(--ink-3); min-width: 34px; }
+      input[type="range"] {
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--range-track);
+        outline-offset: 3px;
+        margin: 6px 0 2px;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 2.5px solid var(--surface);
+        box-shadow: 0 1px 4px rgba(0,0,0,.3);
+        cursor: pointer;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 16px; height: 16px; border-radius: 50%;
+        background: var(--accent); border: 2.5px solid var(--surface);
+        box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer;
+      }
+      .seg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+      .seg button {
+        font: inherit; font-size: 13.5px; font-weight: 500;
+        padding: 6px 13px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--surface-2);
+        color: var(--ink-2);
+        cursor: pointer;
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+      @media (prefers-color-scheme: dark) {
+        .seg button[aria-pressed="true"] { color: #07231c; }
+      }
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+      @media (max-width: 460px) { .grid-2 { grid-template-columns: 1fr; } }
+
+      /* ---- outputs ---- */
+      .results-col { position: sticky; top: 14px; }
+      @media (max-width: 880px) { .results-col { position: static; } }
+
+      .verdict {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+        font-size: 15.5px;
+        line-height: 1.55;
+      }
+      .verdict .vlabel {
+        display: block;
+        font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+        color: var(--accent-ink); margin-bottom: 4px;
+      }
+
+      .comp {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        padding: 15px 17px 13px;
+        margin-bottom: 14px;
+      }
+      .comp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+      .comp h3 { margin: 0; font-size: 16px; font-weight: 650; }
+      .level {
+        font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+        color: var(--ink-2); background: var(--surface-2);
+        border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; flex: none;
+      }
+      .comp .desc { margin: 5px 0 11px; font-size: 13px; color: var(--ink-2); }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+      .stat { background: var(--surface-2); border-radius: 8px; padding: 8px 11px; }
+      .stat .k { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); }
+      .stat .v { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 18px; font-weight: 600; }
+      .stat .v small { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+      .note-line { margin: 10px 0 2px; font-size: 12.5px; color: var(--ink-2); }
+      .note-line.warn {
+        color: var(--warn); background: var(--warn-soft);
+        border-radius: 7px; padding: 7px 10px; font-weight: 500;
+      }
+
+      .totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+      .total-card {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+        box-shadow: var(--shadow); padding: 13px 15px;
+      }
+      .total-card .k { display: block; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); }
+      .total-card .v { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 24px; font-weight: 600; }
+      .total-card .v small { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+      .total-card .d { font-size: 12px; color: var(--ink-2); }
+
+      .assumptions { font-size: 13.5px; color: var(--ink-2); }
+      .assumptions ul { margin: 0 0 12px; padding-left: 19px; }
+      .assumptions li { margin-bottom: 7px; }
+      .assumptions code, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; color: var(--ink); }
+      .assump-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+      @media (max-width: 460px) { .assump-grid { grid-template-columns: 1fr; } }
+      .assump-grid .field label { font-size: 13px; }
+      .assump-grid .num-wrap input[type="number"] { width: 78px; }
+
+      .scope-note {
+        margin: 12px 0 0;
+        max-width: 74ch;
+        background: var(--warn-soft);
+        border: 1px solid var(--warn);
+        border-radius: 8px;
+        padding: 9px 13px;
+        font-size: 13.5px;
+        color: var(--ink);
+      }
+
+      .comp h3 .role { display: block; font-size: 13px; font-weight: 500; color: var(--ink-2); margin-top: 2px; }
+
+      .arch { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
+      .arch-label {
+        display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .05em; color: var(--ink-3); margin-bottom: 7px;
+      }
+      .arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 6px 14px; }
+      .arch-grid .k { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); }
+      .arch-grid .v { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14.5px; font-weight: 600; }
+      .arch .input-line { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-2); }
+
+      .cost-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      .cost-table th, .cost-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      .cost-table thead th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); border-bottom: 1.5px solid var(--line); }
+      .cost-table th.r, .cost-table td.r { text-align: right; }
+      .cost-table td.amt { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; white-space: nowrap; }
+      .cost-table td .basis { display: block; font-size: 12px; color: var(--ink-3); font-weight: 400; margin-top: 1px; }
+      .cost-table tr.sub td { font-weight: 600; border-top: 1.5px solid var(--line); }
+      .cost-table tr.grand td { font-weight: 700; font-size: 15.5px; border-top: 2px solid var(--accent); border-bottom: none; }
+      .cost-table tr.grand td.amt { color: var(--accent-ink); }
+      .cost-table tr.grand td .basis { font-weight: 500; }
+
+      footer.page-foot { color: var(--ink-3); font-size: 12.5px; max-width: 78ch; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page-head">
+        <h1>Dimensioning the Bank's LLMs — v2</h1>
+        <p>Interactive calculator for the AI Architecture note. Move the load inputs and the sizing follows the method of Appendix A of <em>AI Architecture for Secure Client Interactions and Fraud Defense</em>: model size is set by the task, and load sets replica counts. <strong>LLM 1 is Sarvam</strong> — it handles the open conversation with the customer; LLM 2 and LLM 3 are the bank's own models for guided interaction and document scrutiny.</p>
+        <span class="est-tag">Modeled planning estimates — not measurements. To be fixed by the pilot.</span>
+        <p class="scope-note"><strong>The RL NN (DRL defender) is NOT included in this dimensioning</strong> — it is a small CPU-only network, not a language model. Only the three language models below are sized here.</p>
+      </header>
+
+      <div class="layout">
+        <!-- ============ INPUTS ============ -->
+        <div class="inputs-col">
+          <section class="panel" aria-label="Load inputs">
+            <h2>Load inputs</h2>
+
+            <div class="field">
+              <div class="field-head">
+                <label for="in-sessions">Peak concurrent interaction sessions
+                  <span class="hint">Chat + voice sessions live at the same moment, bank-wide.</span>
+                </label>
+                <span class="num-wrap"><input type="number" id="num-sessions" min="100" max="50000" step="100" value="5000" /><span class="unit">sess.</span></span>
+              </div>
+              <input type="range" id="in-sessions" min="100" max="50000" step="100" value="5000" />
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <div class="field-head">
+                  <label for="in-turns">Turns per session</label>
+                  <span class="num-wrap"><input type="number" id="num-turns" min="1" max="30" step="1" value="6" /></span>
+                </div>
+                <input type="range" id="in-turns" min="1" max="30" step="1" value="6" />
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="in-tokens">Generated tokens / turn</label>
+                  <span class="num-wrap"><input type="number" id="num-tokens" min="20" max="600" step="10" value="120" /></span>
+                </div>
+                <input type="range" id="in-tokens" min="20" max="600" step="10" value="120" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <label for="in-voice">Voice share of sessions
+                  <span class="hint">Speech (ASR/TTS) rides with the front layer — shown for load picture, no separate sizing.</span>
+                </label>
+                <span class="num-wrap"><input type="number" id="num-voice" min="0" max="100" step="1" value="30" /><span class="unit">%</span></span>
+              </div>
+              <input type="range" id="in-voice" min="0" max="100" step="1" value="30" />
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <div class="field-head">
+                  <label for="in-docs">Case files / day
+                    <span class="hint">For document scrutiny.</span>
+                  </label>
+                  <span class="num-wrap"><input type="number" id="num-docs" min="50" max="50000" step="50" value="2000" /></span>
+                </div>
+                <input type="range" id="in-docs" min="50" max="50000" step="50" value="2000" />
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="in-pages">Pages per case file</label>
+                  <span class="num-wrap"><input type="number" id="num-pages" min="1" max="300" step="1" value="25" /></span>
+                </div>
+                <input type="range" id="in-pages" min="1" max="300" step="1" value="25" />
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-label="Model and deployment choices">
+            <h2>Model &amp; deployment choices</h2>
+
+            <div class="field">
+              <label>LLM 2 — Client interaction LLM size <span class="hint" style="display:inline">— bank's own, dense, fine-tuned</span></label>
+              <div class="seg" id="seg-inter" role="group" aria-label="Interaction model size">
+                <button type="button" data-val="7">7B</button>
+                <button type="button" data-val="10">10B</button>
+                <button type="button" data-val="14" aria-pressed="true">14B</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>LLM 3 — Document scrutiny LLM size <span class="hint" style="display:inline">— bank's own, 64–128K context</span></label>
+              <div class="seg" id="seg-scrut" role="group" aria-label="Scrutiny model size">
+                <button type="button" data-val="14" aria-pressed="true">14B</button>
+                <button type="button" data-val="20">20B</button>
+                <button type="button" data-val="30">30B</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Serving precision <span class="hint" style="display:inline">— for the bank's own models; INT8 is the Appendix A default</span></label>
+              <div class="seg" id="seg-prec" role="group" aria-label="Serving precision">
+                <button type="button" data-val="2">FP16</button>
+                <button type="button" data-val="1" aria-pressed="true">INT8</button>
+                <button type="button" data-val="0.5">4-bit</button>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <div class="field-head">
+                  <label for="in-nodes">Regional serving nodes
+                    <span class="hint">City head offices serving their branches.</span>
+                  </label>
+                  <span class="num-wrap"><input type="number" id="num-nodes" min="1" max="16" step="1" value="4" /></span>
+                </div>
+                <input type="range" id="in-nodes" min="1" max="16" step="1" value="4" />
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="in-headroom">Headroom
+                    <span class="hint">Spare capacity above peak.</span>
+                  </label>
+                  <span class="num-wrap"><input type="number" id="num-headroom" min="0" max="100" step="5" value="30" /><span class="unit">%</span></span>
+                </div>
+                <input type="range" id="in-headroom" min="0" max="100" step="5" value="30" />
+              </div>
+            </div>
+          </section>
+
+          <section class="panel assumptions" aria-label="Assumptions">
+            <h2>Assumptions <span class="sub">— the arithmetic behind the numbers</span></h2>
+            <ul>
+              <li><strong>Weights memory:</strong> FP16 ≈ 2 GB per billion parameters; INT8 halves it (1 GB/B); 4-bit quarters it (0.5 GB/B). Headroom for the KV cache comes from the 80 GB card, not from extra cards.</li>
+              <li><strong>Session token rate:</strong> <code>peak tokens/sec = concurrent sessions × turns × tokens/turn ÷ session length</code>. A session's turns are spread over its average length, so this is the sustained generation rate the replicas must carry.</li>
+              <li><strong>Interaction replicas:</strong> one replica (7–14B, INT8, one 80 GB GPU) sustains ≈ <span class="mono" id="formula-rep-rate">2,000</span> generated tokens/sec. <code>replicas = ceil(peak tokens/sec × (1 + headroom) ÷ replica rate)</code>, spread across the regional nodes.</li>
+              <li><strong>Front layer — Sarvam open conversation:</strong> Sarvam (LLM 1) handles the open, free-form conversation with the customer. 30B mixture-of-experts at FP16 ≈ 60 GB of weights, served on 2 × 80 GB GPUs per regional node (Appendix A default). Speech (ASR/TTS) runs alongside it on the same node.</li>
+              <li><strong>Scrutiny batch:</strong> case files are processed in a nightly window at ≈ <span class="mono" id="formula-scr-rate">1,500</span> tokens/sec per GPU on long documents. <code>GPUs = ceil(daily tokens ÷ (window × rate) × (1 + headroom))</code>, held inside the Appendix A band of 2–4 GPUs.</li>
+              <li><strong>Cost anchors (from §12 of the note):</strong> one 8 × 80 GB GPU server ≈ $150K–$200K; the $175K midpoint gives a unit GPU price of ≈ $21.9K per GPU, applied to each component's computed GPU count in the cost table below. CPU/host servers (gateway, guardrails, defender host, orchestration) are priced per server. Subtotal plus 20% for storage, network and backup. Excludes manpower, installation, facilities and licence fees. ₹83 per $1. All costs are indicative planning estimates — not vendor quotations.</li>
+            </ul>
+            <div class="assump-grid">
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-tokpage">Tokens per page</label>
+                  <span class="num-wrap"><input type="number" id="num-tokpage" min="100" max="2000" step="50" value="500" /></span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-sessionlen">Avg session length (sec)</label>
+                  <span class="num-wrap"><input type="number" id="num-sessionlen" min="60" max="1800" step="30" value="300" /></span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-reprate">Replica rate (tokens/sec)</label>
+                  <span class="num-wrap"><input type="number" id="num-reprate" min="500" max="6000" step="100" value="2000" /></span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-scrrate">Scrutiny rate / GPU (tokens/sec)</label>
+                  <span class="num-wrap"><input type="number" id="num-scrrate" min="300" max="5000" step="100" value="1500" /></span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-window">Scrutiny batch window (hours)</label>
+                  <span class="num-wrap"><input type="number" id="num-window" min="2" max="24" step="1" value="8" /></span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-gpuprice">Unit GPU price ($)</label>
+                  <span class="num-wrap"><input type="number" id="num-gpuprice" min="5000" max="60000" step="125" value="21875" /></span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-cpuprice">CPU / host server price ($)</label>
+                  <span class="num-wrap"><input type="number" id="num-cpuprice" min="1000" max="60000" step="500" value="10000" /></span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head">
+                  <label for="num-cpuservers">CPU / host servers (count)</label>
+                  <span class="num-wrap"><input type="number" id="num-cpuservers" min="0" max="32" step="1" value="2" /></span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ============ OUTPUTS ============ -->
+        <div class="results-col">
+          <div class="verdict" role="status">
+            <span class="vlabel">Verdict at this load</span>
+            <span id="verdict-text">—</span>
+          </div>
+
+          <div class="totals">
+            <div class="total-card">
+              <span class="k">Total GPUs</span>
+              <span class="v" id="tot-gpus">–</span>
+              <span class="d" id="tot-gpus-d"></span>
+            </div>
+            <div class="total-card">
+              <span class="k">Regional serving</span>
+              <span class="v" id="tot-regional">–</span>
+              <span class="d">Sarvam front layer (open conversation) + interaction replicas</span>
+            </div>
+            <div class="total-card">
+              <span class="k">National HQ</span>
+              <span class="v" id="tot-hq">–</span>
+              <span class="d">document scrutiny pool</span>
+            </div>
+          </div>
+
+          <article class="comp">
+            <div class="comp-head">
+              <h3>LLM 1 — Sarvam Multilingual Front Layer <span class="role">Open conversation — Sarvam handles the free, open-ended conversation with the customer, in the customer's language, Hindi–English code-mixed</span></h3>
+              <span class="level">Regional nodes</span>
+            </div>
+            <p class="desc"><strong>Sarvam — open conversation.</strong> This is the Sarvam model (licensed, locally deployed): it carries the open conversation — the customer speaks freely, not in fixed menus — in Hindi / English / Hinglish. 30B mixture-of-experts · 32K context · real-time conversation. Speech (ASR/TTS) runs on the same node — no separate sizing. Guided, transactional flows then pass to LLM 2.</p>
+            <div class="stats">
+              <div class="stat"><span class="k">Nodes</span><span class="v" id="front-nodes">–</span></div>
+              <div class="stat"><span class="k">GPUs</span><span class="v" id="front-gpus">–</span></div>
+              <div class="stat"><span class="k">Weights / node</span><span class="v" id="front-vram">–</span></div>
+              <div class="stat"><span class="k">Voice sessions</span><span class="v" id="front-voice">–</span></div>
+            </div>
+            <p class="note-line">2 × 80 GB GPUs per node per Appendix A — the 60 GB of FP16 weights plus KV cache and the speech pair fit the pair of cards.</p>
+            <div class="arch">
+              <span class="arch-label">Representative architecture for this size class (not a specific checkpoint)</span>
+              <div class="arch-grid">
+                <div><span class="k">Layers (transformer blocks)</span><span class="v">~48</span></div>
+                <div><span class="k">Hidden size (nodes / layer)</span><span class="v">~3,072</span></div>
+                <div><span class="k">Experts per layer</span><span class="v">8</span></div>
+                <div><span class="k">Total weights</span><span class="v">~30B</span></div>
+                <div><span class="k">Active weights / token</span><span class="v">~5B</span></div>
+                <div><span class="k">Vocabulary</span><span class="v">~128K–256K tokens</span></div>
+              </div>
+              <p class="input-line">Input: token embeddings — embedding dimension = hidden size (~3,072); vocab ~128K–256K tokens for an Indic tokenizer.</p>
+            </div>
+          </article>
+
+          <article class="comp">
+            <div class="comp-head">
+              <h3>LLM 2 — Client Interaction LLM <span class="role">(bank's own) — guided flows and retrieval-grounded answers</span></h3>
+              <span class="level">Regional nodes</span>
+            </div>
+            <p class="desc">Dense, fine-tuned on bank documents · 8–32K context · 1 × 80 GB GPU per replica. Load sets the replica count; model size does not grow with customers.</p>
+            <div class="stats">
+              <div class="stat"><span class="k">Peak generation</span><span class="v" id="inter-rate">–</span></div>
+              <div class="stat"><span class="k">Replicas</span><span class="v" id="inter-replicas">–</span></div>
+              <div class="stat"><span class="k">Per node</span><span class="v" id="inter-pernode">–</span></div>
+              <div class="stat"><span class="k">Weights / replica</span><span class="v" id="inter-vram">–</span></div>
+            </div>
+            <p class="note-line" id="inter-note"></p>
+            <div class="arch">
+              <span class="arch-label">Representative architecture for this size class (not a specific checkpoint)</span>
+              <div class="arch-grid">
+                <div><span class="k">Layers (transformer blocks)</span><span class="v" id="arch-inter-layers">–</span></div>
+                <div><span class="k">Hidden size (nodes / layer)</span><span class="v" id="arch-inter-hidden">–</span></div>
+                <div><span class="k">Total weights</span><span class="v" id="arch-inter-weights">–</span></div>
+                <div><span class="k">Vocabulary</span><span class="v">~128K–256K tokens</span></div>
+              </div>
+              <p class="input-line">Input: token embeddings — embedding dimension = hidden size (<span class="mono" id="arch-inter-emb">–</span>); vocab ~128K–256K tokens for an Indic tokenizer.</p>
+            </div>
+          </article>
+
+          <article class="comp">
+            <div class="comp-head">
+              <h3>LLM 3 — Document Scrutiny LLM <span class="role">(bank's own) — reads case files and the audit log; drafts summaries and STR narratives</span></h3>
+              <span class="level">National HQ</span>
+            </div>
+            <p class="desc">64–128K context for case files and audit logs · batch / offline, reads records and touches nothing · shares the HQ pool off-peak.</p>
+            <div class="stats">
+              <div class="stat"><span class="k">Daily tokens</span><span class="v" id="scr-tokens">–</span></div>
+              <div class="stat"><span class="k">GPUs</span><span class="v" id="scr-gpus">–</span></div>
+              <div class="stat"><span class="k">Weights total</span><span class="v" id="scr-vram">–</span></div>
+              <div class="stat"><span class="k">Window</span><span class="v" id="scr-window">–</span></div>
+            </div>
+            <p class="note-line" id="scr-note"></p>
+            <div class="arch">
+              <span class="arch-label">Representative architecture for this size class (not a specific checkpoint)</span>
+              <div class="arch-grid">
+                <div><span class="k">Layers (transformer blocks)</span><span class="v" id="arch-scr-layers">–</span></div>
+                <div><span class="k">Hidden size (nodes / layer)</span><span class="v" id="arch-scr-hidden">–</span></div>
+                <div><span class="k">Total weights</span><span class="v" id="arch-scr-weights">–</span></div>
+                <div><span class="k">Vocabulary</span><span class="v">~128K–256K tokens</span></div>
+              </div>
+              <p class="input-line">Input: token embeddings — embedding dimension = hidden size (<span class="mono" id="arch-scr-emb">–</span>); vocab ~128K–256K tokens for an Indic tokenizer.</p>
+            </div>
+          </article>
+
+          <article class="comp">
+            <div class="comp-head">
+              <h3>Branches</h3>
+              <span class="level">Endpoints only</span>
+            </div>
+            <p class="desc">No models, no GPUs, no local data store. Branch staff and customer devices are endpoints of the regional node above them; branch sizing scales with branch count, not with compute.</p>
+          </article>
+
+          <article class="comp" aria-label="Indicative cost breakdown">
+            <div class="comp-head">
+              <h3>Indicative cost (US$)</h3>
+              <span class="level">Planning estimate</span>
+            </div>
+            <p class="desc">Each line picks up the capacity computed above — GPU capacity priced per GPU, CPU/host capacity per server. <strong>Indicative planning estimate — not a vendor quotation.</strong> Excludes manpower, installation, facilities and licence fees.</p>
+            <table class="cost-table">
+              <thead>
+                <tr><th scope="col">Component</th><th scope="col" class="r">Indicative US$</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>LLM 1 — Sarvam front layer (open conversation)<span class="basis" id="cost-front-basis">–</span></td>
+                  <td class="amt r" id="cost-front">–</td>
+                </tr>
+                <tr>
+                  <td>LLM 2 — Client interaction<span class="basis" id="cost-inter-basis">–</span></td>
+                  <td class="amt r" id="cost-inter">–</td>
+                </tr>
+                <tr>
+                  <td>LLM 3 — Document scrutiny<span class="basis" id="cost-scr-basis">–</span></td>
+                  <td class="amt r" id="cost-scr">–</td>
+                </tr>
+                <tr>
+                  <td>CPU / host servers<span class="basis" id="cost-cpu-basis">gateway, guardrails, defender host, orchestration</span></td>
+                  <td class="amt r" id="cost-cpu">–</td>
+                </tr>
+                <tr class="sub">
+                  <td>Subtotal</td>
+                  <td class="amt r" id="cost-subtotal">–</td>
+                </tr>
+                <tr>
+                  <td>Storage, network &amp; backup<span class="basis">+20% of subtotal</span></td>
+                  <td class="amt r" id="cost-infra">–</td>
+                </tr>
+                <tr class="grand">
+                  <td>Total indicative cost<span class="basis" id="cost-total-inr">–</span></td>
+                  <td class="amt r" id="cost-total">–</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+      </div>
+
+      <footer class="page-foot">
+        <p>All figures on this page are modeled planning estimates derived from the stated assumptions and the anchors in the AI Architecture note (Appendix A and §12) — not vendor specifications and not measurements. Model dimensions and replica counts are to be fixed by the pilot: one regional serving node, scrutiny on closed cases.</p>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+        var $ = function (id) { return document.getElementById(id); };
+        var fmt = function (n) { return Math.round(n).toLocaleString("en-US"); };
+        var fmtIN = function (n) { return Math.round(n).toLocaleString("en-IN"); };
+
+        // slider <-> number pairs
+        var pairs = [
+          ["in-sessions", "num-sessions"],
+          ["in-turns", "num-turns"], ["in-tokens", "num-tokens"],
+          ["in-voice", "num-voice"], ["in-docs", "num-docs"],
+          ["in-pages", "num-pages"], ["in-nodes", "num-nodes"],
+          ["in-headroom", "num-headroom"]
+        ];
+        pairs.forEach(function (p) {
+          var r = $(p[0]), n = $(p[1]);
+          r.addEventListener("input", function () { n.value = r.value; compute(); });
+          n.addEventListener("input", function () {
+            var v = parseFloat(n.value);
+            if (!isNaN(v)) { r.value = Math.min(Math.max(v, +r.min), +r.max); }
+            compute();
+          });
+          n.addEventListener("change", function () {
+            var v = parseFloat(n.value);
+            if (isNaN(v)) { n.value = r.value; }
+          });
+        });
+        ["num-tokpage", "num-sessionlen", "num-reprate", "num-scrrate", "num-window",
+         "num-gpuprice", "num-cpuprice", "num-cpuservers"].forEach(function (id) {
+          $(id).addEventListener("input", compute);
+        });
+
+        // representative architectures per size class (not specific checkpoints)
+        var archInter = { 7: { layers: 32, hidden: 4096 }, 10: { layers: 36, hidden: 4608 }, 14: { layers: 48, hidden: 5120 } };
+        var archScrut = { 14: { layers: 48, hidden: 5120 }, 20: { layers: 48, hidden: 6144 }, 30: { layers: 60, hidden: 6656 } };
+
+        // segmented controls
+        var choice = { inter: 14, scrut: 14, prec: 1 };
+        function wireSeg(id, key) {
+          var seg = $(id);
+          seg.addEventListener("click", function (e) {
+            var b = e.target.closest("button");
+            if (!b) return;
+            seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+            b.setAttribute("aria-pressed", "true");
+            choice[key] = parseFloat(b.getAttribute("data-val"));
+            compute();
+          });
+        }
+        wireSeg("seg-inter", "inter");
+        wireSeg("seg-scrut", "scrut");
+        wireSeg("seg-prec", "prec");
+
+        function val(id, fallback) {
+          var v = parseFloat($(id).value);
+          return (isNaN(v) || v <= 0) ? fallback : v;
+        }
+        function precName(bpp) { return bpp === 2 ? "FP16" : (bpp === 1 ? "INT8" : "4-bit"); }
+
+        function compute() {
+          var sessions  = val("num-sessions", 5000);
+          var turns     = val("num-turns", 6);
+          var tokTurn   = val("num-tokens", 120);
+          var voicePct  = Math.min(100, Math.max(0, parseFloat($("num-voice").value) || 0));
+          var docs      = val("num-docs", 2000);
+          var pages     = val("num-pages", 25);
+          var nodes     = Math.max(1, Math.round(val("num-nodes", 4)));
+          var headroom  = Math.max(0, parseFloat($("num-headroom").value) || 0) / 100;
+
+          var tokPage   = val("num-tokpage", 500);
+          var sessLen   = val("num-sessionlen", 300);
+          var repRate   = val("num-reprate", 2000);
+          var scrRate   = val("num-scrrate", 1500);
+          var windowH   = val("num-window", 8);
+
+          $("formula-rep-rate").textContent = fmt(repRate);
+          $("formula-scr-rate").textContent = fmt(scrRate);
+
+          // ---- Front layer (regional) ----
+          var frontGPUsPerNode = 2;
+          var frontGPUs = frontGPUsPerNode * nodes;
+          var frontWeights = 30 * 2; // 30B MoE at FP16
+          var voiceSessions = Math.round(sessions * voicePct / 100);
+
+          // ---- Interaction LLM (regional) ----
+          var peakTokSec = sessions * turns * tokTurn / sessLen;
+          var replicas = Math.max(1, Math.ceil(peakTokSec * (1 + headroom) / repRate));
+          var perNode = Math.ceil(replicas / nodes);
+          var interWeights = choice.inter * choice.prec;
+
+          // ---- Scrutiny LLM (HQ) ----
+          var dailyTokens = docs * pages * tokPage;
+          var rawScr = dailyTokens / (windowH * 3600 * scrRate) * (1 + headroom);
+          var scrGPUs = Math.ceil(rawScr);
+          var scrNote = "", scrWarn = false;
+          if (scrGPUs > 4) {
+            scrNote = "Raw requirement is " + scrGPUs + " GPUs — above the Appendix A band of 2–4. Either widen the batch window, split the pool, or accept a larger headquarters GPU pool than the note proposes.";
+            scrWarn = true;
+          } else if (scrGPUs < 2) {
+            scrGPUs = 2;
+            scrNote = "Computed need is under one GPU at this load; held at the Appendix A minimum of 2 GPUs (working pool plus failover / off-peak sharing).";
+          } else {
+            scrNote = "Inside the Appendix A band of 2–4 GPUs.";
+          }
+          var scrWeights = choice.scrut * choice.prec;
+
+          // ---- Totals & cost (priced from the computed capacities) ----
+          var regionalGPUs = frontGPUs + replicas;
+          var hqGPUs = scrGPUs;
+          var totalGPUs = regionalGPUs + hqGPUs;
+          var gpuPrice = val("num-gpuprice", 21875);
+          var cpuPrice = val("num-cpuprice", 10000);
+          var cpuCount = Math.max(0, Math.round(parseFloat($("num-cpuservers").value) || 0));
+          var costFront = frontGPUs * gpuPrice;
+          var costInter = replicas * gpuPrice;
+          var costScr = scrGPUs * gpuPrice;
+          var costCpu = cpuCount * cpuPrice;
+          var costSub = costFront + costInter + costScr + costCpu;
+          var costInfra = costSub * 0.2;
+          var costUSD = costSub + costInfra;
+          var costINR = costUSD * 83;
+
+          // ---- Render ----
+          $("front-nodes").textContent = fmt(nodes);
+          $("front-gpus").innerHTML = fmt(frontGPUs) + " <small>(" + frontGPUsPerNode + " / node)</small>";
+          $("front-vram").innerHTML = fmt(frontWeights) + " <small>GB FP16</small>";
+          $("front-voice").innerHTML = fmt(voiceSessions) + " <small>of " + fmt(sessions) + "</small>";
+
+          $("inter-rate").innerHTML = fmt(peakTokSec) + " <small>tok/s</small>";
+          $("inter-replicas").textContent = fmt(replicas);
+          $("inter-pernode").innerHTML = "≈ " + fmt(perNode) + " <small>× " + fmt(nodes) + " nodes</small>";
+          $("inter-vram").innerHTML = fmt(interWeights) + " <small>GB " + precName(choice.prec) + "</small>";
+          $("inter-note").textContent = choice.inter + "B at " + precName(choice.prec) + " = " + fmt(interWeights) + " GB of weights — one replica per 80 GB GPU, the rest of the card carries the KV cache. Replicas include " + Math.round(headroom * 100) + "% headroom.";
+
+          $("scr-tokens").innerHTML = (dailyTokens / 1e6).toFixed(1) + " <small>M / day</small>";
+          $("scr-gpus").textContent = fmt(scrGPUs);
+          $("scr-vram").innerHTML = fmt(scrWeights) + " <small>GB " + precName(choice.prec) + "</small>";
+          $("scr-window").innerHTML = fmt(windowH) + " <small>h nightly</small>";
+          var sn = $("scr-note");
+          sn.textContent = scrNote;
+          sn.className = "note-line" + (scrWarn ? " warn" : "");
+
+          var ai = archInter[choice.inter], as = archScrut[choice.scrut];
+          $("arch-inter-layers").textContent = "~" + fmt(ai.layers);
+          $("arch-inter-hidden").textContent = fmt(ai.hidden);
+          $("arch-inter-weights").textContent = "~" + choice.inter + "B";
+          $("arch-inter-emb").textContent = fmt(ai.hidden);
+          $("arch-scr-layers").textContent = "~" + fmt(as.layers);
+          $("arch-scr-hidden").textContent = fmt(as.hidden);
+          $("arch-scr-weights").textContent = "~" + choice.scrut + "B";
+          $("arch-scr-emb").textContent = fmt(as.hidden);
+
+          $("tot-gpus").textContent = fmt(totalGPUs);
+          $("tot-gpus-d").textContent = fmt(regionalGPUs) + " regional + " + fmt(hqGPUs) + " at HQ";
+          $("tot-regional").innerHTML = fmt(regionalGPUs) + " <small>GPUs</small>";
+          $("tot-hq").innerHTML = fmt(hqGPUs) + " <small>GPUs</small>";
+
+          $("cost-front-basis").textContent = fmt(frontGPUs) + " GPUs × $" + fmt(gpuPrice) + " / GPU";
+          $("cost-front").textContent = "$" + fmt(costFront);
+          $("cost-inter-basis").textContent = fmt(replicas) + " replica GPU" + (replicas > 1 ? "s" : "") + " × $" + fmt(gpuPrice) + " / GPU";
+          $("cost-inter").textContent = "$" + fmt(costInter);
+          $("cost-scr-basis").textContent = fmt(scrGPUs) + " GPUs × $" + fmt(gpuPrice) + " / GPU";
+          $("cost-scr").textContent = "$" + fmt(costScr);
+          $("cost-cpu-basis").textContent = "gateway, guardrails, defender host, orchestration — " + fmt(cpuCount) + " server" + (cpuCount !== 1 ? "s" : "") + " × $" + fmt(cpuPrice);
+          $("cost-cpu").textContent = "$" + fmt(costCpu);
+          $("cost-subtotal").textContent = "$" + fmt(costSub);
+          $("cost-infra").textContent = "$" + fmt(costInfra);
+          $("cost-total").textContent = "$" + fmt(costUSD);
+          $("cost-total-inr").textContent = "≈ ₹" + (costINR >= 1e7 ? (costINR / 1e7).toFixed(2) + " crore" : fmtIN(costINR)) + " at ₹83 / $1";
+
+          $("verdict-text").textContent =
+            "At this load the interaction layer needs " + fmt(replicas) + " replica" + (replicas > 1 ? "s" : "") +
+            " of the " + choice.inter + "B model across " + fmt(nodes) + " regional node" + (nodes > 1 ? "s" : "") +
+            ", behind the Sarvam front layer (LLM 1, open conversation) on " + fmt(frontGPUs) + " GPUs; document scrutiny " +
+            (scrWarn ? "outgrows the note's 2–4 GPU headquarters band" : "fits the " + fmt(scrGPUs) + "-GPU headquarters pool") +
+            ". Total: " + fmt(totalGPUs) + " GPUs, ≈ $" + fmt(costUSD) + " (₹" + (costINR / 1e7).toFixed(2) + " crore) of infrastructure.";
+        }
+
+        compute();
+      })();
+    </script>
+  </body>
+</html>

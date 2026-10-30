@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tokenised 6G Site — ARPU Calculator (India)</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 1080px; margin: 0 auto; padding: 20px; color: #222; background: #fafafa; }
+  h1 { font-size: 1.35em; margin-bottom: 0; }
+  .sub { color: #555; margin: 4px 0 18px; font-size: 0.93em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; }
+  .card h2 { font-size: 1.02em; margin: 0 0 10px; color: #0b5394; }
+  label { display: flex; justify-content: space-between; align-items: center; margin: 7px 0; font-size: 0.9em; }
+  label span { flex: 1; padding-right: 8px; }
+  input[type=number] { width: 110px; padding: 4px 6px; font-size: 0.93em; }
+  .slice-row { display: flex; gap: 8px; align-items: center; margin: 4px 0; font-size: 0.86em; }
+  .slice-row .tag { width: 58px; font-weight: bold; }
+  .eb { color: #0b5394; } .ur { color: #b45309; } .mi { color: #15803d; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 8px; }
+  th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f0f4f8; }
+  tr.total td { font-weight: bold; background: #eef6ee; }
+  tr.sub td { padding-left: 22px; color: #444; }
+  .btns { margin: 12px 0; }
+  button { padding: 7px 14px; margin-right: 8px; font-size: 0.9em; cursor: pointer; }
+  .note { font-size: 0.84em; color: #555; margin-top: 12px; }
+  .arpu { background: #fff; border: 2px solid #0b5394; border-radius: 8px; padding: 14px 16px; margin-top: 14px; }
+  .arpu .big { font-size: 1.5em; font-weight: bold; color: #0b5394; }
+</style>
+</head>
+<body>
+<h1>Tokenised 6G Site &mdash; ARPU Calculator</h1>
+<p class="sub">Companion to <i>Tokenisation of Future 6G Assets as a Strategy to Improve ARPU for Operators</i>.
+Every assumption is an input &mdash; all on a <b>per-hour, typical urban site</b> basis. A token sells only its asset&rsquo;s <b>spare</b> capacity: as your own traffic (subscribers &times; data per sub) or your own GPU use rises, the sellable spare shrinks &mdash; token income can then rise only through the token&rsquo;s base value. <i>(v3 &mdash; occupancy-linked, minimum&ndash;central range, fully linked)</i> Demand splits across
+<b class="eb">eMBB</b>, <b class="ur">URLLC</b>, <b class="mi">mIoT</b> slices (mix from the RANSlice twin). All figures in &#8377;.</p>
+
+<div class="btns">
+  <button onclick="setDefaults()">Paper defaults (minimum assumptions)</button>
+</div>
+
+<div class="grid">
+<div>
+  <div class="card">
+    <h2>Your network (your figures)</h2>
+    <label><span>Subscribers on site</span><input type="number" id="subs" value="2500" step="100"></label>
+    <label><span>Current ARPU (&#8377;/month, TRAI ~191)</span><input type="number" id="arpu0" value="191" step="1"></label>
+    <label><span>Data per sub (GB/month, TRAI 25.5)</span><input type="number" id="gbSub" value="25.51" step="0.5"></label>
+    <label><span>Annualised site cost (&#8377; lakh/yr)</span><input type="number" id="siteCost" value="20" step="1"></label>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Token assumptions — play with these</h2>
+    <label><span><b>Site type</b> (sets coverage, price &amp; spectrum)</span><select id="siteType" onchange="setSiteType()" style="padding:4px 6px;font-size:0.93em">
+      <option value="urban" selected>Urban</option>
+      <option value="suburban">Suburban</option>
+      <option value="rural">Rural</option>
+    </select></label>
+    <h3 style="font-size:0.95em;color:#333;margin:10px 0 4px">Stream 1 — Shared radio &amp; spectrum</h3>
+    <label><span><b>Link spare capacity to occupancy</b> (both streams)</span><input type="checkbox" id="occLink" checked style="width:18px;height:18px"></label>
+    <label><span>Buyer bandwidth (MHz)</span><input type="number" id="bw" value="40" step="1"></label>
+    <label><span>Coverage (km&sup2;)</span><input type="number" id="cov" value="2" step="0.1"></label>
+    <div class="note" id="covNote" style="margin:0 0 6px"></div>
+    <label><span>Hours per day</span><input type="number" id="hrs1" value="4" step="0.5"></label>
+    <label><span>Hours per day — central</span><input type="number" id="hrs1c" value="6" step="0.5"></label>
+    <label><span>Days per year</span><input type="number" id="days1" value="300" step="5"></label>
+    <label><span>Days per year — central</span><input type="number" id="days1c" value="350" step="5"></label>
+    <label><span>Base price (&#8377;/MHz&middot;hr&middot;km&sup2;)</span><input type="number" id="price1" value="5" step="0.5"></label>
+    <label><span>Base price — central (&#8377;/MHz&middot;hr&middot;km&sup2;)</span><input type="number" id="price1c" value="8" step="0.5"></label>
+    <label><span>Seller cost (&#8377;/hr)</span><input type="number" id="cost1" value="60" step="5"></label>
+    <label><span>Own-network occupancy at reference load (%)</span><input type="number" id="occRef1" value="50" step="1" min="0" max="95"></label>
+    <div class="slice-row"><span class="tag eb">eMBB</span> % <input type="number" id="s1e" value="65" min="0" max="100"> mult <input type="number" id="m1e" value="1" step="0.1"></div>
+    <div class="slice-row"><span class="tag ur">URLLC</span> % <input type="number" id="s1u" value="30" min="0" max="100"> mult <input type="number" id="m1u" value="1.5" step="0.1"></div>
+    <div class="slice-row"><span class="tag mi">mIoT</span> % <input type="number" id="s1m" value="5" min="0" max="100"> mult <input type="number" id="m1m" value="0.6" step="0.1"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3 style="font-size:0.95em;color:#333;margin:10px 0 4px">Stream 2 — Edge compute (GPU-hours)</h3>
+    <label><span>GPU pool (GPU-hours / day)</span><input type="number" id="gpuHrs" value="24" step="1"></label>
+    <label><span>GPU pool&rsquo;s own use (%)</span><input type="number" id="gpuOwn" value="35" step="1" min="0" max="95"></label>
+    <label><span>GPU pool — central (GPU-hours / day)</span><input type="number" id="gpuHrsc" value="48" step="1"></label>
+    <label><span>Days per year</span><input type="number" id="days2" value="300" step="5"></label>
+    <label><span>Wholesale share (GPU-hrs/day)</span><input type="number" id="wsHrs" value="6" step="1"></label>
+    <label><span>Wholesale share — central (GPU-hrs/day)</span><input type="number" id="wsHrsc" value="12" step="1"></label>
+    <label><span>Wholesale price (&#8377;/GPU-hr)</span><input type="number" id="wsPrice" value="40" step="5"></label>
+    <label><span>Wholesale price — central (&#8377;/GPU-hr)</span><input type="number" id="wsPricec" value="50" step="5"></label>
+    <label><span>VMs per GPU-hour</span><input type="number" id="vmPerGpu" value="4" step="1"></label>
+    <label><span>VM utilisation %</span><input type="number" id="vmUtil" value="40" min="0" max="100"></label>
+    <label><span>VM utilisation — central %</span><input type="number" id="vmUtilc" value="60" min="0" max="100"></label>
+    <label><span>VM price (&#8377;/VM-hr)</span><input type="number" id="vmPrice" value="8" step="1"></label>
+    <label><span>VM price — central (&#8377;/VM-hr)</span><input type="number" id="vmPricec" value="12" step="1"></label>
+    <label><span>Power+mgmt (&#8377;/GPU-hr)</span><input type="number" id="cost2" value="12" step="1"></label>
+  </div>
+</div>
+
+<div>
+  <div class="card">
+    <h2>Revenue table (per month)</h2>
+    <table id="out"></table>
+  </div>
+  <div class="arpu">
+    <h2 style="color:#0b5394;margin:0 0 8px">New revenue stream (outside ARPU)</h2>
+    <div id="arpuOut"></div>
+    <div class="note" id="occOut"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h2>Reading the model</h2>
+    <p class="note"><b>Range (v3):</b> every figure in the revenue table is computed live from the inputs &mdash; nothing is hard-coded. Each stream is computed twice, at the <b>minimum</b> assumptions and at the <b>central</b> assumptions (the paper&rsquo;s Table 1 pair), and shown as a band. Change any assumption &mdash; minimum or central &mdash; and its end of every band moves.</p>
+    <p class="note"><b>Occupancy rule (v2):</b> each token sells only its asset&rsquo;s spare capacity. Radio spare falls as own traffic grows (subscribers &times; GB/sub, measured against the site type&rsquo;s reference load); compute spare falls as the GPU pool&rsquo;s own use rises. With occupancy accounted for, token income rises only by raising the token&rsquo;s base value &mdash; never by assuming spare that own traffic has already taken. <b>Base-price anchor:</b> Delhi 3.3&nbsp;GHz cleared at &asymp;&#8377;40 crore/MHz in the 2022 auction; amortised over the licence area and the sellable window (&asymp;1,500 h/yr of the 20-year term) that is &asymp;&#8377;9/MHz&middot;hr&middot;km&sup2;. The adopted base prices &mdash; urban &#8377;5, suburban &#8377;2.5, rural &#8377;1 &mdash; sit at or below that anchor and scale down with circle prices.</p>
+    <p class="note">Slice shares re-weight the Stream-1 price (URLLC premium for latency, mIoT discount for bulk).
+    Stream 2 is the thinner-evidence stream: GPU utilisation and VM pricing are <i>reasonable assumptions</i>, not measured data.
+    Personal VMs complement handset AI (needed anyway for latency/privacy/offline) and are billed separately.
+    All prices are assumed until a registry publishes cleared prices &mdash; the claim is the margin of clearance.</p>
+  </div>
+</div>
+</div>
+
+<script>
+const $ = id => parseFloat(document.getElementById(id).value) || 0;
+const fmt = x => (Math.round(x*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2, maximumFractionDigits:2});
+const norm = (a,b,c) => { const s=a+b+c; return s>0?[a/s,b/s,c/s]:[0,0,0]; };
+let REF = {subs:2500, occ:50, gpu:35};  // reference load of the selected site type
+
+function calc(){
+  const subs=$('subs'), arpu0=$('arpu0');
+  // Occupancy linkage (v2): each asset's sellable spare scales with (1 - own occupancy)
+  const occOn = document.getElementById('occLink').checked;
+  const occRef = $('occRef1');
+  const occNow = Math.min(95, occRef * (subs/REF.subs) * ($('gbSub')/25.51));
+  const f1 = occOn ? Math.max(0, 1-occNow/100) / Math.max(0.01, 1-occRef/100) : 1;
+  const gpuOwn = $('gpuOwn');
+  const f2 = occOn ? Math.max(0, 1-gpuOwn/100) / Math.max(0.01, 1-REF.gpu/100) : 1;
+  const [e1,u1,m1]=norm($('s1e'),$('s1u'),$('s1m'));
+  const wavg = e1*$('m1e')+u1*$('m1u')+m1*$('m1m');
+  const rng = (a,b) => Math.abs(a-b) < 0.005 ? fmt(a) : fmt(a)+' \u2013 '+fmt(b);
+  function stream1(price, hrs, days){
+    const hrsYr = hrs*days;
+    const gross = $('bw')*$('cov')*price*wavg*hrsYr/12 * f1;
+    const cost = $('cost1')*hrsYr/12 * f1;
+    const slices = [[ 'eMBB',e1,$('m1e'),'eb'],['URLLC',u1,$('m1u'),'ur'],['mIoT',m1,$('m1m'),'mi']]
+      .map(([n,sh,mu,cls])=>({n,cls,g:$('bw')*$('cov')*price*sh*mu*hrsYr/12*f1, c:cost*sh}));
+    return {gross, cost, net: gross-cost, slices};
+  }
+  function stream2(pool, wsH, wsP, vmU, vmP){
+    const wsGross = wsH*wsP*$('days2')/12;
+    const vmGross = (pool-wsH)*$('vmPerGpu')*vmU/100*vmP*$('days2')/12;
+    const gross = (wsGross+vmGross) * f2;
+    const cost = $('cost2')*pool*$('days2')/12 * f2;
+    return {gross, cost, net: gross-cost, ws: wsGross*f2, vm: vmGross*f2};
+  }
+  const A1 = stream1($('price1'), $('hrs1'), $('days1'));
+  const B1 = stream1($('price1c'), $('hrs1c'), $('days1c'));
+  const A2 = stream2($('gpuHrs'), $('wsHrs'), $('wsPrice'), $('vmUtil'), $('vmPrice'));
+  const B2 = stream2($('gpuHrsc'), $('wsHrsc'), $('wsPricec'), $('vmUtilc'), $('vmPricec'));
+  const tnA = A1.net + A2.net, tnB = B1.net + B2.net;
+  const perA = tnA/subs, perB = tnB/subs;
+  const liftA = perA/arpu0*100, liftB = perB/arpu0*100;
+
+  let h='<tr><th>Stream</th><th>Gross</th><th>Cost</th><th>Net</th></tr>';
+  h+=`<tr><td><b>1. Shared radio &amp; spectrum</b></td><td>${rng(A1.gross,B1.gross)}</td><td>${rng(A1.cost,B1.cost)}</td><td>${rng(A1.net,B1.net)}</td></tr>`;
+  A1.slices.forEach((r,i)=>{const q=B1.slices[i]; h+=`<tr class="sub"><td><span class="${r.cls}">${r.n}</span></td><td>${rng(r.g,q.g)}</td><td>${rng(r.c,q.c)}</td><td>${rng(r.net ?? (r.g-r.c), q.g-q.c)}</td></tr>`;});
+  h+=`<tr><td><b>2. Edge compute</b> (wholesale ${rng(A2.ws,B2.ws)} + VMs ${rng(A2.vm,B2.vm)})</td><td>${rng(A2.gross,B2.gross)}</td><td>${rng(A2.cost,B2.cost)}</td><td>${rng(A2.net,B2.net)}</td></tr>`;
+  h+=`<tr class="total"><td>Token revenue / month</td><td>${rng(A1.gross+A2.gross, B1.gross+B2.gross)}</td><td>${rng(A1.cost+A2.cost, B1.cost+B2.cost)}</td><td>${rng(tnA,tnB)}</td></tr>`;
+  document.getElementById('out').innerHTML=h;
+
+  const perKm2 = $('bw')*$('price1')*wavg*$('hrs1')*$('days1')/12;
+  document.getElementById('covNote').innerHTML =
+    $('cov') > 3 && $('price1') > 2
+      ? `<b>Note:</b> ${$('cov')} km&sup2; is rural-scale. Model a rural site by decreasing the bandwidth (MHz) above &mdash; not by increasing the area &mdash; and reduce the base price: rural spectrum clears lower. (&asymp;&#8377;${fmt(perKm2)} per km&sup2;/month at current inputs)`
+      : `&asymp; &#8377;${fmt(perKm2)} per km&sup2;/month at the current price.`;
+  document.getElementById('arpuOut').innerHTML =
+    `Your ARPU stays <b>&#8377;${fmt(arpu0)}</b>/sub/month &mdash; untouched.<br>`+
+    `Token revenue is a <b>separate wholesale stream</b>: <span class="big">&#8377;${rng(tnA,tnB)}</span>/month, i.e. <b>&#8377;${rng(perA,perB)}/sub/month</b><br>`+
+    `That is <b>${liftA.toFixed(1)}&ndash;${liftB.toFixed(1)}% of ARPU</b> in new money, with tariffs and your user base unchanged.`;
+  document.getElementById('occOut').innerHTML = occOn
+    ? `<b>Occupancy link ON:</b> own-network occupancy &asymp; <b>${occNow.toFixed(0)}%</b> (reference ${occRef}% at ${REF.subs.toLocaleString('en-IN')} subs) &rarr; radio spare &times;${f1.toFixed(2)}; GPU own use ${gpuOwn}% &rarr; compute spare &times;${f2.toFixed(2)}. Applied at both ends of the range.`
+    : `<b>Occupancy link OFF:</b> spare capacity held fixed (original v1 model).`;
+}
+const SITE_PRESETS = {
+  urban:    {cov: 2,  price1: 5,   bw: 40, subs: 2500, occRef1: 50, gpuOwn: 35},
+  suburban: {cov: 5,  price1: 2.5, bw: 20, subs: 1000, occRef1: 40, gpuOwn: 30},
+  rural:    {cov: 15, price1: 1,   bw: 10, subs: 400,  occRef1: 25, gpuOwn: 20}
+};
+function setSiteType(){
+  const p = SITE_PRESETS[document.getElementById('siteType').value];
+  for (const k in p) document.getElementById(k).value = p[k];
+  const set = (id,v) => document.getElementById(id).value = v;
+  set('price1c', Math.round(p.price1*1.6*2)/2); set('hrs1c', 6); set('days1c', 350);
+  set('gpuHrsc', $('gpuHrs')*2); set('wsHrsc', $('wsHrs')*2); set('wsPricec', Math.round($('wsPrice')*1.25));
+  set('vmUtilc', 60); set('vmPricec', Math.round($('vmPrice')*1.5));
+  REF = {subs: p.subs, occ: p.occRef1, gpu: p.gpuOwn};
+  calc();
+}
+function setDefaults(){
+  const d={subs:2500,arpu0:191,gbSub:25.51,siteCost:20,bw:40,cov:2,hrs1:4,days1:300,price1:5,cost1:60,
+    s1e:65,m1e:1,s1u:30,m1u:1.5,s1m:5,m1m:0.6,
+    gpuHrs:24,days2:300,wsHrs:6,wsPrice:40,vmPerGpu:4,vmUtil:40,vmPrice:8,cost2:12,occRef1:50,gpuOwn:35,
+    price1c:8,hrs1c:6,days1c:350,gpuHrsc:48,wsHrsc:12,wsPricec:50,vmUtilc:60,vmPricec:12};
+  for(const k in d) document.getElementById(k).value=d[k];
+  document.getElementById('siteType').value='urban';
+  document.getElementById('occLink').checked=true;
+  REF = {subs:2500, occ:50, gpu:35};
+  calc();
+}
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));
+document.getElementById('occLink').addEventListener('change',calc);
+calc();
+</script>
+</body>
+</html>

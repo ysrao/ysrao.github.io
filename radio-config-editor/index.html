@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+  <title>Radio Config Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f7f6;
+      --surface: #ffffff;
+      --surface-2: #edf3f1;
+      --ink: #10231e;
+      --muted: #51645e;
+      --line: #ccd8d4;
+      --line-strong: #aebdb8;
+      --accent: #006c58;
+      --accent-strong: #005142;
+      --accent-soft: #d9eee8;
+      --danger: #b4382d;
+      --danger-soft: #fbe3df;
+      --shadow: 0 12px 30px rgba(16, 35, 30, .08);
+      --focus: #008c72;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0c1513;
+        --surface: #14211e;
+        --surface-2: #1b2b27;
+        --ink: #eef8f5;
+        --muted: #adbfba;
+        --line: #31443f;
+        --line-strong: #496059;
+        --accent: #66d7b8;
+        --accent-strong: #8ee7cf;
+        --accent-soft: #173d34;
+        --danger: #ff8d81;
+        --danger-soft: #4b2522;
+        --shadow: 0 14px 34px rgba(0, 0, 0, .24);
+        --focus: #7be3c5;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      line-height: 1.45;
+    }
+    button, input, select { font: inherit; }
+    button, select { cursor: pointer; }
+    .shell { width: min(1180px, 100%); margin: 0 auto; padding: 26px 24px 120px; }
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 28px;
+      align-items: end;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 0 22px;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.045em; line-height: 1; }
+    .intro p { margin: 12px 0 0; color: var(--muted); max-width: 700px; font-size: 1rem; }
+    .status {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: .76rem;
+      white-space: nowrap;
+    }
+    .status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 286px; gap: 22px; align-items: start; }
+    .sections { display: grid; gap: 18px; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 20px 22px 16px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-size: 1.08rem; letter-spacing: -.015em; }
+    .panel-head p { color: var(--muted); margin: 4px 0 0; font-size: .86rem; }
+    .panel-body { padding: 20px 22px 22px; }
+    .ghost, .remove, .secondary, .primary {
+      border: 0;
+      min-height: 42px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: background .16s ease, color .16s ease, border-color .16s ease;
+    }
+    .ghost { padding: 8px 13px; color: var(--accent-strong); background: var(--accent-soft); }
+    .ghost:hover { background: color-mix(in srgb, var(--accent-soft) 75%, var(--accent) 25%); }
+    .carrier-list { display: grid; gap: 12px; }
+    .carrier {
+      display: grid;
+      grid-template-columns: 34px repeat(4, minmax(0, 1fr)) minmax(110px, 1.2fr) 38px;
+      gap: 10px;
+      align-items: end;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--surface-2);
+    }
+    .carrier-index {
+      align-self: center;
+      width: 30px; height: 30px;
+      display: grid; place-items: center;
+      border-radius: 8px;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      font: 600 .75rem "IBM Plex Mono", monospace;
+    }
+    .remove { align-self: end; width: 38px; padding: 0; background: transparent; border: 1px solid var(--line); color: var(--muted); font-size: 1.15rem; }
+    .remove:hover:not(:disabled) { color: var(--danger); background: var(--danger-soft); border-color: var(--danger); }
+    .remove:disabled { opacity: .35; cursor: not-allowed; }
+    .field { display: grid; gap: 6px; min-width: 0; }
+    label, .label { color: var(--muted); font-size: .74rem; font-weight: 600; }
+    .unit { font-family: "IBM Plex Mono", monospace; font-weight: 400; }
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: 9px;
+      padding: 8px 10px;
+      outline: none;
+    }
+    input:focus, select:focus, button:focus-visible, summary:focus-visible { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); outline: none; }
+    input:disabled { opacity: .55; background: var(--bg); }
+    input[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft); }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .traffic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .mobility-table { display: grid; gap: 8px; }
+    .mobility-row {
+      display: grid;
+      grid-template-columns: minmax(130px, 1.2fr) minmax(90px, .7fr) minmax(110px, .8fr);
+      gap: 10px;
+      align-items: end;
+    }
+    .mobility-head { padding: 0 2px; }
+    .mobility-head span { color: var(--muted); font-size: .7rem; font-weight: 600; }
+    .mobility-row input { min-height: 40px; }
+    .inline-code { font: 500 .72rem "IBM Plex Mono", monospace; color: var(--accent-strong); }
+    .usage-note { margin: 0 0 24px; padding: 14px 16px; border-left: 3px solid var(--accent); background: var(--surface); color: var(--muted); font-size: .86rem; }
+    .usage-note strong { color: var(--ink); }
+    .usage-note ol { margin: 8px 0 0; padding-left: 20px; }
+    .usage-note li + li { margin-top: 3px; }
+    .usage-note code { color: var(--accent-strong); font: 600 .78rem "IBM Plex Mono", monospace; }
+    .traffic-note { margin: 18px 0 0; padding: 11px 13px; background: var(--surface-2); border-radius: 9px; color: var(--muted); font-size: .8rem; }
+    .service-table { display: grid; gap: 10px; }
+    .service-row { display: grid; grid-template-columns: minmax(105px, 1fr) repeat(3, minmax(105px, 1fr)); gap: 10px; align-items: end; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2); }
+    .service-name { align-self: center; font: 600 .84rem "IBM Plex Mono", monospace; }
+    .subhead { margin: 22px 0 12px; font-size: .82rem; font-weight: 700; }
+    .segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 3px; gap: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; }
+    .segmented label { position: relative; display: flex; align-items: center; padding-left: 8px; cursor: pointer; }
+    .segmented input { width: 16px; min-height: 16px; margin: 0; accent-color: var(--accent); flex: 0 0 auto; }
+    .segmented span { min-height: 38px; padding: 8px 10px; border-radius: 8px; display: grid; place-items: center; flex: 1; text-align: center; color: var(--muted); font-size: .78rem; font-weight: 600; cursor: pointer; }
+    .segmented label:has(input:checked) { background: var(--surface); border-radius: 8px; box-shadow: 0 1px 4px rgba(16,35,30,.08); }
+    .segmented input:checked + span { color: var(--accent-strong); }
+    .segmented label:has(input:focus-visible) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+    .note { margin: 10px 0 0; color: var(--muted); font-size: .78rem; }
+    .summary-panel { position: sticky; top: 18px; }
+    .summary-panel .panel-body { display: grid; gap: 18px; }
+    .summary-title { margin: 0; font: 600 .74rem "IBM Plex Mono", monospace; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .summary-list { display: grid; gap: 12px; }
+    .summary-row { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+    .summary-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .summary-row span { color: var(--muted); font-size: .82rem; }
+    .summary-row strong { text-align: right; font: 600 .8rem "IBM Plex Mono", monospace; }
+    .carrier-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { padding: 5px 7px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; font: 500 .7rem "IBM Plex Mono", monospace; }
+    .validation { display: none; border-radius: 9px; padding: 10px; color: var(--danger); background: var(--danger-soft); font-size: .8rem; }
+    .validation.show { display: block; }
+    details { border-top: 1px solid var(--line); }
+    summary { list-style: none; padding: 14px 22px; cursor: pointer; color: var(--muted); font-size: .82rem; font-weight: 600; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; float: right; font-family: "IBM Plex Mono", monospace; }
+    details[open] summary::after { content: "−"; }
+    pre { margin: 0 22px 22px; max-height: 330px; overflow-y: auto; overflow-x: hidden; padding: 14px; border-radius: 10px; background: #0d1816; color: #d9eee8; font: .72rem/1.55 "IBM Plex Mono", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .actionbar {
+      position: fixed;
+      z-index: 10;
+      left: 50%; bottom: max(18px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(650px, calc(100% - 28px));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line-strong);
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      border-radius: 15px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.2);
+      backdrop-filter: blur(12px);
+    }
+    .primary { background: var(--accent); color: #fff; padding: 10px 18px; }
+    .primary:hover { background: var(--accent-strong); }
+    .secondary { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); padding: 10px 18px; }
+    .secondary:hover { border-color: var(--accent); color: var(--accent-strong); }
+    .toast {
+      position: fixed; z-index: 20; left: 50%; bottom: 88px; transform: translate(-50%, 12px);
+      padding: 9px 13px; border-radius: 9px; background: var(--ink); color: var(--bg);
+      font-size: .8rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .summary-panel { position: static; order: -1; }
+      .summary-panel .panel-body { grid-template-columns: 1fr 1fr; }
+      .summary-panel .validation { grid-column: 1/-1; }
+      .carrier { grid-template-columns: 30px repeat(3, minmax(0,1fr)); }
+      .carrier .pattern-field { grid-column: 2 / span 2; }
+      .carrier .remove { grid-column: 4; grid-row: 2; }
+    }
+    @media (max-width: 680px) {
+      .shell { padding: 16px 13px 116px; }
+      .intro { grid-template-columns: 1fr; gap: 14px; padding-bottom: 18px; }
+      .status { justify-self: start; }
+      .panel { border-radius: 14px; }
+      .panel-head, .panel-body { padding-left: 15px; padding-right: 15px; }
+      .panel-head { align-items: center; }
+      .grid-3, .grid-4, .traffic-grid { grid-template-columns: 1fr 1fr; }
+      .service-row { grid-template-columns: 1fr 1fr; }
+      .service-name { grid-column: 1 / -1; }
+      .mobility-row { grid-template-columns: minmax(110px, 1.2fr) minmax(80px, .7fr) minmax(95px, .8fr); }
+      .carrier { grid-template-columns: 28px 1fr 1fr; padding: 11px; }
+      .carrier-index { width: 28px; height: 28px; }
+      .carrier .freq-field { grid-column: 2; }
+      .carrier .bandwidth-field { grid-column: 3; }
+      .carrier .numerology-field { grid-column: 2; }
+      .carrier .duplex-field { grid-column: 3; }
+      .carrier .pattern-field { grid-column: 2 / span 2; }
+      .carrier .remove { grid-column: 3; grid-row: 4; justify-self: end; }
+      .summary-panel .panel-body { grid-template-columns: 1fr; }
+      .segmented { grid-auto-flow: row; grid-template-columns: 1fr; }
+      .segmented.radio-compact { grid-auto-flow: column; grid-template-columns: none; }
+      .actionbar { grid-template-columns: 1fr 1fr; }
+      .actionbar #copyEnv { grid-column: 1 / -1; }
+      .primary, .secondary { padding: 9px; font-size: .86rem; }
+    }
+    @media (max-width: 430px) {
+      .grid-3, .grid-4, .traffic-grid, .service-row { grid-template-columns: 1fr; }
+      .mobility-row { grid-template-columns: 1fr 1fr; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+      .mobility-head { display: none; }
+      .mobility-row .mobility-name { grid-column: 1 / -1; }
+      .mobility-row input { background: var(--surface); }
+      .carrier { grid-template-columns: 26px 1fr; }
+      .carrier .freq-field, .carrier .bandwidth-field, .carrier .numerology-field, .carrier .duplex-field, .carrier .pattern-field { grid-column: 2; }
+      .carrier .remove { grid-column: 2; grid-row: auto; justify-self: end; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="intro">
+      <div>
+        <h1>Configure the radio stack</h1>
+        <p>Set carriers, channel behavior, topology, traffic, and slice constraints. Export a schema-v1 Python config and a local run script for the Sionna 2.2.0 twin.</p>
+      </div>
+      <div class="status">Sionna 2.2.0 target</div>
+    </header>
+
+    <div class="usage-note">
+      <strong>The simulation runs on your machine, not in this browser.</strong>
+      <ol>
+        <li>Download the v4 code zip and unpack it.</li>
+        <li>Install its Python requirements as described in the README.</li>
+        <li>Download <code>radio_config.py</code> and <code>run.sh</code> here into the code folder.</li>
+        <li>Run <code>bash run.sh</code>. The script sets <code>RADIO_CONFIG=./radio_config.py</code> before starting the twin.</li>
+      </ol>
+    </div>
+
+    <div class="layout">
+      <div class="sections">
+        <section class="panel" aria-labelledby="carrier-heading">
+          <div class="panel-head">
+            <div><h2 id="carrier-heading">Carriers</h2><p>One Sionna TR 38.901 model is created per carrier.</p></div>
+            <button class="ghost" id="addCarrier" type="button">+ Add carrier</button>
+          </div>
+          <div class="panel-body"><div class="carrier-list" id="carrierList"></div></div>
+        </section>
+
+        <section class="panel" aria-labelledby="radio-heading">
+          <div class="panel-head"><div><h2 id="radio-heading">Propagation &amp; transmit power</h2><p>Scenario model and per-tier downlink power.</p></div></div>
+          <div class="panel-body">
+            <label class="field" for="scenarioSelect">Propagation scenario
+              <select id="scenarioSelect">
+                <option value="UMa" selected>UMa — urban macro</option>
+                <option value="RMa">RMa — suburban / rural macro</option>
+                <option value="UMi-Street Canyon">UMi-Street Canyon — pico / femto small cells</option>
+              </select>
+            </label>
+            <div class="subhead">TX power <span class="unit">dBm</span></div>
+            <div class="grid-3">
+              <label class="field">Macro<input id="txMacro" type="number" step="0.1" value="46"></label>
+              <label class="field">Pico<input id="txPico" type="number" step="0.1" value="30"></label>
+              <label class="field">Femto<input id="txFemto" type="number" step="0.1" value="20"></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="channel-heading">
+          <div class="panel-head"><div><h2 id="channel-heading">Channel behavior</h2><p>Runtime flags consumed by the twin channel module.</p></div></div>
+          <div class="panel-body">
+            <div class="grid-3">
+              <div class="field"><span class="label">Large-scale parameters</span><div class="segmented radio-compact"><label><input type="radio" name="lsp" value="frozen" checked><span>Frozen</span></label><label><input type="radio" name="lsp" value="redraw"><span>Redraw</span></label></div></div>
+              <div class="field"><span class="label">Multicarrier state</span><div class="segmented radio-compact"><label><input type="radio" name="multifreq" value="consistent" checked><span>Consistent</span></label><label><input type="radio" name="multifreq" value="independent"><span>Independent</span></label></div></div>
+              <div class="field"><span class="label">Link model</span><div class="segmented radio-compact"><label><input type="radio" name="link" value="sionna" checked><span>Sionna</span></label><label><input type="radio" name="link" value="shannon"><span>Shannon</span></label></div></div>
+            </div>
+            <div class="grid-3" style="margin-top:14px">
+              <label class="field">BLER target<input id="bler" type="number" min="0.0001" max="0.9999" step="0.01" value="0.1"></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="layout-heading">
+          <div class="panel-head"><div><h2 id="layout-heading">Scenario &amp; network</h2><p>Schema identity and reference geometry for the twin topology layer.</p></div></div>
+          <div class="panel-body">
+            <div class="grid-4">
+              <label class="field">Scenario name<input id="scenarioName" type="text" value="urban-heavy" spellcheck="false"></label>
+              <label class="field">Seed<input id="scenarioSeed" type="number" min="0" step="1" value="2026"></label>
+              <label class="field">Macro sites<input id="macroSites" type="number" min="1" step="1" value="7"></label>
+              <label class="field">Sectors / site<input id="sectors" type="number" min="1" step="1" value="3"></label>
+            </div>
+            <div class="grid-4" style="margin-top:14px">
+              <label class="field">Site spacing <span class="unit">m ISD</span><input id="isd" type="number" min="1" step="1" value="500"></label>
+              <label class="field">Small cells<input id="smallCells" type="number" min="0" step="1" value="12"></label>
+              <label class="field">Small-cell placement<select id="smallCellPlacement"><option value="uniform" selected>Uniform</option><option value="hotspot">Hotspot</option><option value="none">None</option></select></label>
+              <label class="field">Wraparound<select id="wraparound"><option value="true" selected>Enabled</option><option value="false">Disabled</option></select></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="traffic-heading">
+          <div class="panel-head"><div><h2 id="traffic-heading">Traffic &amp; UE characteristics</h2><p>Sionna assumes nothing about UEs—it provides PHY/channel only. All of these are twin-side inputs.</p></div></div>
+          <div class="panel-body">
+            <div class="traffic-grid">
+              <label class="field">Number of UEs<input id="numUes" type="number" min="1" step="1" value="600"></label>
+              <label class="field">Trace CSV path <span class="unit">optional</span><input id="traceCsv" type="text" placeholder="data/traffic_trace.csv" spellcheck="false"></label>
+            </div>
+
+            <div class="subhead">Mobility classes <span class="unit">shares must total 100%</span></div>
+            <div class="mobility-table" id="mobilityTable">
+              <div class="mobility-row mobility-head" aria-hidden="true"><span>Class</span><span>Share</span><span>Speed</span></div>
+              <div class="mobility-row">
+                <label class="field mobility-name">Class<input class="mobility-class" type="text" value="stationary" spellcheck="false"></label>
+                <label class="field">Share <span class="unit">%</span><input class="mobility-share" type="number" min="0" max="100" step="0.1" value="50"></label>
+                <label class="field">Speed <span class="unit">m/s</span><input class="mobility-speed" type="number" min="0" step="0.1" value="0"></label>
+              </div>
+              <div class="mobility-row">
+                <label class="field mobility-name">Class<input class="mobility-class" type="text" value="pedestrian" spellcheck="false"></label>
+                <label class="field">Share <span class="unit">%</span><input class="mobility-share" type="number" min="0" max="100" step="0.1" value="30"></label>
+                <label class="field">Speed <span class="unit">m/s</span><input class="mobility-speed" type="number" min="0" step="0.1" value="1.5"></label>
+              </div>
+              <div class="mobility-row">
+                <label class="field mobility-name">Class<input class="mobility-class" type="text" value="vehicular" spellcheck="false"></label>
+                <label class="field">Share <span class="unit">%</span><input class="mobility-share" type="number" min="0" max="100" step="0.1" value="20"></label>
+                <label class="field">Speed <span class="unit">m/s</span><input class="mobility-speed" type="number" min="0" step="0.1" value="13.9"></label>
+              </div>
+            </div>
+
+            <div class="subhead">Handover</div>
+            <div class="traffic-grid">
+              <label class="field">Hysteresis <span class="unit">dB</span><input id="handoverHysteresis" type="number" min="0" step="0.1" value="3"></label>
+              <label class="field">Time-to-trigger <span class="unit">ms</span><input id="handoverTtt" type="number" min="0" step="1" value="160"></label>
+            </div>
+
+            <div class="subhead">Per-slice arrivals</div>
+            <div class="grid-4">
+              <label class="field">eMBB inter-arrival <span class="unit">slots</span><input id="embbInterarrival" type="number" min="0.0001" step="1" value="40"></label>
+              <label class="field">eMBB packet <span class="unit">bits</span><input id="embbPacketBits" type="number" min="1" step="1" value="12000"></label>
+              <label class="field">URLLC inter-arrival <span class="unit">slots</span><input id="urllcInterarrival" type="number" min="0.0001" step="1" value="200"></label>
+              <label class="field">URLLC packet <span class="unit">bits</span><input id="urllcPacketBits" type="number" min="1" step="1" value="256"></label>
+            </div>
+
+            <div class="subhead">URLLC demand controls</div>
+            <div class="traffic-grid">
+              <label class="field">Demand scale <span class="inline-code">URTWIN_URLLC_SCALE</span><input id="urllcScale" type="number" min="0" step="0.1" value="1.0"></label>
+              <label class="field">Size override <span class="unit">bits · </span><span class="inline-code">URTWIN_URLLC_SIZE</span><input id="urllcSize" type="number" min="1" step="1" value="256"></label>
+            </div>
+            <p class="traffic-note"><strong>mIoT:</strong> demand enters through the PRACH model, not direct packet arrivals.</p>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="slice-heading">
+          <div class="panel-head"><div><h2 id="slice-heading">Service slices</h2><p>Latency, reliability, and minimum scheduler share for each service.</p></div></div>
+          <div class="panel-body">
+            <div class="service-table">
+              <div class="service-row">
+                <div class="service-name">eMBB</div>
+                <label class="field">Latency <span class="unit">ms</span><input id="embbLatency" type="number" min="0" step="0.1" value="20"></label>
+                <label class="field">Reliability<input id="embbReliability" type="number" min="0" max="1" step="0.00001" value="0.99"></label>
+                <label class="field">Minimum share <span class="unit">%</span><input id="embb" type="number" min="0" max="100" step="1" value="40"></label>
+              </div>
+              <div class="service-row">
+                <div class="service-name">URLLC</div>
+                <label class="field">Latency <span class="unit">ms</span><input id="urllcLatency" type="number" min="0" step="0.1" value="1"></label>
+                <label class="field">Reliability<input id="urllcReliability" type="number" min="0" max="1" step="0.00001" value="0.99999"></label>
+                <label class="field">Minimum share <span class="unit">%</span><input id="urllc" type="number" min="0" max="100" step="1" value="20"></label>
+              </div>
+              <div class="service-row">
+                <div class="service-name">mIoT</div>
+                <label class="field">Latency <span class="unit">ms</span><input id="miotLatency" type="number" min="0" step="0.1" value="100"></label>
+                <label class="field">Reliability<input id="miotReliability" type="number" min="0" max="1" step="0.00001" value="0.95"></label>
+                <label class="field">Minimum share <span class="unit">%</span><input id="miot" type="number" min="0" max="100" step="1" value="10"></label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="control-heading">
+          <div class="panel-head"><div><h2 id="control-heading">Control loop</h2><p>Decision timing and forecast reach consumed by the twin controller.</p></div></div>
+          <div class="panel-body traffic-grid">
+            <label class="field">Budget decision <span class="unit">ms</span><input id="budgetDecisionMs" type="number" min="0.1" step="0.1" value="15"></label>
+            <label class="field">Forecast horizon<input id="forecastHorizon" type="number" min="1" step="1" value="10"></label>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="preview-heading">
+          <div class="panel-head"><div><h2 id="preview-heading">Generated module</h2><p>Preview updates as you edit.</p></div></div>
+          <details><summary>Inspect radio_config.py</summary><pre id="codePreview"></pre></details>
+        </section>
+      </div>
+
+      <aside class="panel summary-panel" aria-label="Configuration summary">
+        <div class="panel-head"><div><h2>Run summary</h2><p>Effective configuration</p></div></div>
+        <div class="panel-body">
+          <div>
+            <p class="summary-title">Carriers</p>
+            <div class="carrier-chips" id="carrierChips"></div>
+          </div>
+          <div class="summary-list">
+            <div class="summary-row"><span>Scenario</span><strong id="scenarioSummary">UMa</strong></div>
+            <div class="summary-row"><span>Macro sectors</span><strong id="sectorSummary">21</strong></div>
+            <div class="summary-row"><span>UEs</span><strong id="ueSummary">600</strong></div>
+            <div class="summary-row"><span>Mobility mix</span><strong id="mobilitySummary">50 / 30 / 20%</strong></div>
+            <div class="summary-row"><span>Slice floors</span><strong id="floorSummary">70%</strong></div>
+            <div class="summary-row"><span>Channel</span><strong id="channelSummary">frozen / Sionna</strong></div>
+          </div>
+          <div class="validation" id="validation" role="status"></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="actionbar" aria-label="Export actions">
+    <button class="primary" id="downloadPython" type="button">Download config</button>
+    <button class="secondary" id="downloadRun" type="button">Download run script</button>
+    <button class="secondary" id="copyEnv" type="button">Copy env vars</button>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <template id="carrierTemplate">
+    <div class="carrier">
+      <div class="carrier-index"></div>
+      <label class="field freq-field">Frequency <span class="unit">MHz</span><input class="frequency" type="number" min="1" step="0.1"></label>
+      <label class="field bandwidth-field">Bandwidth <span class="unit">MHz</span><input class="bandwidth" type="number" min="0.1" step="0.1"></label>
+      <label class="field numerology-field">Numerology <span class="unit">μ</span><select class="numerology"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
+      <label class="field duplex-field">Duplex<select class="duplex"><option>FDD</option><option>TDD</option></select></label>
+      <label class="field pattern-field">TDD pattern<input class="pattern" type="text" maxlength="24" placeholder="DDDSU" spellcheck="false"></label>
+      <button class="remove" type="button" aria-label="Remove carrier">×</button>
+    </div>
+  </template>
+
+  <script>
+    (function () {
+      "use strict";
+      const defaults = [
+        {frequency: 2100, bandwidth: 20, numerology: 1, duplex: "FDD", pattern: ""},
+        {frequency: 3500, bandwidth: 100, numerology: 1, duplex: "TDD", pattern: "DDDSU"},
+        {frequency: 7125, bandwidth: 200, numerology: 2, duplex: "TDD", pattern: "DDDDDDSSUU"}
+      ];
+      const list = document.getElementById("carrierList");
+      const template = document.getElementById("carrierTemplate");
+      const toast = document.getElementById("toast");
+      let toastTimer;
+
+      function showToast(text) {
+        toast.textContent = text;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
+      }
+      function radio(name) { return document.querySelector('input[name="' + name + '"]:checked').value; }
+      function num(id) { return Number(document.getElementById(id).value); }
+      function text(id) { return document.getElementById(id).value.trim(); }
+      function getMobilityClasses() {
+        return Array.from(document.querySelectorAll("#mobilityTable .mobility-row:not(.mobility-head)")).map(function (row) {
+          return {
+            name: row.querySelector(".mobility-class").value.trim(),
+            share: Number(row.querySelector(".mobility-share").value) / 100,
+            speed_mps: Number(row.querySelector(".mobility-speed").value)
+          };
+        });
+      }
+      function py(value) {
+        if (value === null) return "None";
+        if (typeof value === "boolean") return value ? "True" : "False";
+        if (typeof value === "number") return Number.isFinite(value) ? String(value) : "0";
+        return JSON.stringify(String(value));
+      }
+      function pythonLiteral(value, spaces) {
+        const pad = " ".repeat(spaces);
+        const childPad = " ".repeat(spaces + 4);
+        if (Array.isArray(value)) {
+          if (!value.length) return "[]";
+          return "[\n" + value.map(function (item) { return childPad + pythonLiteral(item, spaces + 4); }).join(",\n") + "\n" + pad + "]";
+        }
+        if (value && typeof value === "object") {
+          const entries = Object.keys(value);
+          if (!entries.length) return "{}";
+          return "{\n" + entries.map(function (key) { return childPad + py(key) + ": " + pythonLiteral(value[key], spaces + 4); }).join(",\n") + "\n" + pad + "}";
+        }
+        return py(value);
+      }
+      function addCarrier(data) {
+        const node = template.content.firstElementChild.cloneNode(true);
+        node.querySelector(".frequency").value = data.frequency;
+        node.querySelector(".bandwidth").value = data.bandwidth;
+        node.querySelector(".numerology").value = data.numerology;
+        node.querySelector(".duplex").value = data.duplex;
+        node.querySelector(".pattern").value = data.pattern || "";
+        node.querySelector(".remove").addEventListener("click", function () { node.remove(); sync(); });
+        node.querySelectorAll("input, select").forEach(function (el) { el.addEventListener("input", sync); el.addEventListener("change", sync); });
+        list.appendChild(node);
+        sync();
+      }
+      function getCarriers() {
+        return Array.from(list.querySelectorAll(".carrier")).map(function (row, index) {
+          return {
+            cc_id: "cc" + (index + 1),
+            duplex: row.querySelector(".duplex").value,
+            freq_mhz: Number(row.querySelector(".frequency").value),
+            bw_mhz: Number(row.querySelector(".bandwidth").value),
+            numerology: Number(row.querySelector(".numerology").value),
+            tdd_pattern: row.querySelector(".duplex").value === "TDD" ? row.querySelector(".pattern").value.trim().toUpperCase() : null
+          };
+        });
+      }
+      function config() {
+        return {
+          scenario: { name: text("scenarioName"), seed: num("scenarioSeed") },
+          network: {
+            macro_sites: num("macroSites"),
+            sectors_per_site: num("sectors"),
+            site_spacing_m: num("isd"),
+            small_cells: { count: num("smallCells"), placement: document.getElementById("smallCellPlacement").value },
+            wraparound: document.getElementById("wraparound").value === "true"
+          },
+          radio: {
+            carriers: getCarriers(),
+            propagation: document.getElementById("scenarioSelect").value,
+            tx_power_dbm: { macro: num("txMacro"), pico: num("txPico"), femto: num("txFemto") }
+          },
+          mobility: {
+            classes: getMobilityClasses(),
+            handover: { hysteresis_db: num("handoverHysteresis"), time_to_trigger_ms: num("handoverTtt") }
+          },
+          services: {
+            slices: [
+              { name: "eMBB", latency_ms: num("embbLatency"), reliability: num("embbReliability"), min_share: num("embb") / 100 },
+              { name: "URLLC", latency_ms: num("urllcLatency"), reliability: num("urllcReliability"), min_share: num("urllc") / 100 },
+              { name: "mIoT", latency_ms: num("miotLatency"), reliability: num("miotReliability"), min_share: num("miot") / 100 }
+            ]
+          },
+          control: { budget_decision_ms: num("budgetDecisionMs"), forecast_horizon: num("forecastHorizon") },
+          traffic: {
+            ue_count: num("numUes"),
+            trace_csv: text("traceCsv") || null,
+            embb: { mean_interarrival_slots: num("embbInterarrival"), mean_packet_bits: num("embbPacketBits") },
+            urllc: {
+              mean_interarrival_slots: num("urllcInterarrival"), mean_packet_bits: num("urllcPacketBits"),
+              demand_scale: num("urllcScale"), size_override_bits: num("urllcSize")
+            },
+            miot: { arrival_model: "PRACH", direct_arrivals: false }
+          },
+          runtime: {
+            lsp: radio("lsp"), multicarrier: radio("multifreq"), link: radio("link"),
+            bler_target: num("bler")
+          }
+        };
+      }
+      function validate(cfg) {
+        const errors = [];
+        cfg.radio.carriers.forEach(function (c, i) {
+          const row = list.children[i];
+          row.querySelectorAll("input").forEach(function(el){ el.removeAttribute("aria-invalid"); });
+          if (!(c.freq_mhz > 0)) { errors.push("Carrier " + (i+1) + " needs a frequency."); row.querySelector(".frequency").setAttribute("aria-invalid", "true"); }
+          if (!(c.bw_mhz > 0)) { errors.push("Carrier " + (i+1) + " needs bandwidth."); row.querySelector(".bandwidth").setAttribute("aria-invalid", "true"); }
+          if (c.duplex === "TDD" && !/^[DSU]+$/.test(c.tdd_pattern || "")) { errors.push("Carrier " + (i+1) + " needs a D/S/U TDD pattern."); row.querySelector(".pattern").setAttribute("aria-invalid", "true"); }
+        });
+        document.querySelectorAll("#mobilityTable input").forEach(function(el){ el.removeAttribute("aria-invalid"); });
+        cfg.mobility.classes.forEach(function (item, i) {
+          const row = document.querySelectorAll("#mobilityTable .mobility-row:not(.mobility-head)")[i];
+          if (!item.name) { errors.push("Every mobility class needs a name."); row.querySelector(".mobility-class").setAttribute("aria-invalid", "true"); }
+          if (!(item.share >= 0 && item.share <= 1)) { errors.push("Mobility shares must be between 0% and 100%."); row.querySelector(".mobility-share").setAttribute("aria-invalid", "true"); }
+          if (!(item.speed_mps >= 0)) { errors.push("Mobility speeds cannot be negative."); row.querySelector(".mobility-speed").setAttribute("aria-invalid", "true"); }
+        });
+        const mobilityTotal = cfg.mobility.classes.reduce(function (sum, item) { return sum + item.share; }, 0);
+        if (Math.abs(mobilityTotal - 1) > 0.00001) {
+          errors.push("Mobility shares must total 100%.");
+          document.querySelectorAll(".mobility-share").forEach(function(el){ el.setAttribute("aria-invalid", "true"); });
+        }
+        if (!cfg.scenario.name) errors.push("Scenario name is required.");
+        if (!(cfg.scenario.seed >= 0 && Number.isInteger(cfg.scenario.seed))) errors.push("Seed must be a non-negative integer.");
+        if (!(cfg.network.macro_sites >= 1 && Number.isInteger(cfg.network.macro_sites))) errors.push("Macro sites must be a positive integer.");
+        if (!(cfg.network.sectors_per_site >= 1 && Number.isInteger(cfg.network.sectors_per_site))) errors.push("Sectors per site must be a positive integer.");
+        if (!(cfg.network.site_spacing_m > 0)) errors.push("Site spacing must be greater than zero.");
+        if (!(cfg.network.small_cells.count >= 0 && Number.isInteger(cfg.network.small_cells.count))) errors.push("Small-cell count must be a non-negative integer.");
+        if (!(cfg.traffic.ue_count >= 1 && Number.isInteger(cfg.traffic.ue_count))) errors.push("Number of UEs must be a positive integer.");
+        if (!(cfg.mobility.handover.hysteresis_db >= 0)) errors.push("Handover hysteresis cannot be negative.");
+        if (!(cfg.mobility.handover.time_to_trigger_ms >= 0)) errors.push("Handover time-to-trigger cannot be negative.");
+        if (!(cfg.traffic.embb.mean_interarrival_slots > 0 && cfg.traffic.urllc.mean_interarrival_slots > 0)) errors.push("Traffic inter-arrival values must be greater than zero.");
+        if (!(cfg.traffic.embb.mean_packet_bits >= 1 && cfg.traffic.urllc.mean_packet_bits >= 1)) errors.push("Packet sizes must be at least one bit.");
+        if (!(cfg.traffic.urllc.demand_scale >= 0)) errors.push("URLLC demand scale cannot be negative.");
+        if (!(cfg.traffic.urllc.size_override_bits >= 1)) errors.push("URLLC size override must be at least one bit.");
+        if (!(cfg.runtime.bler_target > 0 && cfg.runtime.bler_target < 1)) errors.push("BLER target must be between 0 and 1.");
+        const floorTotal = cfg.services.slices.reduce(function(sum, item) { return sum + item.min_share; }, 0);
+        if (floorTotal > 1.000001) errors.push("Slice minimum shares exceed 100%.");
+        cfg.services.slices.forEach(function(item) {
+          if (!(item.latency_ms >= 0)) errors.push(item.name + " latency cannot be negative.");
+          if (!(item.reliability > 0 && item.reliability <= 1)) errors.push(item.name + " reliability must be greater than 0 and at most 1.");
+        });
+        if (!(cfg.control.budget_decision_ms > 0)) errors.push("Budget decision time must be greater than zero.");
+        if (!(cfg.control.forecast_horizon >= 1 && Number.isInteger(cfg.control.forecast_horizon))) errors.push("Forecast horizon must be a positive integer.");
+        return errors;
+      }
+      function scenarioDict(cfg) {
+        return {
+          scenario: cfg.scenario,
+          network: cfg.network,
+          radio: cfg.radio,
+          mobility: cfg.mobility,
+          services: cfg.services,
+          control: cfg.control,
+          traffic: cfg.traffic
+        };
+      }
+      function envDict(cfg) {
+        return {
+          URTWIN_LSP: String(cfg.runtime.lsp),
+          URTWIN_MULTIFREQ: String(cfg.runtime.multicarrier),
+          URTWIN_LINK: String(cfg.runtime.link),
+          URTWIN_BLER: String(cfg.runtime.bler_target),
+          URTWIN_NUES: String(cfg.traffic.ue_count),
+          URTWIN_URLLC_SCALE: String(cfg.traffic.urllc.demand_scale),
+          URTWIN_URLLC_SIZE: String(cfg.traffic.urllc.size_override_bits)
+        };
+      }
+      function pythonSource(cfg) {
+        const env = envDict(cfg);
+        return `"""Generated schema-v1 configuration for the Urban RAN Digital Twin.
+Set RADIO_CONFIG to this file's path before starting the runner.
+"""
+
+ENV = ${pythonLiteral(env, 0)}
+
+
+def get_scenario():
+    """Return the twin's schema-v1 scenario as a plain dictionary."""
+    return ${pythonLiteral(scenarioDict(cfg), 4)}
+`;
+      }
+      function envSource(cfg) {
+        const env = envDict(cfg);
+        return [
+          "export RADIO_CONFIG=./radio_config.py",
+          "export URTWIN_LSP=" + env.URTWIN_LSP,
+          "export URTWIN_MULTIFREQ=" + env.URTWIN_MULTIFREQ,
+          "export URTWIN_LINK=" + env.URTWIN_LINK,
+          "export URTWIN_BLER=" + env.URTWIN_BLER,
+          "export URTWIN_NUES=" + env.URTWIN_NUES,
+          "export URTWIN_URLLC_SCALE=" + env.URTWIN_URLLC_SCALE,
+          "export URTWIN_URLLC_SIZE=" + env.URTWIN_URLLC_SIZE
+        ].join("\n");
+      }
+      function runSource(cfg) {
+        return `#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+${envSource(cfg)}
+
+PYTHONPATH=src python scripts/run_v22.py urban 0 2
+`;
+      }
+      function sync() {
+        Array.from(list.querySelectorAll(".carrier")).forEach(function(row, i) {
+          row.querySelector(".carrier-index").textContent = "C" + (i + 1);
+          const duplex = row.querySelector(".duplex").value;
+          const pattern = row.querySelector(".pattern");
+          pattern.disabled = duplex === "FDD";
+          row.querySelector(".remove").disabled = list.children.length === 1;
+        });
+        const cfg = config();
+        const errors = validate(cfg);
+        document.getElementById("carrierChips").innerHTML = cfg.radio.carriers.map(function(c) { return '<span class="chip">' + c.freq_mhz + ' MHz · ' + c.duplex + '</span>'; }).join("");
+        document.getElementById("scenarioSummary").textContent = cfg.radio.propagation;
+        document.getElementById("sectorSummary").textContent = String(cfg.network.macro_sites * cfg.network.sectors_per_site);
+        document.getElementById("ueSummary").textContent = String(cfg.traffic.ue_count);
+        document.getElementById("mobilitySummary").textContent = cfg.mobility.classes.map(function (item) { return Math.round(item.share * 1000) / 10; }).join(" / ") + "%";
+        document.getElementById("floorSummary").textContent = Math.round(cfg.services.slices.reduce(function(sum, item) { return sum + item.min_share; }, 0) * 1000) / 10 + "%";
+        document.getElementById("channelSummary").textContent = cfg.runtime.lsp + " / " + (cfg.runtime.link === "sionna" ? "Sionna" : "Shannon");
+        const box = document.getElementById("validation");
+        box.textContent = errors.length ? errors.join(" ") : "";
+        box.classList.toggle("show", errors.length > 0);
+        document.getElementById("codePreview").textContent = pythonSource(cfg);
+        document.getElementById("downloadPython").disabled = errors.length > 0;
+        document.getElementById("downloadRun").disabled = errors.length > 0;
+        document.getElementById("copyEnv").disabled = errors.length > 0;
+      }
+      function downloadText(filename, text, mime) {
+        const blob = new Blob([text], {type: mime});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      }
+      async function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+        const area = document.createElement("textarea");
+        area.value = text; area.style.position = "fixed"; area.style.opacity = "0";
+        document.body.appendChild(area); area.select();
+        const ok = document.execCommand("copy"); area.remove();
+        if (!ok) throw new Error("Copy failed");
+      }
+
+      defaults.forEach(addCarrier);
+      document.getElementById("addCarrier").addEventListener("click", function () { addCarrier({frequency: 28000, bandwidth: 100, numerology: 3, duplex: "TDD", pattern: "DDDSU"}); });
+      document.querySelectorAll('input:not(.carrier input), select:not(.carrier select)').forEach(function (el) { el.addEventListener("input", sync); el.addEventListener("change", sync); });
+      document.getElementById("downloadPython").addEventListener("click", function () {
+        const cfg = config(); const errors = validate(cfg);
+        if (errors.length) { showToast("Fix the highlighted settings first"); return; }
+        downloadText("radio_config.py", pythonSource(cfg), "text/x-python;charset=utf-8");
+        showToast("radio_config.py downloaded");
+      });
+      document.getElementById("downloadRun").addEventListener("click", function () {
+        const cfg = config(); const errors = validate(cfg);
+        if (errors.length) { showToast("Fix the highlighted settings first"); return; }
+        downloadText("run.sh", runSource(cfg), "text/x-shellscript;charset=utf-8");
+        showToast("run.sh downloaded");
+      });
+      document.getElementById("copyEnv").addEventListener("click", function () {
+        copyText(envSource(config())).then(function(){ showToast("Environment exports copied"); }).catch(function(){ showToast("Clipboard unavailable"); });
+      });
+      sync();
+    }());
+  </script>
+</body>
+</html>

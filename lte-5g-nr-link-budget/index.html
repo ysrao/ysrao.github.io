@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>LTE and 5G NR Link Budget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f2f5f3; --panel:#ffffff; --panel2:#e9efec; --ink:#15211d; --ink2:#41524b;
+    --line:#cfd9d3; --accent:#0c6b5e; --accent-ink:#ffffff; --warn:#b45309; --warn-bg:#fdf0dd;
+    --good:#0c6b5e; --dl:#2563eb; --ul:#b45309; --chip:#e3ece8; --shadow:0 1px 3px rgba(20,40,35,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#101613; --panel:#1a211d; --panel2:#232c27; --ink:#e8efeb; --ink2:#a9bcb2;
+      --line:#37443d; --accent:#2ea893; --accent-ink:#08110e; --warn:#e8a34c; --warn-bg:#3a2c15;
+      --dl:#7aa5f5; --ul:#e8a34c; --chip:#26312b; --shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+  h1{font-size:clamp(24px,4vw,34px);line-height:1.15;margin:0 0 8px;font-weight:800;letter-spacing:-.01em}
+  .lede{color:var(--ink2);max-width:74ch;margin:0 0 6px}
+  .model-note{font-size:13px;color:var(--ink2);max-width:74ch}
+  .model-note strong{color:var(--ink)}
+  .layout{display:grid;grid-template-columns:400px 1fr;gap:18px;margin-top:20px;align-items:start}
+  .layout>*,.stack>*,.cards>*{min-width:0}
+  .panel,.card{overflow-wrap:break-word}
+  @media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:16px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 4px;color:var(--accent);font-weight:700}
+  .panel h2:not(:first-child){margin-top:20px}
+  .hint{font-size:12.5px;color:var(--ink2);margin:0 0 10px}
+  .seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+  .seg button{appearance:none;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:7px 12px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;max-width:100%;white-space:normal;text-align:left}
+  .seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .seg button:disabled{opacity:.45;cursor:not-allowed}
+  .seg button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  label.f{display:block;font-size:13.5px;font-weight:600;margin:12px 0 2px}
+  label.f .val{font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:600;color:var(--accent);float:right}
+  .fdesc{font-size:12px;color:var(--ink2);margin:0 0 4px}
+  input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0}
+  select{width:100%;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);margin-top:4px}
+  .notebar{background:var(--warn-bg);border:1px solid var(--warn);color:var(--ink);border-radius:8px;padding:9px 11px;font-size:13px;margin-top:10px}
+  .notebar:empty{display:none}
+  .runbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:16px;box-shadow:var(--shadow);position:sticky;top:10px;z-index:5}
+  #btnRun{appearance:none;border:1px solid var(--line);background:#ffffff;color:#15211d;border-radius:8px;padding:10px 22px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;min-width:120px}
+  @media (prefers-color-scheme: dark){#btnRun{background:var(--panel);color:var(--ink)}}
+  #btnRun.stale{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  #btnRun:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #runStatus{font-size:13.5px;color:var(--ink2)}
+  /* results */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:640px){.cards{grid-template-columns:1fr 1fr}}
+  @media (max-width:420px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px}
+  .card .k{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);font-weight:700}
+  .card .v{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:29px;font-weight:600;line-height:1.2;margin:2px 0}
+  .card .s{font-size:12.5px;color:var(--ink2)}
+  .card.limit{border-color:var(--warn);background:var(--warn-bg)}
+  .card.dl .v{color:var(--dl)} .card.ul .v{color:var(--ul)}
+  .bar-row{display:grid;grid-template-columns:86px 1fr 92px;gap:10px;align-items:center;margin:8px 0;font-size:13px}
+  .bar-track{height:14px;background:var(--panel2);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%}
+  .bar-fill.dl{background:var(--dl)} .bar-fill.ul{background:var(--ul)}
+  .bar-row .bv{font-family:"IBM Plex Mono",monospace;text-align:right;font-weight:600}
+  .steps{counter-reset:step;list-style:none;margin:0;padding:0}
+  .steps li{position:relative;padding:0 0 12px 38px;font-size:14px}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .steps li strong{font-family:"IBM Plex Mono",monospace;font-weight:600}
+  .formula{font-family:"IBM Plex Mono",monospace;font-size:13px;background:var(--panel2);border-radius:8px;padding:10px 12px;white-space:normal;overflow-wrap:anywhere;margin:6px 0 10px;max-width:100%}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--ink2);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  td.num{font-family:"IBM Plex Mono",monospace}
+  .stack{display:grid;gap:18px}
+  .fixlist{font-size:13.5px;margin:0;padding-left:18px}
+  .fixlist li{margin-bottom:6px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--chip);border-radius:4px;padding:2px 6px;margin-right:6px;color:var(--ink2)}
+  footer{margin-top:22px;font-size:12.5px;color:var(--ink2);max-width:80ch}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>LTE &amp; 5G NR link budget — the simple version</h1>
+  <p class="lede">Pick a technology, a band, a service and the kind of area you are covering. Change any input on the left, then press <strong>Run</strong> to update the budgets, the limiting direction, the cell radius and the data rates. Whenever a setting changes, the Run button turns green to show the results on display are stale; after you run, it returns to white.</p>
+  <p class="model-note"><strong>One model only:</strong> the 3GPP model from TR 36.492 / TR 38.901 (the standards model in the workbook), not the proprietary Vendor A or Vendor B models. Path loss uses the 3GPP channel model that matches the morphology you pick.</p>
+
+  <div class="runbar">
+    <button id="btnRun" type="button">Run</button>
+    <span id="runStatus" aria-live="polite">Results are up to date.</span>
+  </div>
+
+  <div class="layout">
+    <!-- ============ CONTROLS ============ -->
+    <section class="panel" aria-label="Inputs">
+      <h2>1 · Technology</h2>
+      <p class="hint">LTE (4G) or 5G NR. NR adds wider bands, mmWave, the eMBB service and higher MIMO orders.</p>
+      <div class="seg" id="segRat" role="group" aria-label="Technology"></div>
+
+      <h2>2 · Service at the cell edge</h2>
+      <p class="hint">The downlink (PDSCH) service the budget must still deliver at the edge of the cell. Faster services need a stronger signal, so the downlink budget gets tighter. The uplink (PUSCH) is budgeted separately, for its own robust 256 kbps-class service, and does not change when you pick a faster downlink — so a demanding downlink really can become the limiting direction. <span id="svcNote"></span></p>
+      <div class="seg" id="segService" role="group" aria-label="Service"></div>
+
+      <h2>3 · Band</h2>
+      <p class="hint">Lower frequencies travel further but carry less data; higher frequencies are the opposite. The band also decides whether the link is FDD or TDD (see step 5).</p>
+      <div class="seg" id="segBand" role="group" aria-label="Band"></div>
+      <p class="hint" id="bandInfo"></p>
+
+      <label class="f" for="selBw">Channel bandwidth</label>
+      <p class="fdesc">Wider channel = faster rates, but a higher noise floor, so a slightly smaller MAPL.</p>
+      <select id="selBw"></select>
+
+      <h2>4 · Morphology (area type)</h2>
+      <p class="hint">Sets the 3GPP channel model, the base-station height and typical shadow / building-penetration margins. You can still override the margins below.</p>
+      <div class="seg" id="segMorph" role="group" aria-label="Morphology"></div>
+      <p class="hint" id="morphInfo"></p>
+
+      <h2>5 · Duplex mode</h2>
+      <p class="hint" id="duplexInfo"></p>
+      <div class="seg" id="segDuplex" role="group" aria-label="Duplex mode"></div>
+      <div id="tddBox">
+        <label class="f" for="selTdd">TDD slot pattern (DL : UL)</label>
+        <p class="fdesc">How the shared channel time is split between downlink and uplink. It changes the data rates, not the MAPL — the signal still has to travel the same distance.</p>
+        <select id="selTdd"></select>
+        <p class="hint" id="tddInfo"></p>
+      </div>
+
+      <h2>6 · Antennas &amp; MIMO</h2>
+      <label class="f" for="selMimo">MIMO configuration</label>
+      <p class="fdesc" id="mimoDesc">More antenna pairs = a real MIMO gain in the budget and more parallel streams (layers) for data.</p>
+      <select id="selMimo"></select>
+      <p class="hint" id="mimoInfo"></p>
+
+      <label class="f" for="rngBsGain">Base-station antenna gain <span class="val" id="vBsGain"></span></label>
+      <input type="range" id="rngBsGain" min="0" max="30" step="0.5" />
+      <label class="f" for="rngUeGain">Phone (UE) antenna gain <span class="val" id="vUeGain"></span></label>
+      <input type="range" id="rngUeGain" min="-3" max="10" step="0.5" />
+      <label class="f" for="rngBsH">Base-station antenna height <span class="val" id="vBsH"></span></label>
+      <p class="fdesc">Higher sites see further, especially in the rural model. The phone is assumed at 1.5 m.</p>
+      <input type="range" id="rngBsH" min="5" max="60" step="1" />
+
+      <h2>7 · Transmit powers</h2>
+      <label class="f" for="rngBsPow">Base-station transmit power <span class="val" id="vBsPow"></span></label>
+      <input type="range" id="rngBsPow" min="30" max="53" step="1" />
+      <label class="f" for="rngUePow">Phone transmit power <span class="val" id="vUePow"></span></label>
+      <p class="fdesc">Phones are battery-limited (23 dBm is the usual class) — this is why the uplink usually limits the cell.</p>
+      <input type="range" id="rngUePow" min="20" max="26" step="1" />
+
+      <h2>8 · Losses &amp; margins</h2>
+      <label class="f" for="rngShadow">Shadow-fading margin <span class="val" id="vShadow"></span></label>
+      <p class="fdesc">Spare dB kept aside so coverage still works in dips behind buildings and terrain.</p>
+      <input type="range" id="rngShadow" min="0" max="15" step="0.5" />
+      <label class="f" for="rngPen">Building penetration loss <span class="val" id="vPen"></span></label>
+      <p class="fdesc">Signal lost going through walls to reach users indoors. Set it low for outdoor-only coverage.</p>
+      <input type="range" id="rngPen" min="0" max="30" step="1" />
+      <label class="f" for="rngInt">Interference margin <span class="val" id="vInt"></span></label>
+      <p class="fdesc">Spare dB for noise from neighbouring cells using the same frequencies.</p>
+      <input type="range" id="rngInt" min="0" max="10" step="0.5" />
+      <label class="f" for="rngNfUe">Phone receiver noise figure <span class="val" id="vNfUe"></span></label>
+      <p class="fdesc">How much noise the phone's own receiver adds. 7 dB is the workbook value — including for the 700 MHz 256 kbps case (see “Corrections applied”).</p>
+      <input type="range" id="rngNfUe" min="5" max="10" step="0.5" />
+      <label class="f" for="rngNfBs">Base-station receiver noise figure <span class="val" id="vNfBs"></span></label>
+      <input type="range" id="rngNfBs" min="1" max="6" step="0.5" />
+
+      <div class="notebar" id="warnBox" role="status"></div>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="stack">
+      <section aria-label="Headline results">
+        <div class="cards">
+          <div class="card dl"><div class="k">Downlink MAPL · PDSCH</div><div class="v" id="oDlMapl">–</div><div class="s">Most path loss the downlink (site → phone) can tolerate and still deliver the service picked in step 2.</div></div>
+          <div class="card ul"><div class="k">Uplink MAPL · PUSCH</div><div class="v" id="oUlMapl">–</div><div class="s">Same for the uplink (phone → site), budgeted for its own 256 kbps-class PUSCH service. Usually the smaller of the two — but not when the downlink service is demanding.</div></div>
+          <div class="card limit"><div class="k">Limiting direction</div><div class="v" id="oLimit" style="font-size:24px">–</div><div class="s" id="oLimitWhy">Worked out on each Run from the two MAPLs — whichever is smaller limits the cell.</div></div>
+          <div class="card"><div class="k">Cell radius</div><div class="v" id="oRadius">–</div><div class="s">Distance where the 3GPP path-loss model for this morphology exactly uses up the limiting MAPL.</div></div>
+          <div class="card"><div class="k">Rate at cell edge</div><div class="v" id="oEdgeRate" style="font-size:22px">–</div><div class="s" id="oEdgeNote">Achievable DL / UL if one user at the edge gets the whole channel.</div></div>
+          <div class="card"><div class="k">Peak rate (near site)</div><div class="v" id="oPeakRate" style="font-size:22px">–</div><div class="s" id="oPeakNote">Best-case DL / UL with a strong signal, all MIMO layers active.</div></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="MAPL comparison">
+        <h2>Downlink vs uplink budget</h2>
+        <div class="bar-row"><span>Downlink</span><div class="bar-track"><div class="bar-fill dl" id="barDl" style="width:50%"></div></div><span class="bv" id="barDlV">–</span></div>
+        <div class="bar-row"><span>Uplink</span><div class="bar-track"><div class="bar-fill ul" id="barUl" style="width:50%"></div></div><span class="bv" id="barUlV">–</span></div>
+        <p class="hint" id="gapNote" style="margin-top:8px"></p>
+        <table aria-label="Budget detail">
+          <thead><tr><th>Item</th><th>Downlink</th><th>Uplink</th></tr></thead>
+          <tbody>
+            <tr><td>Transmit power</td><td class="num" id="tTxDl">–</td><td class="num" id="tTxUl">–</td></tr>
+            <tr><td>Transmitter antenna gain</td><td class="num" id="tGaDl">–</td><td class="num" id="tGaUl">–</td></tr>
+            <tr><td>MIMO gain (real value, not FALSE)</td><td class="num" id="tMimoDl">–</td><td class="num" id="tMimoUl">–</td></tr>
+            <tr><td>Noise floor in channel</td><td class="num" id="tNoiseDl">–</td><td class="num" id="tNoiseUl">–</td></tr>
+            <tr><td>Required signal-to-noise (DL service; PUSCH fixed)</td><td class="num" id="tSinrDl">–</td><td class="num" id="tSinrUl">–</td></tr>
+            <tr><td>Receiver sensitivity</td><td class="num" id="tSensDl">–</td><td class="num" id="tSensUl">–</td></tr>
+            <tr><td>Margins (shadow + penetration + interference)</td><td class="num" id="tMarg">–</td><td class="num">same</td></tr>
+            <tr><td><strong>MAPL</strong></td><td class="num" id="tMaplDl">–</td><td class="num" id="tMaplUl">–</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel" aria-label="Channel model">
+        <h2>3GPP channel model for this morphology</h2>
+        <p style="margin:0 0 4px"><strong id="cmName">–</strong> <span class="tag">3GPP TR 38.901</span></p>
+        <p class="hint" id="cmDesc"></p>
+        <div class="formula" id="cmFormula">–</div>
+        <p class="hint" id="cmParams" style="margin-bottom:0"></p>
+      </section>
+
+      <section class="panel" aria-label="How the numbers are worked out">
+        <h2>How the numbers are worked out</h2>
+        <ol class="steps" id="stepsList"></ol>
+      </section>
+
+      <section class="panel" aria-label="Corrections applied">
+        <h2>Corrections applied (from the workbook check)</h2>
+        <ul class="fixlist">
+          <li><strong>4×4 MIMO gain is a real number.</strong> The workbook's 36.492 sheet returned the text FALSE for 4×4, which zeroed its data rate. Here every MIMO setting computes a gain — 4×4 gives <span id="fixMimo">6.0 dB</span> — and the rate follows from it.</li>
+          <li><strong>700 MHz 256 kbps case uses a 7 dB phone noise figure.</strong> The workbook pointed that one cell at a blank cell, silently using 0 dB and flattering the noise floor by 7 dB. The default above is 7 dB for every band and service.</li>
+          <li><strong>The limiting direction is calculated, not typed.</strong> The workbook's summary had “UL” typed into every row. Here it is simply whichever of the two MAPLs is smaller, recomputed on every Run.</li>
+          <li><strong>PDSCH and PUSCH are budgeted separately.</strong> In the workbook there is one uplink (PUSCH) budget and a separate downlink (PDSCH) budget for each downlink rate — e.g. at 700 MHz in dense urban, PUSCH allows 117.0 dB while PDSCH at 1000 kbps allows only 106.9 dB, so that case is downlink-limited. This page now does the same: the service in step 2 sets the PDSCH requirement only, and the PUSCH requirement stays fixed at −5 dB SINR. (An earlier version of this page moved both requirements together, which kept the two MAPLs almost the same distance apart whatever service you picked, so the downlink could practically never become the limiting one.)</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    Simplified planning tool, not a vendor design: one user per channel for the edge/peak rates, non-line-of-sight 3GPP path loss, phone at 1.5 m, feeder/body losses folded into the margins. Figures are for comparing choices — band, morphology, MIMO, duplex — not for site acquisition. Model basis: 3GPP TR 36.492 / TR 38.901 channel models as used in the source workbook.
+  </footer>
+</main>
+
+<script>
+"use strict";
+/* ================= Data ================= */
+var BANDS = {
+  LTE: [
+    {id:"l700", label:"700 MHz · B28", fc:0.75, duplex:["FDD"], bws:[5,10,15], bwDef:10, bsPow:46, bsGain:17, ueGain:0,
+     note:"FDD only — paired spectrum (separate DL and UL frequencies). TDD is not defined for this LTE band, so it is not offered."},
+    {id:"laws", label:"AWS · B66 (2.1 GHz)", fc:2.11, duplex:["FDD"], bws:[10,15,20], bwDef:20, bsPow:46, bsGain:18, ueGain:0,
+     note:"FDD only — paired AWS spectrum. TDD is not defined for this LTE band, so it is not offered."},
+    {id:"l41", label:"2.5 GHz · B41", fc:2.50, duplex:["TDD"], bws:[10,20], bwDef:20, bsPow:46, bsGain:18, ueGain:0,
+     note:"TDD only — one shared frequency, time-split between DL and UL. FDD is not defined for this LTE band."},
+    {id:"l42", label:"3.5 GHz · B42", fc:3.50, duplex:["TDD"], bws:[10,20], bwDef:20, bsPow:44, bsGain:19, ueGain:0,
+     note:"TDD only — one shared frequency, time-split between DL and UL. FDD is not defined for this LTE band."}
+  ],
+  NR: [
+    {id:"n28", label:"700 MHz · n28", fc:0.75, duplex:["FDD"], bws:[10,20,30], bwDef:20, bsPow:46, bsGain:17, ueGain:0,
+     note:"FDD only — paired spectrum. TDD is not defined for n28, so it is not offered."},
+    {id:"n66", label:"AWS · n66 (2.1 GHz)", fc:2.11, duplex:["FDD"], bws:[20,30,40], bwDef:40, bsPow:46, bsGain:18, ueGain:0,
+     note:"FDD only — paired AWS spectrum. TDD is not defined for n66, so it is not offered."},
+    {id:"n41", label:"2.5 GHz · n41", fc:2.50, duplex:["TDD"], bws:[40,60,80,100], bwDef:100, bsPow:47, bsGain:19, ueGain:0,
+     note:"TDD only — one shared frequency, time-split between DL and UL. FDD is not defined for n41."},
+    {id:"n78", label:"3.5 GHz · n78", fc:3.55, duplex:["TDD"], bws:[40,60,80,100], bwDef:100, bsPow:47, bsGain:20, ueGain:0,
+     note:"TDD only — the main global 5G capacity band. FDD is not defined for n78."},
+    {id:"n257", label:"28 GHz · n257 (mmWave)", fc:28.0, duplex:["TDD"], bws:[100,200,400], bwDef:200, bsPow:43, bsGain:24, ueGain:5,
+     note:"TDD only — mmWave is never FDD. Very wide channels and beamforming antenna gains, but the signal fades fast and barely passes walls: realistic for dense-urban hotspots, not wide-area rural coverage."}
+  ]
+};
+/* The service picker sets the DOWNLINK (PDSCH) requirement only, as in the
+   workbook: one PUSCH uplink budget is compared against a separate PDSCH
+   budget for each downlink rate. The PUSCH requirement is fixed — a robust
+   256 kbps-class uplink service needing -5 dB SINR (the uplink value that
+   was paired with the 256 kbps coverage case). */
+var UL_SINR = -5;
+var SERVICES = {
+  LTE: [
+    {id:"s256", label:"256 kbps — coverage", sinrDl:-3, desc:"Narrow, robust downlink service (the workbook's PDSCH 256 kbps case). Lowest required signal, largest downlink budget."},
+    {id:"s1m", label:"1 Mbps — basic data", sinrDl:0, desc:"Everyday messaging / light data at the edge."},
+    {id:"s10m", label:"10 Mbps — broadband", sinrDl:7, desc:"Video-capable downlink edge rate. Needs a much stronger signal than PUSCH, so this is the case that can make the cell downlink-limited."}
+  ],
+  NR: [
+    {id:"s256", label:"256 kbps — coverage", sinrDl:-3, desc:"Narrow, robust downlink service (the workbook's PDSCH 256 kbps case, with the corrected 7 dB phone noise figure)."},
+    {id:"s1m", label:"1 Mbps — basic data", sinrDl:0, desc:"Everyday messaging / light data at the edge."},
+    {id:"s10m", label:"10 Mbps — broadband", sinrDl:7, desc:"Video-capable downlink edge rate. Needs a much stronger signal than PUSCH, so this is the case that can make the cell downlink-limited."},
+    {id:"embb", label:"eMBB — 100 Mbps class", sinrDl:12, desc:"enhanced Mobile Broadband, the headline 5G use case: high-rate data for phones and fixed wireless. Highest required downlink signal of the list — expect it near the site, not at a wide-area cell edge."}
+  ]
+};
+var MORPHS = [
+  {id:"du", label:"Dense urban", model:"UMi — Street Canyon (NLOS)", hBs:10, shadow:10, pen:20,
+   desc:"City centres: base station below rooftop level (10 m), streets act as canyons, heavy shadowing and wall losses."},
+  {id:"ur", label:"Urban", model:"UMa — Urban Macro (NLOS)", hBs:25, shadow:8, pen:15,
+   desc:"Towns and suburbs of cities: rooftop macro site at 25 m, above most clutter."},
+  {id:"su", label:"Suburban", model:"RMa — Rural Macro, suburban setting (NLOS)", hBs:35, shadow:6, pen:10,
+   desc:"Low, spread-out housing: the 3GPP rural-macro model with narrow streets and low buildings."},
+  {id:"ru", label:"Rural", model:"RMa — Rural Macro (NLOS)", hBs:45, shadow:4, pen:5,
+   desc:"Open countryside: tall mast, wide streets / fields, low buildings, small margins."}
+];
+var TDD_PATTERNS = [
+  {id:"p712", label:"DDDDDDDSUU — 7 DL : 1 flex : 2 UL", dl:0.75, ul:0.20, desc:"DL-heavy pattern common on 3.5 GHz networks: about 75% of time to downlink, 20% to uplink."},
+  {id:"p41", label:"DDDSU — 4 DL : 1 UL", dl:0.80, ul:0.20, desc:"Classic 4:1 split (the S slot carries mostly DL). 80% downlink, 20% uplink."},
+  {id:"p22", label:"DDSUU — 2 DL : 1 flex : 2 UL", dl:0.50, ul:0.40, desc:"Balanced pattern: good when uplink traffic (video calls, uploads, cameras) matters."},
+  {id:"p13", label:"DSUUU — 1 DL : 1 flex : 3 UL", dl:0.30, ul:0.60, desc:"UL-heavy pattern for cameras, sensors and uplink backhaul-type use. Downlink rate drops sharply."}
+];
+var MIMO = {
+  LTE: [
+    {v:1, label:"1×1 — single antenna", layers:1},
+    {v:2, label:"2×2 MIMO", layers:2},
+    {v:4, label:"4×4 MIMO", layers:4}
+  ],
+  NR: [
+    {v:1, label:"1×1 — single antenna", layers:1},
+    {v:2, label:"2×2 MIMO", layers:2},
+    {v:4, label:"4×4 MIMO", layers:4},
+    {v:8, label:"8×8 MIMO", layers:8},
+    {v:16, label:"16×16 — massive-MIMO array (layers capped at 8)", layers:8}
+  ]
+};
+
+/* ================= State ================= */
+var S = {
+  rat:"LTE", service:"s256", band:"l700", morph:"ur", duplex:"FDD", tdd:"p41",
+  bw:10, mimo:4,
+  bsPow:46, uePow:23, bsGain:17, ueGain:0, bsH:25,
+  shadow:8, pen:15, inter:3, nfUe:7, nfBs:2
+};
+function bandObj(){ for(var i=0;i<BANDS[S.rat].length;i++) if(BANDS[S.rat][i].id===S.band) return BANDS[S.rat][i]; return BANDS[S.rat][0]; }
+function svcObj(){ for(var i=0;i<SERVICES[S.rat].length;i++) if(SERVICES[S.rat][i].id===S.service) return SERVICES[S.rat][i]; return SERVICES[S.rat][0]; }
+function morphObj(){ for(var i=0;i<MORPHS.length;i++) if(MORPHS[i].id===S.morph) return MORPHS[i]; return MORPHS[1]; }
+function tddObj(){ for(var i=0;i<TDD_PATTERNS.length;i++) if(TDD_PATTERNS[i].id===S.tdd) return TDD_PATTERNS[i]; return TDD_PATTERNS[1]; }
+function mimoObj(){ var l=MIMO[S.rat]; for(var i=0;i<l.length;i++) if(l[i].v===S.mimo) return l[i]; return l[l.length-1]; }
+function $(id){ return document.getElementById(id); }
+function fmt(x,d){ return x.toFixed(d===undefined?1:d); }
+function fmtRate(mbps){ if(mbps>=1000) return fmt(mbps/1000,2)+" Gbps"; if(mbps>=100) return fmt(mbps,0)+" Mbps"; if(mbps>=1) return fmt(mbps,1)+" Mbps"; return fmt(mbps*1000,0)+" kbps"; }
+var isStale=false;
+function markStale(){
+  isStale=true;
+  var b=$("btnRun"); if(b){ b.classList.add("stale"); b.textContent="Run — settings changed"; }
+  var st=$("runStatus"); if(st) st.textContent="Settings changed — the results below are stale. Press Run to update them.";
+}
+function clearStale(){
+  isStale=false;
+  var b=$("btnRun"); if(b){ b.classList.remove("stale"); b.textContent="Run"; }
+  var st=$("runStatus"); if(st) st.textContent="Results are up to date.";
+}
+
+/* ================= 3GPP path loss (TR 38.901, NLOS) ================= */
+function pathLoss(d2d, fc, hBs, morphId){
+  var hUt=1.5, d3d=Math.sqrt(d2d*d2d + (hBs-hUt)*(hBs-hUt));
+  if(morphId==="du"){ /* UMi street canyon NLOS */
+    return 35.3*Math.log10(d3d) + 22.4 + 21.3*Math.log10(fc) - 0.3*(hUt-1.5);
+  }
+  if(morphId==="ur"){ /* UMa NLOS */
+    return 13.54 + 39.08*Math.log10(d3d) + 20*Math.log10(fc) - 0.6*(hUt-1.5);
+  }
+  /* RMa NLOS: W street width, h avg building height */
+  var W = (morphId==="su") ? 20 : 50, h = 5;
+  return 161.04 - 7.11*Math.log10(W) + 7.5*Math.log10(h)
+    - (24.37 - 3.7*Math.pow(h/hBs,2))*Math.log10(hBs)
+    + (43.42 - 3.1*Math.log10(hBs))*(Math.log10(d3d)-3)
+    + 20*Math.log10(fc) - (3.2*Math.pow(Math.log10(11.75*hUt),2) - 4.97);
+}
+function radiusFor(mapl, fc, hBs, morphId){
+  var lo=10, hi=200000;
+  if(pathLoss(hi,fc,hBs,morphId) < mapl) return hi;
+  for(var i=0;i<60;i++){ var mid=(lo+hi)/2; if(pathLoss(mid,fc,hBs,morphId) < mapl) lo=mid; else hi=mid; }
+  return (lo+hi)/2;
+}
+
+/* ================= Controls build ================= */
+function buildSeg(el, items, current, onPick){
+  el.innerHTML="";
+  items.forEach(function(it){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=it.label;
+    b.setAttribute("aria-pressed", it.id===current ? "true":"false");
+    b.addEventListener("click", function(){ onPick(it.id); });
+    el.appendChild(b);
+  });
+}
+function refreshControls(){
+  buildSeg($("segRat"), [{id:"LTE",label:"LTE (4G)"},{id:"NR",label:"5G NR"}], S.rat, function(id){
+    if(id===S.rat) return;
+    S.rat=id;
+    S.band = BANDS[id][0].id; S.service = SERVICES[id][0].id; S.mimo = (id==="NR")?8:4;
+    applyBandPreset(); refreshControls(); markStale();
+  });
+  buildSeg($("segService"), SERVICES[S.rat], S.service, function(id){ if(id===S.service) return; S.service=id; refreshControls(); markStale(); });
+  $("svcNote").textContent = (S.rat==="NR") ? "eMBB is offered in NR mode — it is a 5G use case and is not offered for LTE here." : "eMBB appears when you switch to 5G NR — it is a 5G use case, so it is not offered for LTE.";
+  buildSeg($("segBand"), BANDS[S.rat], S.band, function(id){
+    if(id===S.band) return; S.band=id; applyBandPreset(); refreshControls(); markStale();
+  });
+  var b=bandObj();
+  $("bandInfo").textContent = b.note;
+  var bwSel=$("selBw"); bwSel.innerHTML="";
+  b.bws.forEach(function(w){ var o=document.createElement("option"); o.value=w; o.textContent=w+" MHz"; bwSel.appendChild(o); });
+  bwSel.value=S.bw;
+  buildSeg($("segMorph"), MORPHS, S.morph, function(id){
+    if(id===S.morph) return; S.morph=id;
+    var m=morphObj(); S.bsH=m.hBs; S.shadow=m.shadow; S.pen=m.pen; syncSliders(); refreshControls(); markStale();
+  });
+  var m=morphObj();
+  $("morphInfo").textContent = "Model: "+m.model+". "+m.desc;
+  /* duplex */
+  var dupItems=[{id:"FDD",label:"FDD — separate DL/UL frequencies"},{id:"TDD",label:"TDD — shared frequency, time-split"}];
+  var segD=$("segDuplex"); segD.innerHTML="";
+  dupItems.forEach(function(it){
+    var btn=document.createElement("button"); btn.type="button"; btn.textContent=it.label;
+    var ok = b.duplex.indexOf(it.id)>=0;
+    btn.disabled = !ok;
+    btn.setAttribute("aria-pressed", (S.duplex===it.id && ok) ? "true":"false");
+    btn.addEventListener("click", function(){ if(S.duplex===it.id) return; S.duplex=it.id; refreshControls(); markStale(); });
+    segD.appendChild(btn);
+  });
+  if(b.duplex.length===1){
+    S.duplex=b.duplex[0];
+    $("duplexInfo").textContent = "This band is "+S.duplex+"-only, so the other mode is greyed out rather than offered misleadingly. "+(S.duplex==="FDD" ? "FDD uses paired spectrum: downlink and uplink run at the same time on different frequencies." : "TDD uses one frequency: downlink and uplink take turns in time slots — pick the split below.");
+  } else {
+    $("duplexInfo").textContent = "This band supports both modes — pick one.";
+  }
+  $("tddBox").style.display = (S.duplex==="TDD") ? "block":"none";
+  var tSel=$("selTdd"); tSel.innerHTML="";
+  TDD_PATTERNS.forEach(function(p){ var o=document.createElement("option"); o.value=p.id; o.textContent=p.label; tSel.appendChild(o); });
+  tSel.value=S.tdd;
+  $("tddInfo").textContent = tddObj().desc;
+  /* mimo */
+  var mSel=$("selMimo"); mSel.innerHTML="";
+  MIMO[S.rat].forEach(function(mm){ var o=document.createElement("option"); o.value=mm.v; o.textContent=mm.label; mSel.appendChild(o); });
+  mSel.value=S.mimo;
+  var mo=mimoObj();
+  $("mimoInfo").textContent = (S.rat==="LTE")
+    ? "LTE here goes up to 4×4, as in the workbook. Higher orders (8×8 and up) are a 5G NR feature — switch to NR to use them."
+    : (S.mimo>=16 ? "Massive-MIMO array: the budget gain keeps growing with antennas, but NR carries at most 8 SU-MIMO layers to one user, so the data-rate layers are capped at 8." : "NR supports up to 8 layers to one user; 8×8 is selectable here, plus a 16×16 massive-MIMO array option.");
+  syncSliders();
+}
+function applyBandPreset(){
+  var b=bandObj();
+  S.bw=b.bwDef; S.duplex=b.duplex[0];
+  S.bsPow=b.bsPow; S.bsGain=b.bsGain; S.ueGain=b.ueGain;
+}
+function syncSliders(){
+  var map=[["rngBsPow","bsPow","vBsPow"," dBm"],["rngUePow","uePow","vUePow"," dBm"],
+    ["rngBsGain","bsGain","vBsGain"," dBi"],["rngUeGain","ueGain","vUeGain"," dBi"],
+    ["rngBsH","bsH","vBsH"," m"],["rngShadow","shadow","vShadow"," dB"],
+    ["rngPen","pen","vPen"," dB"],["rngInt","inter","vInt"," dB"],
+    ["rngNfUe","nfUe","vNfUe"," dB"],["rngNfBs","nfBs","vNfBs"," dB"]];
+  map.forEach(function(t){ $(t[0]).value=S[t[1]]; $(t[2]).textContent=fmt(S[t[1]], (t[1]==="bsH")?0:1)+t[3]; });
+}
+function bindSliders(){
+  var map=[["rngBsPow","bsPow"],["rngUePow","uePow"],["rngBsGain","bsGain"],["rngUeGain","ueGain"],
+    ["rngBsH","bsH"],["rngShadow","shadow"],["rngPen","pen"],["rngInt","inter"],["rngNfUe","nfUe"],["rngNfBs","nfBs"]];
+  map.forEach(function(t){
+    $(t[0]).addEventListener("input", function(){ S[t[1]]=parseFloat(this.value); syncSliders(); markStale(); });
+  });
+  $("selBw").addEventListener("change", function(){ S.bw=parseFloat(this.value); markStale(); });
+  $("selTdd").addEventListener("change", function(){ S.tdd=this.value; $("tddInfo").textContent=tddObj().desc; markStale(); });
+  $("selMimo").addEventListener("change", function(){ S.mimo=parseInt(this.value,10); refreshControls(); markStale(); });
+  $("btnRun").addEventListener("click", function(){ compute(); });
+}
+
+/* ================= Compute ================= */
+function compute(){
+  var b=bandObj(), svc=svcObj(), m=morphObj(), mo=mimoObj(), t=tddObj();
+  var layers=mo.layers;
+  var mimoGain = 3*Math.log2(Math.max(1,layers)); /* dB: 1x1 0, 2x2 3, 4x4 6, 8 layers 9 — always a real number */
+  var margins = S.shadow + S.pen + S.inter;
+  var noiseDl = -174 + 10*Math.log10(S.bw*1e6) + S.nfUe;
+  var noiseUl = -174 + 10*Math.log10(S.bw*1e6) + S.nfBs;
+  var sensDl = noiseDl + svc.sinrDl;
+  var sensUl = noiseUl + UL_SINR; /* PUSCH: fixed requirement, independent of the PDSCH service picked */
+  /* The phone antenna gain belongs in BOTH budgets: it is the receive gain
+     on the downlink and the transmit gain on the uplink (same antenna). */
+  var maplDl = (S.bsPow + S.bsGain + S.ueGain + mimoGain) - sensDl - margins;
+  var maplUl = (S.uePow + S.ueGain + S.bsGain + mimoGain) - sensUl - margins;
+  var limiting = (maplDl <= maplUl) ? "Downlink" : "Uplink";
+  var limitMapl = Math.min(maplDl, maplUl);
+  var radius = radiusFor(limitMapl, b.fc, S.bsH, S.morph);
+  /* duplex shares */
+  var dlShare = (S.duplex==="FDD") ? 1 : t.dl;
+  var ulShare = (S.duplex==="FDD") ? 1 : t.ul;
+  /* rates */
+  var peakSePerLayer = (S.rat==="NR") ? 6.5 : 5.0; /* bps/Hz/layer at best modulation, before overhead */
+  var peakDl = S.bw * peakSePerLayer * layers * 0.85 * dlShare;
+  var peakUl = S.bw * (peakSePerLayer*0.6) * Math.min(layers,4) * 0.85 * ulShare;
+  function edgeRate(sinr, share){
+    var se = 0.7 * Math.log2(1 + Math.pow(10, sinr/10)); /* practical Shannon, per layer */
+    return S.bw * se * layers * share;
+  }
+  var edgeDl = edgeRate(svc.sinrDl, dlShare);
+  var edgeUl = edgeRate(UL_SINR, ulShare) * (S.rat==="NR"?1:0.8);
+
+  /* outputs */
+  $("oDlMapl").textContent = fmt(maplDl,1)+" dB";
+  $("oUlMapl").textContent = fmt(maplUl,1)+" dB";
+  $("oLimit").textContent = limiting + " limits";
+  $("oLimitWhy").textContent = "The "+limiting.toLowerCase()+" ("+(limiting==="Downlink"?"PDSCH":"PUSCH")+") MAPL ("+fmt(limitMapl,1)+" dB) is the smaller one, so it sets the cell size. Computed on each Run by comparing the two separate budgets — in the workbook this was typed text.";
+  $("oRadius").textContent = radius>=1000 ? fmt(radius/1000,2)+" km" : fmt(radius,0)+" m";
+  $("oEdgeRate").textContent = fmtRate(edgeDl)+" / "+fmtRate(edgeUl);
+  $("oPeakRate").textContent = fmtRate(peakDl)+" / "+fmtRate(peakUl);
+  $("oPeakNote").textContent = "Best-case DL / UL with a strong signal, "+layers+" MIMO layer"+(layers>1?"s":"")+(S.duplex==="TDD" ? ", time-split by the "+t.label.split("—")[0].trim()+" pattern." : ", FDD so DL and UL run simultaneously.");
+  var maxBar = Math.max(maplDl, maplUl, 1);
+  $("barDl").style.width = (100*maplDl/maxBar)+"%";
+  $("barUl").style.width = (100*maplUl/maxBar)+"%";
+  $("barDlV").textContent = fmt(maplDl,1)+" dB";
+  $("barUlV").textContent = fmt(maplUl,1)+" dB";
+  $("gapNote").textContent = "The directions differ by "+fmt(Math.abs(maplDl-maplUl),1)+" dB. "+(limiting==="Uplink" ? "That gap is mostly the phone's low transmit power ("+S.uePow+" dBm vs the site's "+S.bsPow+" dBm) — the usual reason real cells are uplink-limited." : "Here the downlink is the tighter one — check the phone noise figure and the downlink service SINR, which drive it.");
+  $("tTxDl").textContent = fmt(S.bsPow,0)+" dBm"; $("tTxUl").textContent = fmt(S.uePow,0)+" dBm";
+  $("tGaDl").textContent = fmt(S.bsGain,1)+" dBi (site) + "+fmt(S.ueGain,1)+" dBi (phone)"; $("tGaUl").textContent = fmt(S.ueGain,1)+" dBi (phone) + "+fmt(S.bsGain,1)+" dBi (site)";
+  $("tMimoDl").textContent = fmt(mimoGain,1)+" dB"; $("tMimoUl").textContent = fmt(mimoGain,1)+" dB";
+  $("tNoiseDl").textContent = fmt(noiseDl,1)+" dBm"; $("tNoiseUl").textContent = fmt(noiseUl,1)+" dBm";
+  $("tSinrDl").textContent = fmt(svc.sinrDl,0)+" dB"; $("tSinrUl").textContent = fmt(UL_SINR,0)+" dB (fixed)";
+  $("tSensDl").textContent = fmt(sensDl,1)+" dBm"; $("tSensUl").textContent = fmt(sensUl,1)+" dBm";
+  $("tMarg").textContent = fmt(margins,1)+" dB"; $("tMaplDl").textContent = fmt(maplDl,1)+" dB"; $("tMaplUl").textContent = fmt(maplUl,1)+" dB";
+  $("fixMimo").textContent = fmt(3*Math.log2(4),1)+" dB";
+
+  /* channel model panel */
+  $("cmName").textContent = m.model;
+  $("cmDesc").textContent = m.desc;
+  var fText;
+  if(S.morph==="du") fText = "PL = 35.3·log₁₀(d₃D) + 22.4 + 21.3·log₁₀(f GHz) − 0.3·(h_phone − 1.5)";
+  else if(S.morph==="ur") fText = "PL = 13.54 + 39.08·log₁₀(d₃D) + 20·log₁₀(f GHz) − 0.6·(h_phone − 1.5)";
+  else fText = "PL = 161.04 − 7.11·log₁₀(W) + 7.5·log₁₀(h) − (24.37 − 3.7(h/h_site)²)·log₁₀(h_site) + (43.42 − 3.1·log₁₀(h_site))·(log₁₀(d₃D) − 3) + 20·log₁₀(f GHz) − …";
+  $("cmFormula").textContent = fText;
+  $("cmParams").textContent = "In plain words: loss grows with distance (d₃D, metres, including the height difference) and with frequency. At "+fmt(b.fc,b.fc<10?2:0)+" GHz, a "+fmt(S.bsH,0)+" m site and the limiting MAPL of "+fmt(limitMapl,1)+" dB, this model reaches that loss at "+(radius>=1000?fmt(radius/1000,2)+" km":fmt(radius,0)+" m")+" — that distance is the cell radius above. Non-line-of-sight version used (the conservative, no-clear-view case).";
+
+  /* steps */
+  var steps = [
+    "<strong>Start with the noise.</strong> In a "+S.bw+" MHz channel the thermal noise floor is "+fmt(noiseUl,1)+" dBm at the site and "+fmt(noiseDl,1)+" dBm at the phone (the phone adds its "+fmt(S.nfUe,1)+" dB noise figure; the site adds "+fmt(S.nfBs,1)+" dB).",
+    "<strong>Add what each channel needs.</strong> The downlink service “"+svc.label+"” (PDSCH) needs a signal "+fmt(svc.sinrDl,0)+" dB above noise at the phone. The uplink (PUSCH) is budgeted for its own robust service, fixed at "+fmt(UL_SINR,0)+" dB above noise at the site — it does not change with the downlink service. That gives sensitivities of "+fmt(sensDl,1)+" dBm (phone) and "+fmt(sensUl,1)+" dBm (site).",
+    "<strong>Add up the transmit side.</strong> Downlink: "+fmt(S.bsPow,0)+" dBm site power + "+fmt(S.bsGain,1)+" dBi site antenna + "+fmt(S.ueGain,1)+" dBi phone antenna + "+fmt(mimoGain,1)+" dB MIMO gain ("+mo.label+"). Uplink: "+fmt(S.uePow,0)+" dBm phone power + the same antennas + the same MIMO gain.",
+    "<strong>Subtract the margins.</strong> Shadow "+fmt(S.shadow,1)+" + penetration "+fmt(S.pen,1)+" + interference "+fmt(S.inter,1)+" = "+fmt(margins,1)+" dB is held back in both directions.",
+    "<strong>That leaves the MAPLs:</strong> downlink "+fmt(maplDl,1)+" dB, uplink "+fmt(maplUl,1)+" dB. The smaller one — the "+limiting.toLowerCase()+" — limits the cell.",
+    "<strong>Turn MAPL into distance.</strong> Run the 3GPP "+m.model.split("—")[1].trim()+" path-loss formula until the loss equals "+fmt(limitMapl,1)+" dB: that happens at "+(radius>=1000?fmt(radius/1000,2)+" km":fmt(radius,0)+" m")+", the cell radius.",
+    "<strong>Rates follow from bandwidth, layers and duplex.</strong> Peak ≈ bandwidth × spectral efficiency × "+layers+" layer"+(layers>1?"s":"")+(S.duplex==="TDD" ? " × the slot share ("+Math.round(dlShare*100)+"% DL / "+Math.round(ulShare*100)+"% UL for "+t.label.split("—")[0].trim()+")" : " (FDD: no time split)")+": "+fmtRate(peakDl)+" down, "+fmtRate(peakUl)+" up."
+  ];
+  $("stepsList").innerHTML = steps.map(function(s){ return "<li>"+s+"</li>"; }).join("");
+
+  /* warnings */
+  var w=[];
+  if(b.id==="n257" && (S.morph==="ru"||S.morph==="su")) w.push("Heads-up: 28 GHz mmWave over a "+morphObj().label.toLowerCase()+" morphology is not a realistic deployment — the model will still do the maths, but treat the radius as a maths exercise, not a plan.");
+  if(S.service==="embb" && radius>3000) w.push("eMBB at a "+(radius>=1000?fmt(radius/1000,1)+" km":fmt(radius,0)+" m")+" radius is optimistic: the 100 Mbps-class service normally lives within a few hundred metres of the site. The budget only guarantees the service's required SINR at the edge.");
+  if(limitMapl<100) w.push("The limiting MAPL is under 100 dB — a very small cell. The margins (especially penetration) are eating the budget; check step 8.");
+  $("warnBox").textContent = w.join(" ");
+  clearStale();
+}
+
+refreshControls();
+bindSliders();
+compute();
+</script>
+</body>
+</html>

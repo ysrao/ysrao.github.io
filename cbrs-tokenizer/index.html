@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+  <title>CBRS Tokenizer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap');
+    :root {
+      color-scheme: light dark;
+      --bg: #edf0ed;
+      --paper: #f8f9f6;
+      --paper-2: #ffffff;
+      --ink: #13201d;
+      --muted: #596762;
+      --line: #c8cfcb;
+      --line-strong: #8e9a95;
+      --accent: #d85518;
+      --accent-ink: #fff8f2;
+      --cyan: #087f83;
+      --cyan-soft: #d9eeee;
+      --ok: #17643f;
+      --ok-soft: #dcecdf;
+      --warn: #9a3b16;
+      --warn-soft: #f6e1d7;
+      --shadow: 0 18px 48px rgba(28, 43, 37, .10);
+      --radius-lg: 24px;
+      --radius-md: 14px;
+      --radius-sm: 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1210;
+        --paper: #111b18;
+        --paper-2: #16231f;
+        --ink: #edf4f0;
+        --muted: #a7b5af;
+        --line: #30413b;
+        --line-strong: #65766f;
+        --accent: #ff7a3d;
+        --accent-ink: #241008;
+        --cyan: #55c6ca;
+        --cyan-soft: #153638;
+        --ok: #70d19a;
+        --ok-soft: #153626;
+        --warn: #ff9a70;
+        --warn-soft: #402217;
+        --shadow: 0 22px 60px rgba(0,0,0,.30);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--line) 36%, transparent) 1px, transparent 1px) 0 0 / 44px 44px,
+        linear-gradient(color-mix(in srgb, var(--line) 28%, transparent) 1px, transparent 1px) 0 0 / 44px 44px,
+        var(--bg);
+      color: var(--ink);
+      font-family: "Public Sans", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 64px; }
+    .intro { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(270px, .6fr); gap: 40px; align-items: end; margin-bottom: 28px; }
+    .eyebrow { margin: 0 0 9px; color: var(--accent); font: 600 12px/1.2 "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { margin: 0; max-width: 780px; font-size: clamp(34px, 5vw, 66px); line-height: .98; letter-spacing: -.045em; font-weight: 700; }
+    .intro-copy { margin: 0 0 4px; color: var(--muted); font-size: 16px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.14fr) minmax(340px, .86fr); gap: 20px; align-items: start; }
+    .panel { background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .inputs { border-radius: var(--radius-lg) 8px var(--radius-lg) var(--radius-lg); overflow: hidden; }
+    .results { position: sticky; top: 18px; border-radius: 8px var(--radius-lg) var(--radius-lg) var(--radius-lg); overflow: hidden; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 22px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
+    .panel-head h2 { margin: 0; font-size: 17px; letter-spacing: -.015em; }
+    .step-count { color: var(--muted); font: 500 12px/1 "IBM Plex Mono", monospace; }
+    .form-section { padding: 23px 22px 25px; border-bottom: 1px solid var(--line); }
+    .form-section:last-child { border-bottom: 0; }
+    .section-title { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+    .section-title b { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--paper); font: 600 11px/1 "IBM Plex Mono", monospace; }
+    .section-title h3 { margin: 0; font-size: 15px; }
+    .section-note { margin: -8px 0 17px 34px; color: var(--muted); font-size: 13px; }
+    .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .segmented > div { position: relative; }
+    .segmented input { position: absolute; z-index: 2; left: 14px; top: 15px; width: 18px; min-height: 18px; margin: 0; padding: 0; accent-color: var(--accent); }
+    .segmented label { display: block; padding: 14px 15px 14px 43px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-2); transition: border-color .16s, background .16s; }
+    .segmented label strong { display: block; font-size: 14px; }
+    .segmented label span { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .segmented input:checked + label { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--paper-2)); box-shadow: inset 0 0 0 1px var(--accent); }
+    .segmented input:focus-visible + label { outline: 3px solid color-mix(in srgb, var(--cyan) 30%, transparent); outline-offset: 2px; }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label, .sub-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .unit-input { position: relative; }
+    input, select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper-2); outline: none; }
+    input:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
+    .unit-input input { padding-right: 52px; }
+    .unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font: 500 11px/1 "IBM Plex Mono", monospace; pointer-events: none; }
+    .hint { margin: 6px 0 0; color: var(--muted); font-size: 11px; }
+    .band-wrap { margin-top: 16px; }
+    .band-labels { display: flex; justify-content: space-between; color: var(--muted); font: 500 10px/1 "IBM Plex Mono", monospace; }
+    .band { position: relative; height: 32px; margin: 7px 0; border: 1px solid var(--line-strong); border-radius: 4px; overflow: hidden; background: repeating-linear-gradient(90deg, transparent 0 calc(6.666% - 1px), var(--line) calc(6.666% - 1px) 6.666%), var(--paper-2); }
+    .band-selection { position: absolute; top: 0; bottom: 0; left: 0; width: 6.666%; background: color-mix(in srgb, var(--cyan) 75%, transparent); border-left: 2px solid var(--cyan); border-right: 2px solid var(--cyan); transition: left .2s, width .2s; }
+    .band-caption { color: var(--muted); font-size: 11px; }
+    .switch-row { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 16px; }
+    .switch-copy strong { display: block; font-size: 14px; }
+    .switch-copy span { display: block; color: var(--muted); font-size: 12px; }
+    .switch { position: relative; flex: 0 0 auto; width: 28px; height: 28px; }
+    .switch input { position: static; opacity: 1; width: 28px; min-height: 28px; margin: 0; padding: 0; accent-color: var(--cyan); }
+    .switch-ui { display: none; }
+    .gate-fields[hidden] { display: none; }
+    .source-blocks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .source-block { padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: var(--paper-2); }
+    .source-block h4 { margin: 0 0 3px; font-size: 14px; }
+    .source-context { margin: 0 0 13px; color: var(--muted); font-size: 11px; }
+    .source-block .fields { grid-template-columns: 1fr; gap: 11px; }
+    .result-top { padding: 22px; background: var(--ink); color: var(--paper); }
+    .result-kicker { margin: 0 0 11px; color: color-mix(in srgb, var(--paper) 65%, transparent); font: 500 11px/1 "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: .08em; }
+    .token-number { margin: 0; font: 600 clamp(36px, 6vw, 58px)/1 "IBM Plex Mono", monospace; letter-spacing: -.055em; }
+    .token-unit { margin-top: 7px; color: color-mix(in srgb, var(--paper) 72%, transparent); font-size: 13px; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .metric { padding: 17px 18px; border-bottom: 1px solid var(--line); }
+    .metric:nth-child(odd) { border-right: 1px solid var(--line); }
+    .metric-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+    .metric-value { display: block; font: 600 17px/1.25 "IBM Plex Mono", monospace; overflow-wrap: anywhere; }
+    .gate-card { margin: 18px; padding: 15px; border-radius: 11px; background: var(--cyan-soft); }
+    .gate-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .gate-label { font-size: 12px; font-weight: 600; }
+    .gate-status { padding: 5px 8px; border-radius: 99px; font: 600 10px/1 "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: .04em; }
+    .gate-status.pass { background: var(--ok-soft); color: var(--ok); }
+    .gate-status.fail { background: var(--warn-soft); color: var(--warn); }
+    .gate-status.off { background: var(--paper-2); color: var(--muted); }
+    .gate-detail { margin-top: 11px; font: 500 13px/1.4 "IBM Plex Mono", monospace; }
+    .token-string { margin: 0 18px 18px; padding: 13px; border: 1px dashed var(--line-strong); border-radius: 8px; background: var(--paper-2); font: 500 11px/1.55 "IBM Plex Mono", monospace; overflow-wrap: anywhere; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 0 18px 18px; }
+    .action { min-height: 42px; border-radius: 8px; border: 1px solid var(--line-strong); background: transparent; font-size: 13px; font-weight: 600; }
+    .action.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+    .action:hover { filter: brightness(.96); }
+    .action:focus-visible { outline: 3px solid color-mix(in srgb, var(--cyan) 35%, transparent); outline-offset: 2px; }
+    .formula { margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); background: var(--paper); border-radius: 14px; overflow: hidden; }
+    .formula div { padding: 16px 18px; border-right: 1px solid var(--line); }
+    .formula div:last-child { border-right: 0; }
+    .formula b { display: block; margin-bottom: 4px; font: 600 12px/1.3 "IBM Plex Mono", monospace; }
+    .formula span { color: var(--muted); font-size: 12px; }
+    .disclaimer { margin: 14px 2px 0; color: var(--muted); font-size: 11px; }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 18px); z-index: 10; padding: 10px 14px; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: 12px; opacity: 0; pointer-events: none; transition: .2s; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (max-width: 840px) {
+      .shell { width: min(100% - 24px, 700px); padding-top: 28px; }
+      .intro { grid-template-columns: 1fr; gap: 14px; }
+      .intro-copy { max-width: 600px; }
+      .layout { grid-template-columns: 1fr; }
+      .results { position: static; }
+      .formula { grid-template-columns: 1fr; }
+      .formula div { border-right: 0; border-bottom: 1px solid var(--line); }
+      .formula div:last-child { border-bottom: 0; }
+    }
+    @media (max-width: 520px) {
+      .shell { width: 100%; padding: 22px 12px 40px; }
+      h1 { font-size: 39px; }
+      .fields { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .inputs, .results { border-radius: 18px; }
+      .form-section, .panel-head { padding-left: 16px; padding-right: 16px; }
+      .segmented, .source-blocks { grid-template-columns: 1fr; }
+      .result-top { padding: 20px 18px; }
+      .metric { padding: 15px 14px; }
+      .metric-value { font-size: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">3550–3700 MHz · draft instrument</p>
+        <h1 id="page-title">Turn a CBRS right into a measurable claim.</h1>
+      </div>
+      <p class="intro-copy">Describe the authorization, place, time, and engineering conditions. The calculator returns the resource quantity, a notional value, and a portable token record.</p>
+    </section>
+
+    <div class="layout">
+      <form class="panel inputs" id="token-form" novalidate>
+        <div class="panel-head"><h2>Token inputs</h2><span class="step-count">4 blocks</span></div>
+
+        <section class="form-section">
+          <div class="section-title"><b>01</b><h3>Access right</h3></div>
+          <div class="segmented" role="radiogroup" aria-label="CBRS access tier">
+            <div>
+              <input type="radio" name="tier" id="tier-pal" value="PAL" checked />
+              <label for="tier-pal"><strong>PAL</strong><span>Priority Access License</span></label>
+            </div>
+            <div>
+              <input type="radio" name="tier" id="tier-gaa" value="GAA" />
+              <label for="tier-gaa"><strong>GAA</strong><span>General Authorized Access</span></label>
+            </div>
+          </div>
+          <p class="hint" id="tier-help">PAL is protected from GAA but remains subordinate to incumbents.</p>
+        </section>
+
+        <section class="form-section">
+          <div class="section-title"><b>02</b><h3>Resource envelope</h3></div>
+          <div class="fields">
+            <div class="field">
+              <label for="low-edge">Lower band edge</label>
+              <div class="unit-input"><input id="low-edge" type="number" min="3550" max="3690" step="10" value="3550" /><span class="unit">MHz</span></div>
+            </div>
+            <div class="field">
+              <label for="bandwidth">Bandwidth</label>
+              <div class="unit-input"><input id="bandwidth" type="number" min="1" max="150" step="1" value="10" /><span class="unit">MHz</span></div>
+            </div>
+            <div class="field">
+              <label for="start-time">Window begins</label>
+              <input id="start-time" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label for="duration">Duration</label>
+              <div class="unit-input"><input id="duration" type="number" min="0.25" max="8760" step="0.25" value="4" /><span class="unit">hours</span></div>
+            </div>
+            <div class="field">
+              <label for="geo-type">Geography type</label>
+              <select id="geo-type"><option>County</option><option>Census tract</option><option>Site footprint</option><option>Custom polygon</option></select>
+            </div>
+            <div class="field">
+              <label for="geo-id">Geography / asset ID</label>
+              <input id="geo-id" type="text" value="Zone A" maxlength="80" aria-describedby="geo-note" />
+              <p class="hint" id="geo-note">A county name, tract ID, site ID, or polygon reference.</p>
+            </div>
+          </div>
+          <div class="band-wrap" aria-label="Selected CBRS band visualization">
+            <div class="band-labels"><span>3550</span><span>3625</span><span>3700 MHz</span></div>
+            <div class="band"><div class="band-selection" id="band-selection"></div></div>
+            <div class="band-caption" id="band-caption">3550–3560 MHz selected</div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-title"><b>03</b><h3>Engineering gate</h3></div>
+          <div class="switch-row">
+            <div class="switch-copy"><strong>Check external interference</strong><span>Adds I<sub>ext</sub> to the internal-interference baseline.</span></div>
+            <label class="switch" aria-label="Enable engineering gate"><input id="gate-enabled" type="checkbox" checked /><span class="switch-ui"></span></label>
+          </div>
+          <div class="gate-fields" id="gate-fields">
+            <span class="sub-label">Radar interference sources</span>
+            <div class="source-blocks">
+              <section class="source-block" aria-labelledby="ground-radar-title">
+                <h4 id="ground-radar-title">Ground-based radar</h4>
+                <p class="source-context">Inland-site reference</p>
+                <div class="fields">
+                  <div class="field">
+                    <label for="ground-distance">Receiver separation</label>
+                    <div class="unit-input"><input id="ground-distance" type="number" min="0.1" max="1000" step="0.1" value="120" /><span class="unit">km</span></div>
+                  </div>
+                  <div class="field">
+                    <label for="ground-eirp">Radar EIRP</label>
+                    <div class="unit-input"><input id="ground-eirp" type="number" min="-50" max="150" step="0.5" value="90" /><span class="unit">dBm</span></div>
+                  </div>
+                  <div class="field">
+                    <label for="ground-duty">Beam-on activity (scan dwell)</label>
+                    <div class="unit-input"><input id="ground-duty" type="number" min="0.01" max="100" step="0.1" value="0.4" /><span class="unit">%</span></div>
+                  </div>
+                  <div class="field">
+                    <label for="ground-inbound-loss">Inbound off-axis, clutter + terrain loss</label>
+                    <div class="unit-input"><input id="ground-inbound-loss" type="number" min="0" max="200" step="0.5" value="60" /><span class="unit">dB</span></div>
+                  </div>
+                </div>
+              </section>
+              <section class="source-block" aria-labelledby="navy-radar-title">
+                <h4 id="navy-radar-title">Navy shipborne radar</h4>
+                <p class="source-context">Coastal-county reference</p>
+                <div class="fields">
+                  <div class="field">
+                    <label for="navy-distance">Receiver separation</label>
+                    <div class="unit-input"><input id="navy-distance" type="number" min="0.1" max="1000" step="0.1" value="120" /><span class="unit">km</span></div>
+                  </div>
+                  <div class="field">
+                    <label for="navy-eirp">Radar EIRP</label>
+                    <div class="unit-input"><input id="navy-eirp" type="number" min="-50" max="150" step="0.5" value="90" /><span class="unit">dBm</span></div>
+                  </div>
+                  <div class="field">
+                    <label for="navy-duty">Beam-on activity (scan dwell)</label>
+                    <div class="unit-input"><input id="navy-duty" type="number" min="0.01" max="100" step="0.1" value="0.4" /><span class="unit">%</span></div>
+                  </div>
+                  <div class="field">
+                    <label for="navy-inbound-loss">Inbound off-axis, clutter + terrain loss</label>
+                    <div class="unit-input"><input id="navy-inbound-loss" type="number" min="0" max="200" step="0.5" value="60" /><span class="unit">dB</span></div>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <p class="hint">Both modeled radar contributions are combined in I<sub>ext</sub>. Use separation and activity assumptions suited to the selected geography; Navy shipborne radar is the coastal-county source, while ground-based radar covers inland sites.</p>
+            <span class="sub-label" style="margin-top:18px">Commercial KPI gate</span>
+            <div class="fields">
+              <div class="field">
+                <label for="signal">Desired CBRS signal</label>
+                <div class="unit-input"><input id="signal" type="number" min="-160" max="0" step="0.5" value="-80" /><span class="unit">dBm</span></div>
+              </div>
+              <div class="field">
+                <label for="internal">Internal interference + noise</label>
+                <div class="unit-input"><input id="internal" type="number" min="-180" max="0" step="0.5" value="-98" /><span class="unit">dBm</span></div>
+              </div>
+              <div class="field full">
+                <label for="min-sinr">Minimum SINR</label>
+                <div class="unit-input"><input id="min-sinr" type="number" min="-20" max="40" step="0.5" value="5" /><span class="unit">dB</span></div>
+              </div>
+            </div>
+            <span class="sub-label" style="margin-top:18px">Incumbent-protection gate</span>
+            <div class="fields">
+              <div class="field">
+                <label for="cbsd-eirp">CBSD EIRP toward incumbent</label>
+                <div class="unit-input"><input id="cbsd-eirp" type="number" min="-50" max="100" step="0.5" value="47" /><span class="unit">dBm</span></div>
+              </div>
+              <div class="field">
+                <label for="cbsd-duty">CBSD active share</label>
+                <div class="unit-input"><input id="cbsd-duty" type="number" min="0.01" max="100" step="0.1" value="50" /><span class="unit">%</span></div>
+              </div>
+              <div class="field">
+                <label for="outbound-loss">Outbound off-axis + terrain loss</label>
+                <div class="unit-input"><input id="outbound-loss" type="number" min="0" max="200" step="0.5" value="20" /><span class="unit">dB</span></div>
+              </div>
+              <div class="field">
+                <label for="incumbent-limit">Protection limit at incumbent</label>
+                <div class="unit-input"><input id="incumbent-limit" type="number" min="-180" max="0" step="0.5" value="-109" /><span class="unit">dBm</span></div>
+              </div>
+            </div>
+            <p class="hint">The transparent parametric model uses free-space path loss at the selected band center plus the entered off-axis, clutter, and terrain terms. Radar activity factors are scan-dwell shares (azimuth beamwidth ÷ 360°): ≈0.4% for a 1.4° rotating surveillance beam — the fraction of time the beam illuminates the site, i.e. the closed-window share (shipborne search sets with wider beams run higher, e.g. ≈0.9% for a 3.3° beam). This is not the radar's pulse duty (~0.1% within a dwell); the long-term time-average is dwell × pulse duty.</p>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-title"><b>04</b><h3>Valuation assumptions</h3></div>
+          <p class="section-note">There is no universal CBRS token price. Use a negotiated, auction-discovered, or scenario rate.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="rate">Rate per MHz-hour</label>
+              <div class="unit-input"><input id="rate" type="number" min="0" step="0.01" value="1.00" /><span class="unit">USD</span></div>
+            </div>
+            <div class="field">
+              <label for="usable">Expected usable share</label>
+              <div class="unit-input"><input id="usable" type="number" min="0" max="100" step="1" value="100" /><span class="unit">%</span></div>
+            </div>
+            <div class="field full">
+              <label for="adjustment">Rights / risk adjustment</label>
+              <div class="unit-input"><input id="adjustment" type="number" min="-100" max="500" step="1" value="0" /><span class="unit">%</span></div>
+              <p class="hint">Enter the premium or discount explicitly; selecting PAL or GAA never hides one in the formula.</p>
+            </div>
+          </div>
+        </section>
+      </form>
+
+      <aside class="panel results" aria-live="polite">
+        <div class="panel-head"><h2>Draft token</h2><span class="step-count" id="token-ref">REF 00000000</span></div>
+        <div class="result-top">
+          <p class="result-kicker">Cleared resource quantity</p>
+          <p class="token-number"><span id="cleared-qty">40.00</span></p>
+          <div class="token-unit">MHz·hour tokens</div>
+        </div>
+        <div class="result-grid">
+          <div class="metric"><span class="metric-label">Requested</span><span class="metric-value" id="requested-qty">40.00 MHz·h</span></div>
+          <div class="metric"><span class="metric-label">Notional value</span><span class="metric-value" id="notional-value">$40.00</span></div>
+          <div class="metric"><span class="metric-label">Access tier</span><span class="metric-value" id="tier-output">PAL</span></div>
+          <div class="metric"><span class="metric-label">Spectrum block</span><span class="metric-value" id="block-output">3550–3560</span></div>
+        </div>
+        <div class="gate-card">
+          <div class="gate-line"><span class="gate-label">Commercial KPI gate</span><span class="gate-status pass" id="commercial-status">Pass</span></div>
+          <div class="gate-detail" id="commercial-detail">SINR 14.97 dB ≥ 5.00 dB · Ground-based + Navy shipborne radar Iext</div>
+          <div class="gate-line" style="margin-top:14px"><span class="gate-label">Incumbent-protection gate</span><span class="gate-status pass" id="incumbent-status">Pass</span></div>
+          <div class="gate-detail" id="incumbent-detail">Ground-based radar and Navy shipborne radar are both within the protection limit — SAFE TRADE</div>
+        </div>
+        <div class="token-string" id="token-string">CBRS/PAL/3550-3560/COUNTY:ZONE-A/40.00MHH/PASS</div>
+        <div class="actions">
+          <button class="action" type="button" id="copy-btn">Copy record</button>
+          <button class="action primary" type="button" id="download-btn">Download JSON</button>
+        </div>
+      </aside>
+    </div>
+
+    <section class="formula" aria-label="Calculation method">
+      <div><b>Quantity = MHz × hours</b><span>The resource unit is independent of price and access tier.</span></div>
+      <div><b>SINR = S / (Iᵢₙₜ + Iₑₓₜ + N)</b><span>Iₑₓₜ is the power sum of ground-based and Navy shipborne radar contributions.</span></div>
+      <div><b>Value = quantity × rate × usable share × (1 + adjustment)</b><span>A failed gate clears zero units; the requested quantity remains visible.</span></div>
+    </section>
+    <p class="disclaimer">Research calculator only. It does not grant spectrum rights, replace SAS/ESC authorization, or represent a market quote. Incumbent-protection decisions remain with the authorized CBRS coordination framework.</p>
+  </main>
+  <div class="toast" id="toast" role="status">Copied</div>
+
+  <script>
+    (function () {
+      var form = document.getElementById('token-form');
+      var ids = ['low-edge','bandwidth','start-time','duration','geo-type','geo-id','gate-enabled','ground-distance','ground-eirp','ground-duty','ground-inbound-loss','navy-distance','navy-eirp','navy-duty','navy-inbound-loss','min-sinr','signal','internal','cbsd-eirp','cbsd-duty','outbound-loss','incumbent-limit','rate','usable','adjustment'];
+      var el = {};
+      ids.forEach(function (id) { el[id] = document.getElementById(id); });
+
+      function localDateTime() {
+        var d = new Date();
+        d.setMinutes(0, 0, 0);
+        d.setHours(d.getHours() + 1);
+        var off = d.getTimezoneOffset();
+        return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
+      }
+      el['start-time'].value = localDateTime();
+
+      function num(id, fallback) {
+        var v = parseFloat(el[id].value);
+        return Number.isFinite(v) ? v : fallback;
+      }
+      function power(dbm) { return Math.pow(10, dbm / 10); }
+      function slug(value) {
+        return String(value || 'UNSPECIFIED').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '') || 'UNSPECIFIED';
+      }
+      function hash(text) {
+        var h = 2166136261;
+        for (var i = 0; i < text.length; i++) {
+          h ^= text.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return (h >>> 0).toString(16).toUpperCase().padStart(8, '0');
+      }
+      function money(value) {
+        return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+      }
+      function data() {
+        var tierNode = document.querySelector('input[name="tier"]:checked');
+        var tier = tierNode ? tierNode.value : 'PAL';
+        var low = Math.max(3550, Math.min(3699, num('low-edge', 3550)));
+        var bw = Math.max(0, num('bandwidth', 0));
+        var high = Math.min(3700, low + bw);
+        var validBw = Math.max(0, high - low);
+        var duration = Math.max(0, num('duration', 0));
+        var requested = validBw * duration;
+        var gateOn = el['gate-enabled'].checked;
+        var centerGhz = (low + high) / 2000;
+        var groundDistance = Math.max(0.1, num('ground-distance', 120));
+        var groundFspl = 92.45 + 20 * Math.log10(centerGhz) + 20 * Math.log10(groundDistance);
+        var groundDuty = Math.max(0.0001, Math.min(100, num('ground-duty', 0.4))) / 100;
+        var groundExternalDbm = num('ground-eirp', 90) + 10 * Math.log10(groundDuty) - groundFspl - Math.max(0, num('ground-inbound-loss', 60));
+        var navyDistance = Math.max(0.1, num('navy-distance', 120));
+        var navyFspl = 92.45 + 20 * Math.log10(centerGhz) + 20 * Math.log10(navyDistance);
+        var navyDuty = Math.max(0.0001, Math.min(100, num('navy-duty', 0.4))) / 100;
+        var navyExternalDbm = num('navy-eirp', 90) + 10 * Math.log10(navyDuty) - navyFspl - Math.max(0, num('navy-inbound-loss', 60));
+        var externalDbm = 10 * Math.log10(power(groundExternalDbm) + power(navyExternalDbm));
+        var sinr = num('signal', -80) - 10 * Math.log10(power(num('internal', -98)) + power(externalDbm));
+        var threshold = num('min-sinr', 5);
+        var commercialPass = sinr >= threshold;
+        var cbsdDuty = Math.max(0.0001, Math.min(100, num('cbsd-duty', 50))) / 100;
+        var outboundLoss = Math.max(0, num('outbound-loss', 20));
+        var groundIncumbentContribution = num('cbsd-eirp', 47) + 10 * Math.log10(cbsdDuty) - groundFspl - outboundLoss;
+        var navyIncumbentContribution = num('cbsd-eirp', 47) + 10 * Math.log10(cbsdDuty) - navyFspl - outboundLoss;
+        var incumbentLimit = num('incumbent-limit', -109);
+        var groundIncumbentPass = groundIncumbentContribution <= incumbentLimit;
+        var navyIncumbentPass = navyIncumbentContribution <= incumbentLimit;
+        var incumbentPass = groundIncumbentPass && navyIncumbentPass;
+        var passed = !gateOn || (commercialPass && incumbentPass);
+        var cleared = passed ? requested : 0;
+        var usable = Math.max(0, Math.min(100, num('usable', 100))) / 100;
+        var multiplier = Math.max(0, 1 + num('adjustment', 0) / 100);
+        var value = cleared * Math.max(0, num('rate', 0)) * usable * multiplier;
+        return {
+          tier: tier, low: low, high: high, bandwidth: validBw, duration: duration,
+          start: el['start-time'].value || '', geoType: el['geo-type'].value,
+          geography: el['geo-id'].value.trim() || 'Unspecified', requested: requested,
+          gateEnabled: gateOn,
+          groundRadar: { distanceKm: groundDistance, eirpDbm: num('ground-eirp', 90), dutyShare: groundDuty, freeSpacePathLossDb: groundFspl, inboundAdditionalLossDb: Math.max(0, num('ground-inbound-loss', 60)), receivedInterferenceDbm: groundExternalDbm },
+          navyShipborneRadar: { distanceKm: navyDistance, eirpDbm: num('navy-eirp', 90), dutyShare: navyDuty, freeSpacePathLossDb: navyFspl, inboundAdditionalLossDb: Math.max(0, num('navy-inbound-loss', 60)), receivedInterferenceDbm: navyExternalDbm },
+          desiredSignalDbm: num('signal', -80), internalInterferenceNoiseDbm: num('internal', -98),
+          externalInterferenceDbm: externalDbm, minimumSinrDb: threshold,
+          calculatedSinrDb: sinr, commercialVerdict: gateOn ? (commercialPass ? 'PASS' : 'FAIL') : 'UNVERIFIED',
+          cbsdEirpDbm: num('cbsd-eirp', 47), cbsdDutyShare: cbsdDuty,
+          outboundAdditionalLossDb: outboundLoss,
+          groundIncumbentContributionDbm: groundIncumbentContribution,
+          navyIncumbentContributionDbm: navyIncumbentContribution,
+          incumbentProtectionLimitDbm: incumbentLimit,
+          groundIncumbentVerdict: gateOn ? (groundIncumbentPass ? 'PASS' : 'FAIL') : 'UNVERIFIED',
+          navyIncumbentVerdict: gateOn ? (navyIncumbentPass ? 'PASS' : 'FAIL') : 'UNVERIFIED',
+          incumbentVerdict: gateOn ? (incumbentPass ? 'PASS' : 'FAIL') : 'UNVERIFIED',
+          verdict: gateOn ? (passed ? 'PASS' : 'FAIL') : 'UNVERIFIED',
+          cleared: cleared, rateUsdPerMhzHour: Math.max(0, num('rate', 0)),
+          usableShare: usable, rightsRiskAdjustment: num('adjustment', 0) / 100,
+          notionalValueUsd: value
+        };
+      }
+      function record(d) {
+        return ['CBRS', d.tier, d.low + '-' + d.high, slug(d.geoType) + ':' + slug(d.geography), d.requested.toFixed(2) + 'MHH', d.verdict].join('/');
+      }
+      function update() {
+        var d = data();
+        var rec = record(d);
+        document.getElementById('cleared-qty').textContent = d.cleared.toFixed(2);
+        document.getElementById('requested-qty').textContent = d.requested.toFixed(2) + ' MHz·h';
+        document.getElementById('notional-value').textContent = money(d.notionalValueUsd);
+        document.getElementById('tier-output').textContent = d.tier;
+        document.getElementById('block-output').textContent = d.low + '–' + d.high;
+        document.getElementById('token-string').textContent = rec;
+        document.getElementById('token-ref').textContent = 'REF ' + hash(rec + '|' + d.start + '|' + d.rateUsdPerMhzHour);
+        var commercialStatus = document.getElementById('commercial-status');
+        var commercialDetail = document.getElementById('commercial-detail');
+        var incumbentStatus = document.getElementById('incumbent-status');
+        var incumbentDetail = document.getElementById('incumbent-detail');
+        commercialStatus.className = 'gate-status'; incumbentStatus.className = 'gate-status';
+        if (!d.gateEnabled) {
+          commercialStatus.textContent = 'Unverified'; commercialStatus.classList.add('off');
+          incumbentStatus.textContent = 'Unverified'; incumbentStatus.classList.add('off');
+          commercialDetail.textContent = 'Gate disabled · quantity is provisional';
+          incumbentDetail.textContent = 'Gate disabled · incumbent impact not checked';
+        } else {
+          commercialStatus.textContent = d.commercialVerdict === 'PASS' ? 'Pass' : 'Fail';
+          commercialStatus.classList.add(d.commercialVerdict === 'PASS' ? 'pass' : 'fail');
+          commercialDetail.textContent = 'SINR ' + d.calculatedSinrDb.toFixed(2) + ' dB ' + (d.commercialVerdict === 'PASS' ? '≥' : '<') + ' ' + d.minimumSinrDb.toFixed(2) + ' dB · Iext total ' + d.externalInterferenceDbm.toFixed(2) + ' dBm (ground-based ' + d.groundRadar.receivedInterferenceDbm.toFixed(2) + ' + Navy shipborne ' + d.navyShipborneRadar.receivedInterferenceDbm.toFixed(2) + ')';
+          incumbentStatus.textContent = d.incumbentVerdict === 'PASS' ? 'Pass' : 'Fail';
+          incumbentStatus.classList.add(d.incumbentVerdict === 'PASS' ? 'pass' : 'fail');
+          incumbentDetail.textContent = 'Ground-based radar ' + d.groundIncumbentContributionDbm.toFixed(2) + ' dBm (' + d.groundIncumbentVerdict + ') · Navy shipborne radar ' + d.navyIncumbentContributionDbm.toFixed(2) + ' dBm (' + d.navyIncumbentVerdict + ') ' + (d.incumbentVerdict === 'PASS' ? '— SAFE TRADE (both within the protection limit)' : '— UNSAFE (one or both exceed the protection limit)');
+        }
+        document.getElementById('gate-fields').hidden = !d.gateEnabled;
+        var left = Math.max(0, Math.min(100, (d.low - 3550) / 150 * 100));
+        var width = Math.max(0, Math.min(100 - left, d.bandwidth / 150 * 100));
+        var sel = document.getElementById('band-selection');
+        sel.style.left = left + '%'; sel.style.width = width + '%';
+        document.getElementById('band-caption').textContent = d.low + '–' + d.high + ' MHz selected' + (d.bandwidth < num('bandwidth', 0) ? ' · clipped at 3700 MHz' : '');
+        document.getElementById('tier-help').textContent = d.tier === 'PAL'
+          ? 'PAL is protected from GAA but remains subordinate to incumbents.'
+          : 'GAA has no interference protection from PAL and remains subordinate to incumbents.';
+      }
+      function showToast(text) {
+        var toast = document.getElementById('toast');
+        toast.textContent = text; toast.classList.add('show');
+        window.setTimeout(function () { toast.classList.remove('show'); }, 1600);
+      }
+      form.addEventListener('input', update);
+      form.addEventListener('change', update);
+      document.getElementById('copy-btn').addEventListener('click', function () {
+        var d = data();
+        var text = record(d) + '\nQuantity: ' + d.requested.toFixed(2) + ' MHz·h\nCleared: ' + d.cleared.toFixed(2) + ' MHz·h\nNotional value: ' + money(d.notionalValueUsd);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { showToast('Token record copied'); }, function () { showToast('Copy unavailable'); });
+        } else { showToast('Copy unavailable'); }
+      });
+      document.getElementById('download-btn').addEventListener('click', function () {
+        var d = data();
+        var rec = record(d);
+        var payload = {
+          schema: 'cbrs-resource-token-draft/0.2',
+          reference: hash(rec + '|' + d.start + '|' + d.rateUsdPerMhzHour),
+          token: rec,
+          authorization: { tier: d.tier },
+          resource: { lowerEdgeMhz: d.low, upperEdgeMhz: d.high, bandwidthMhz: d.bandwidth, durationHours: d.duration, requestedMhzHours: d.requested, clearedMhzHours: d.cleared },
+          geography: { type: d.geoType, identifier: d.geography },
+          timeWindow: { startsLocal: d.start },
+          engineeringGate: {
+            enabled: d.gateEnabled,
+            propagationModel: 'FSPL at band center plus entered directional/clutter/terrain loss',
+            externalSources: {
+              groundBasedRadar: { applicability: 'inland sites', distanceKm: d.groundRadar.distanceKm, eirpDbm: d.groundRadar.eirpDbm, dutyShare: d.groundRadar.dutyShare, freeSpacePathLossDb: Number(d.groundRadar.freeSpacePathLossDb.toFixed(3)), inboundAdditionalLossDb: d.groundRadar.inboundAdditionalLossDb, receivedInterferenceDbm: Number(d.groundRadar.receivedInterferenceDbm.toFixed(3)) },
+              navyShipborneRadar: { applicability: 'coastal counties', distanceKm: d.navyShipborneRadar.distanceKm, eirpDbm: d.navyShipborneRadar.eirpDbm, dutyShare: d.navyShipborneRadar.dutyShare, freeSpacePathLossDb: Number(d.navyShipborneRadar.freeSpacePathLossDb.toFixed(3)), inboundAdditionalLossDb: d.navyShipborneRadar.inboundAdditionalLossDb, receivedInterferenceDbm: Number(d.navyShipborneRadar.receivedInterferenceDbm.toFixed(3)) }
+            },
+            combinedExternalInterferenceDbm: Number(d.externalInterferenceDbm.toFixed(3)),
+            commercialKpiGate: { desiredSignalDbm: d.desiredSignalDbm, internalInterferenceAndNoiseDbm: d.internalInterferenceNoiseDbm, minimumSinrDb: d.minimumSinrDb, calculatedSinrDb: Number(d.calculatedSinrDb.toFixed(3)), verdict: d.commercialVerdict },
+            incumbentProtectionGate: {
+              cbsdEirpDbm: d.cbsdEirpDbm,
+              cbsdDutyShare: d.cbsdDutyShare,
+              outboundAdditionalLossDb: d.outboundAdditionalLossDb,
+              protectionLimitDbm: d.incumbentProtectionLimitDbm,
+              groundBasedRadar: { contributionAtRadarDbm: Number(d.groundIncumbentContributionDbm.toFixed(3)), verdict: d.groundIncumbentVerdict },
+              navyShipborneRadar: { contributionAtRadarDbm: Number(d.navyIncumbentContributionDbm.toFixed(3)), verdict: d.navyIncumbentVerdict },
+              verdict: d.incumbentVerdict
+            },
+            overallVerdict: d.verdict
+          },
+          valuation: { rateUsdPerMhzHour: d.rateUsdPerMhzHour, usableShare: d.usableShare, rightsRiskAdjustment: d.rightsRiskAdjustment, notionalValueUsd: Number(d.notionalValueUsd.toFixed(2)), marketQuote: false }
+        };
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'cbrs-token-' + payload.reference.toLowerCase() + '.json';
+        document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        showToast('JSON downloaded');
+      });
+      update();
+    }());
+  </script>
+</body>
+</html>
