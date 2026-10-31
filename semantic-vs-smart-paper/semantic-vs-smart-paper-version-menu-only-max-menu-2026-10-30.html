@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Semantic vs Smart Code Implementation for mIoT</title>
+<!-- No external fonts: system type only, so the page works offline and in a downloaded file. -->
+<style>
+  :root{
+    --bg:#eef2f0; --panel:#ffffff; --panel-2:#f6f8f7; --ink:#15211d; --ink-2:#43554e; --ink-3:#6b7d76;
+    --line:#d3ddd8; --line-strong:#b9c8c1;
+    --smart:#2b4f7e; --smart-soft:#e3ebf5;
+    --sem:#0b6e5d; --sem-soft:#dff2ec;
+    --amber:#9a5b00; --amber-bg:#fdf0d3; --amber-line:#e8c26a;
+    --bad:#9c2b1e; --bad-bg:#fbe7e2; --bad-line:#eaa79c;
+    --good-bg:#dff2ec;
+    --run:#2f6f4f; --run-ready:#15803d; --run-ready-ink:#ffffff;
+    --btn:#ffffff; --btn-ink:#15211d; --btn-on:#15211d; --btn-on-ink:#ffffff;
+    --shadow:none;
+    --radius:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1412; --panel:#17201d; --panel-2:#1c2724; --ink:#e8efec; --ink-2:#b3c4bd; --ink-3:#87998f;
+      --line:#2c3a35; --line-strong:#3d4f48;
+      --smart:#8db1dd; --smart-soft:#22334a;
+      --sem:#4fc9ae; --sem-soft:#173c34;
+      --amber:#f0bc57; --amber-bg:#3a2c10; --amber-line:#7a5c1c;
+      --bad:#f0927f; --bad-bg:#3d1e18; --bad-line:#7c3a2e;
+      --good-bg:#173c34;
+      --run:#3d8b63; --run-ready:#22a355; --run-ready-ink:#ffffff;
+      --btn:#1c2724; --btn-ink:#e8efec; --btn-on:#e8efec; --btn-on-ink:#101613;
+      --shadow:none;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:18px 16px 56px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  h1{font-size:24px;line-height:1.2;margin:0 0 6px;font-weight:700;letter-spacing:-.01em}
+  h2{font-size:17px;margin:0 0 8px;font-weight:600}
+  h3{font-size:14px;margin:0 0 6px;font-weight:600}
+  p{margin:0 0 8px}
+  .lede{color:var(--ink-2);max-width:72ch}
+  .version-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+  .badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--panel);border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600}
+  .badge.modelled{border-color:var(--amber-line);background:var(--amber-bg);color:var(--amber)}
+  .badge.paper{border-color:var(--sem);color:var(--sem);background:var(--sem-soft)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin:0 0 14px}
+  .two-systems{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
+  .sys-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px 16px}
+  .sys-card.smart{border-top:4px solid var(--smart)}
+  .sys-card.sem{border-top:4px solid var(--sem)}
+  .sys-card h2{font-size:16px}
+  .sys-card .codec{font-size:12.5px;font-weight:600;}
+  .sys-card.smart .codec{color:var(--smart)} .sys-card.sem .codec{color:var(--sem)}
+  .sys-card p{color:var(--ink-2);font-size:14px}
+  .sys-card ul{margin:6px 0 0;padding-left:18px;color:var(--ink-2);font-size:14px}
+  .plain-note{font-size:13.5px;color:var(--ink-2);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 14px}
+  .plain-note strong{color:var(--ink)}
+  /* Controls */
+  .ctrl-group{margin:0 0 14px}
+  .ctrl-group:last-child{margin-bottom:0}
+  .ctrl-label{font-size:12px;font-weight:600;;color:var(--ink-3);margin:0 0 7px}
+  .pills{display:flex;flex-wrap:wrap;gap:7px}
+  .pill{appearance:none;min-height:44px;border:1px solid var(--line-strong);background:var(--btn);color:var(--btn-ink);border-radius:999px;padding:7px 13px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer;line-height:1.25;text-align:left}
+  .pill:hover{border-color:var(--ink-3)}
+  .pill[aria-pressed="true"]{background:var(--btn-on);color:var(--btn-on-ink);border-color:var(--btn-on)}
+  .pill .sub{display:block;font-size:11.5px;font-weight:400;opacity:.75}
+  .pill:focus-visible,.run-btn:focus-visible,.dl-btn:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sem);outline-offset:2px}
+  .l2-detail{margin-top:9px;font-size:13.5px;color:var(--ink-2);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+  .l2-detail strong{color:var(--ink)}
+  .thr-chip{display:inline-block;border:1px solid var(--line-strong);border-radius:6px;padding:0 6px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;background:var(--panel)}
+  .grid-config{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .menu-grid .field input,.menu-grid .field select{min-height:44px}
+  .field label{display:block;font-size:12px;font-weight:600;;color:var(--ink-3);margin:0 0 5px}
+  .field input,.field select{width:100%;font:inherit;font-size:14px;padding:8px 9px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);color:var(--ink)}
+  .field .hint{font-size:12px;color:var(--ink-3);margin-top:4px}
+  details.config{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel-2)}
+  details.config summary{cursor:pointer;font-weight:600;font-size:14px}
+  details.config .grid-config{margin-top:12px}
+  .run-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+  .run-btn{appearance:none;min-height:44px;border:1px solid var(--run);background:var(--panel);color:var(--run);font:inherit;font-size:15px;font-weight:700;border-radius:9px;padding:11px 26px;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
+  .run-btn.ready{background:var(--run-ready);border-color:var(--run-ready);color:var(--run-ready-ink);box-shadow:0 2px 10px rgba(21,128,61,.35)}
+  .run-note{font-size:13px;color:var(--ink-2)}
+  .run-note.stale{color:var(--amber);font-weight:600}
+  /* NTN link facts */
+  .ntn-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:4px}
+  .fact{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel-2)}
+  .fact .k{font-size:11.5px;font-weight:600;;color:var(--ink-3)}
+  .fact .v{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:16px;font-weight:600;margin:2px 0}
+  .fact .d{font-size:12px;color:var(--ink-2)}
+  /* Banner */
+  .banner{border-radius:var(--radius);padding:15px 17px;margin:0 0 14px;border:1.5px solid var(--amber-line);background:var(--amber-bg);box-shadow:var(--shadow)}
+  .banner h2{font-size:16px;margin-bottom:5px}
+  .banner p{font-size:14px;margin-bottom:5px}
+  .banner .seq{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;background:var(--panel);border:1px solid var(--line-strong);border-radius:8px;padding:9px 11px;margin:9px 0;color:var(--ink);overflow-wrap:anywhere}
+  .banner .always{font-weight:700}
+  /* Chart */
+  .tabs{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 10px}
+  .tab{appearance:none;border:1px solid var(--line-strong);background:var(--btn);color:var(--btn-ink);border-radius:8px;padding:7px 13px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer}
+  .tab[aria-selected="true"]{background:var(--btn-on);color:var(--btn-on-ink);border-color:var(--btn-on)}
+  .chart-box{width:100%}
+  .chart-box svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink-2);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:22px;height:0;border-top:3px solid var(--smart);display:inline-block}
+  .swatch.sem{border-top-color:var(--sem);border-top-style:dashed}
+  .swatch.thr{border-top:2px dotted var(--bad)}
+  .swatch.shade{height:12px;border:1px solid var(--bad-line);background:var(--bad-bg);border-radius:2px}
+  .chart-note{font-size:12.5px;color:var(--ink-2);margin-top:6px}
+  /* Table */
+  .table-scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+  th,td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:12px;;color:var(--ink-3);font-weight:600}
+  th:first-child,td:first-child{text-align:left}
+  td.num,th.num{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.8px}
+  tr.row-sem td{background:var(--good-bg)}
+  tr.row-keep td{background:var(--bad-bg)}
+  .choice{font-weight:700}
+  .choice.sem{color:var(--sem)} .choice.keep{color:var(--bad)} .choice.smart{color:var(--smart)}
+  .pass{color:var(--sem);font-weight:600}.fail{color:var(--bad);font-weight:600}
+  /* Auto explainer */
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+  .step{border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:var(--panel-2)}
+  .step .n{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:600;color:var(--sem)}
+  .step p{font-size:13.5px;color:var(--ink-2);margin:4px 0 0}
+  .step p strong{color:var(--ink)}
+  /* Downloads */
+  .dl-row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  .dl-btn{appearance:none;border:1px solid var(--line-strong);background:var(--btn);color:var(--btn-ink);font:inherit;font-size:13.5px;font-weight:600;border-radius:8px;padding:9px 15px;cursor:pointer}
+  .dl-btn:hover{border-color:var(--ink-3)}
+  .log{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;color:var(--ink-2);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:12px;max-height:180px;overflow-y:auto}
+  footer{font-size:12.5px;color:var(--ink-3);margin-top:18px}
+  footer p{margin-bottom:5px}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+  @media (max-width:640px){
+    h1{font-size:21px}
+    .two-systems{grid-template-columns:1fr}
+    .wrap{padding:14px 12px 44px}
+    .panel{padding:13px}
+    .run-btn{width:100%;text-align:center}
+    /* Results table stacks into per-SNR blocks — no sideways scrolling. */
+    .table-scroll{overflow-x:visible}
+    table{min-width:0}
+    table thead{display:none}
+    table,table tbody,table tr,table td{display:block;width:100%}
+    table tr{border:1px solid var(--line);border-radius:8px;margin:0 0 10px;padding:4px 0}
+    table td{display:flex;justify-content:space-between;align-items:baseline;gap:14px;text-align:right;white-space:normal;border-bottom:1px solid var(--line);padding:7px 10px}
+    table td:last-child{border-bottom:none}
+    table td::before{content:attr(data-label);font-size:11.5px;font-weight:600;;color:var(--ink-3);text-align:left;flex:0 0 auto}
+    table td[data-label="Auto choice"]{display:block;text-align:left}
+    table td[data-label="Auto choice"]::before{display:block;margin-bottom:3px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="version-row">
+    <span class="badge paper">Paper version — based on Harness v7</span>
+    <span class="badge">Frontend cleanup — 2026-10-30 · model unchanged</span>
+    <span class="badge">Menu-only IoT application and type — 2026-10-30 · model unchanged</span>
+    <span class="badge">Data type label — 2026-10-30 · model unchanged</span>
+    <span class="badge">Maximum number linked to symbols — 2026-10-30 · model unchanged</span>
+    <span class="badge">Number in menu: 10,000 / 100,000 / 1,000,000 — 2026-10-30 · model unchanged</span>
+    <span class="badge modelled">All results simulated / modelled — not measured encoder results</span>
+    <span class="badge">All channels playable · Paper example: Simple NTN LEO</span>
+  </div>
+
+  <noscript><p style="border:2px solid #9c2b1e;padding:12px">This page needs JavaScript to run. If the buttons do nothing, open the downloaded file in Safari or Chrome — chat previews and slide tools do not run its code.</p></noscript>
+  <h1>Semantic vs Smart Code Implementation for mIoT</h1>
+  <p style="color:var(--ink-2);font-size:13.5px">Open this file in a browser (Safari or Chrome). Chat previews and slide tools do not run its code, so the buttons will not work there.</p>
+  <p class="lede">The companion implementation for the paper — a clean two-system comparison. Pick any application, data type and channel — AWGN, Fading, simplified 3GPP-style or Simple NTN LEO — run the model and read off where each system passes its task, where the Current Smart system becomes unusable, and where the Auto switch changes over. The paper itself works its examples on the Simple NTN LEO channel, which is selected by default below.</p>
+
+  <div class="two-systems">
+    <section class="sys-card smart" aria-labelledby="sys-smart-h">
+      <div class="codec">Conventional codec</div>
+      <h2 id="sys-smart-h">Current Smart system</h2>
+      <p>Conventional coding, but already smart. Before transmitting, the device does local work and sends only what the task allows:</p>
+      <ul>
+        <li>Label, intent or command code where a code is enough</li>
+        <li>An event code only when something changes (intermittent sensor)</li>
+        <li>A keyframe for surveillance — most of the content, where a code is not enough</li>
+      </ul>
+    </section>
+    <section class="sys-card sem" aria-labelledby="sys-sem-h">
+      <div class="codec">Semantic codec</div>
+      <h2 id="sys-sem-h">Semantic system</h2>
+      <p>No separate compression step. The device extracts task-relevant features and maps them directly to channel symbols in one joint step:</p>
+      <ul>
+        <li>“Semantic coder” for sensor, text, speech and control-type data</li>
+        <li>“DeepJSCC” only when the data is a Picture / image</li>
+        <li>No ARQ retries — it degrades gracefully instead of failing outright</li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="plain-note"><strong>Two systems, two codecs.</strong> Smart uses the <strong>conventional codec</strong> and Semantic uses the <strong>semantic codec</strong>. There are exactly two systems in this version, and those are the two names used everywhere below — in the controls, the charts, the tables and the downloads.</p>
+
+  <!-- ============ CONTROLS ============ -->
+  <section class="panel" aria-labelledby="controls-h">
+    <h2 id="controls-h">Controls</h2>
+
+    <div class="ctrl-group">
+      <p class="ctrl-label" id="l2-label">Selected application and data type — detail (from the menus above)</p>
+      <div class="l2-detail" id="l2-detail"></div>
+    </div>
+
+    <div class="ctrl-group">
+      <p class="ctrl-label" id="iot-menu-label">IoT application, data type, and maximum number — menu-driven</p>
+      <div class="menu-grid" role="group" aria-labelledby="iot-menu-label">
+        <div class="field">
+          <label for="iot-app-menu">IoT application (menu)</label>
+          <select id="iot-app-menu"></select>
+          <div class="hint">Numbered 1–6, same list as the Level 1 pills.</div>
+        </div>
+        <div class="field">
+          <label for="iot-type-menu">Data type</label>
+          <select id="iot-type-menu"></select>
+          <div class="hint">Data types for the application above.</div>
+        </div>
+        <div class="field">
+          <label for="iot-number">Maximum number of IoT devices (menu)</label>
+          <select id="iot-number">
+            <option value="10000" selected>10,000</option>
+            <option value="100000">100,000</option>
+            <option value="1000000">1,000,000 (1m)</option>
+          </select>
+          <div class="hint">Choose from the menu: 10,000, 100,000, or 1,000,000 per km² — the 1,000,000 figure is the 3GPP / IMT-2020 mMTC density target. Symbols are linked to this number: total symbols = symbols per task × this number. It does not change per-task success, thresholds, or the Auto choice.</div>
+        </div>
+      </div>
+      <div class="l2-detail" id="iot-number-note"></div>
+    </div>
+
+    <div class="ctrl-group">
+      <p class="ctrl-label" id="mode-label">Mode</p>
+      <div class="pills" id="mode-pills" role="group" aria-labelledby="mode-label">
+        <button type="button" class="pill" data-mode="head" aria-pressed="true">Head-to-head<span class="sub">Both systems, side by side</span></button>
+        <button type="button" class="pill" data-mode="smart" aria-pressed="false">Current Smart system<span class="sub">On its own</span></button>
+        <button type="button" class="pill" data-mode="semantic" aria-pressed="false">Semantic system<span class="sub">On its own</span></button>
+        <button type="button" class="pill" data-mode="auto" aria-pressed="false">Auto-switch<span class="sub">Smart vs Semantic, per SNR</span></button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <p class="ctrl-label" id="chan-label">Channel — all channels playable; Simple NTN LEO is the paper's example channel</p>
+      <div class="pills" id="chan-pills" role="group" aria-labelledby="chan-label">
+        <button type="button" class="pill" data-chan="awgn" aria-pressed="false">AWGN<span class="sub">Clean terrestrial reference channel</span></button>
+        <button type="button" class="pill" data-chan="rayleigh" aria-pressed="false">Fading — Rayleigh<span class="sub">No line of sight; deep fades</span></button>
+        <button type="button" class="pill" data-chan="rician" aria-pressed="false">Fading — Rician<span class="sub">Line of sight plus scatter; shallower fades</span></button>
+        <button type="button" class="pill" data-chan="gpp" aria-pressed="false">3GPP simplified<span class="sub">Simplified 3GPP-style terrestrial channel</span></button>
+        <button type="button" class="pill" data-chan="ntn550" aria-pressed="true">Simple NTN LEO 550 km<span class="sub">Paper example channel — LEO, lower orbit: shorter delay, shorter passes</span></button>
+        <button type="button" class="pill" data-chan="ntn1200" aria-pressed="false">Simple NTN LEO 1,200 km<span class="sub">Paper example channel — LEO, higher orbit: longer delay, longer passes</span></button>
+      </div>
+    </div>
+
+    <details class="config" id="config-details">
+      <summary>Configure — SNR sweep, seed and trials</summary>
+      <div class="grid-config">
+        <div class="field">
+          <label for="snr-min">SNR from (dB)</label>
+          <input type="number" id="snr-min" value="-5" min="-10" max="15" step="1" />
+        </div>
+        <div class="field">
+          <label for="snr-max">SNR to (dB)</label>
+          <input type="number" id="snr-max" value="20" min="0" max="30" step="1" />
+        </div>
+        <div class="field">
+          <label for="snr-step">SNR step (dB)</label>
+          <select id="snr-step">
+            <option value="1">1 dB</option>
+            <option value="2.5">2.5 dB</option>
+            <option value="5" selected>5 dB</option>
+          </select>
+          <div class="hint">5 dB matches the paper table.</div>
+        </div>
+        <div class="field">
+          <label for="seed">Seed</label>
+          <input type="number" id="seed" value="7" min="1" max="99999" step="1" />
+          <div class="hint">Same seed → same modelled run.</div>
+        </div>
+        <div class="field">
+          <label for="trials">Trials per point</label>
+          <input type="number" id="trials" value="2000" min="200" max="20000" step="100" />
+          <div class="hint">More trials → less sampling noise.</div>
+        </div>
+      </div>
+      <p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 2px">Changing anything here — like changing any selection above — turns the Run button green. Press Run to apply the new settings; the chart, banner and table update then, and Run goes back to white.</p>
+    </details>
+
+    <div class="run-row">
+      <button type="button" class="run-btn" id="run-btn">Run</button>
+      <span class="run-note" id="run-note">Results below match the settings above.</span>
+    </div>
+  </section>
+
+  <!-- ============ NTN LINK FACTS ============ -->
+  <section class="panel" aria-labelledby="ntn-h">
+    <h2 id="ntn-h">Channel — what it adds</h2>
+    <p style="color:var(--ink-2);font-size:14px" id="chan-intro"></p>
+    <div class="ntn-facts" id="ntn-facts"></div>
+  </section>
+
+  <!-- ============ AUTO BANNER ============ -->
+  <section class="banner" aria-labelledby="banner-h">
+    <h2 id="banner-h">Auto-switch &amp; the smart-unusable range</h2>
+    <p id="banner-main"></p>
+    <div class="seq" id="banner-seq"></div>
+    <p class="always">For control, always Smart — the command is already a code, so there is nothing for Semantic to gain.</p>
+    <p id="banner-fallback" style="margin-bottom:0"></p>
+  </section>
+
+  <!-- ============ CHART ============ -->
+  <section class="panel" aria-labelledby="chart-h">
+    <h2 id="chart-h">Curves</h2>
+    <div class="tabs" role="tablist" aria-label="Chart choice">
+      <button type="button" class="tab" role="tab" id="tab-success" aria-selected="true" data-chart="success">Task success vs SNR</button>
+      <button type="button" class="tab" role="tab" id="tab-latency" aria-selected="false" data-chart="latency">Latency vs SNR</button>
+    </div>
+    <div class="chart-box" id="chart-box"></div>
+    <div class="legend" id="chart-legend"></div>
+    <p class="chart-note" id="chart-note"></p>
+  </section>
+
+  <!-- ============ RESULTS TABLE ============ -->
+  <section class="panel" aria-labelledby="table-h">
+    <h2 id="table-h">Results by SNR</h2>
+    <p style="color:var(--ink-2);font-size:13.5px">Row colours match the chart shading and the banner above: a tinted row is a Semantic Auto choice, a red-tinted row is the smart-unusable range where Auto keeps Smart as the fallback.</p>
+    <div class="table-scroll">
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th>SNR (dB)</th>
+            <th class="num">Smart success</th>
+            <th class="num">Semantic success</th>
+            <th class="num">Threshold</th>
+            <th class="num">Smart latency</th>
+            <th class="num">Semantic latency</th>
+            <th class="num">Symbols / task (Smart · Sem)</th>
+            <th class="num">Total symbols for max number (Smart · Sem)</th>
+            <th>Auto choice</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ AUTO RULE ============ -->
+  <section class="panel" aria-labelledby="auto-h">
+    <h2 id="auto-h">How Auto decides — Smart vs Semantic only</h2>
+    <div class="steps">
+      <div class="step"><span class="n">Step 1</span><h3>Pass check</h3><p>Task success at or above the Level 2 threshold <strong>and</strong> latency within budget. Thresholds: <strong>90%</strong> for most types, <strong>95%</strong> for intermittent, structured, surveillance and voice, <strong>99%</strong> for control and keyword alert.</p></div>
+      <div class="step"><span class="n">Step 2</span><h3>Device-eligibility check</h3><p>Semantic is only considered if the outdoor device can actually run a semantic encoder. Simple nodes that cannot are Smart-only, whatever the curves say.</p></div>
+      <div class="step"><span class="n">Step 3</span><h3>Gain check, after costs</h3><p>If Semantic is the only system that passes, it is chosen. When both pass, Semantic must still win on channel symbols per successful task after a <strong>15% complexity penalty</strong> and a <strong>10% switching cost</strong>, by more than a <strong>5% winning margin</strong>. These three are modelled parameters, not measurements.</p></div>
+      <div class="step"><span class="n">Fallback</span><h3>Keep Smart</h3><p>If neither system passes, Auto does not force a choice: it <strong>keeps the Current Smart system</strong> as the default fallback. For control, Auto always chooses Smart.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ DOWNLOADS ============ -->
+  <section class="panel" aria-labelledby="dl-h">
+    <h2 id="dl-h">Download these results</h2>
+    <p style="color:var(--ink-2);font-size:13.5px">The files contain exactly what is on this page — Current Smart system and Semantic system only, for the settings above.</p>
+    <div class="dl-row">
+      <button type="button" class="dl-btn" id="dl-csv">Download CSV</button>
+      <button type="button" class="dl-btn" id="dl-json">Download JSON</button>
+      <span class="run-note" id="dl-note"></span>
+    </div>
+    <div class="log" id="run-log" aria-label="Run log"></div>
+  </section>
+
+  <footer>
+    <p><strong>Paper version — based on Harness v7.</strong> Simplified for the paper: two systems only (Current Smart system, Semantic system). All channels are playable — AWGN, Fading (Rayleigh and Rician), simplified 3GPP-style, and Simple NTN LEO at 550 km and 1,200 km (LEO only). The paper's worked examples — outdoor intermittent sensor, outdoor remote-site surveillance keyframe, and outdoor remote control on/off — use the Simple NTN LEO channel with outdoor devices.</p>
+    <p>Frontend cleanup 2026-10-30, using the frontend-design skill: system type, flat panels, larger touch targets, one delegated click handler. The model, channels, thresholds and Auto costs are unchanged from the paper version.</p>
+    <p>Menu-driven IoT edit 2026-10-30, same skill rules: IoT application and type are now also selectable from menus (numbered 1–6, in step with the pills), plus a number of IoT devices capped at 1,000,000 per km². That number only scales total symbols; per-task success, thresholds and Auto choice are unchanged. All other UI is unchanged.</p>
+    <p>Number in menu edit 2026-10-30: free number input replaced by a menu with only 10,000, 100,000, and 1,000,000 (1m), default 10,000. Total symbols in the table, note, CSV and JSON are still linked to the selected preset: total = symbols per task × selected number. Per-task success, thresholds and Auto choice are unchanged.</p>
+    <p>Maximum number edit 2026-10-30: number box relabelled “Maximum number of IoT devices” (up to 1,000,000 per km²). Symbols are now linked to it inside the table: a new “Total symbols for max number” column = symbols per task × maximum number, and the same totals are in CSV/JSON. Per-task success, thresholds and Auto choice are unchanged.</p>
+    <p>Data type label edit 2026-10-30: second menu relabelled from “IoT application type” to “Data type”, as it was originally called. No model, menu options, or other UI changed.</p>
+    <p>Menu-only edit 2026-10-30: duplicate Level 1 and Level 2 pills removed — the menus above are now the only application and data type controls. Mode, Channel, chart tabs, Configure, Run, banner, chart, table and downloads are unchanged, and the model is unchanged.</p>
+    <p>All numbers on this page come from the built-in modelled simulation (seeded, reproducible). They are simulated / modelled results, not measured encoder results, and not results from real hardware or a real satellite link.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* ================= Model data =================
+   Two systems only. Smart = conventional codec, already smart about what it
+   sends. Semantic = semantic codec, task features straight to symbols.    */
+var C_KM_S = 299792.458; /* speed of light, km/s */
+
+/* All channels are playable. Simple NTN LEO is the paper's example channel;
+   the NTN entries are LEO only (550 km and 1,200 km). penaltyDb is taken off
+   the SNR in every result for that channel; noiseMult widens the modelled
+   run-to-run variability (fading channels vary more).                    */
+var CHANNELS = {
+  "awgn":     { kind:"basic", name:"AWGN", penaltyDb:0, oneWayMs:0.05, rttMs:0.1, noiseMult:1,
+                desc:"Clean terrestrial reference — additive white Gaussian noise only, no fading, negligible delay." },
+  "rayleigh": { kind:"fading", name:"Fading — Rayleigh", penaltyDb:6, oneWayMs:0.05, rttMs:0.1, noiseMult:2,
+                desc:"No line of sight. Deep fades are modelled as a 6 dB SNR penalty plus wider run-to-run variability." },
+  "rician":   { kind:"fading", name:"Fading — Rician", penaltyDb:3, oneWayMs:0.05, rttMs:0.1, noiseMult:1.5,
+                desc:"Line of sight plus scattered paths. Shallower fades: a 3 dB SNR penalty plus some extra variability." },
+  "gpp":      { kind:"basic", name:"3GPP simplified", penaltyDb:2, oneWayMs:1, rttMs:8, noiseMult:1.2,
+                desc:"Simplified 3GPP-style terrestrial channel — a 2 dB implementation penalty and ordinary network delay. Not a full 3GPP simulator." },
+  "ntn550":   { kind:"ntn", name:"Simple NTN LEO 550 km", altKm:550, elevLossDb:1.2, dopplerDb:0.4, passMin:9,  gapMin:38, availability:0.19, noiseMult:1.3,
+                footprint:"Regional — one satellite in view ~9 min per pass", desc:"Satellite channel for outdoor devices — the paper's worked examples use this channel." },
+  "ntn1200":  { kind:"ntn", name:"Simple NTN LEO 1,200 km", altKm:1200, elevLossDb:2.0, dopplerDb:0.7, passMin:16, gapMin:55, availability:0.23, noiseMult:1.3,
+                footprint:"Wider footprint — one satellite in view ~16 min per pass", desc:"Satellite channel for outdoor devices — the paper's worked examples use this channel." }
+};
+
+/* Per data type:
+   threshold  task-success threshold for the pass check
+   budgetMs   latency budget for the pass check (in-pass delivery latency)
+   smartSym   channel symbols per task, Current Smart system
+   semSym     channel symbols per task, Semantic system
+   rate       channel symbol rate (sym/s) used for transmission time
+   smartMid / smartSlope  logistic centre/slope for Smart success vs effective SNR
+   semMid / semSlope / semCeil  same for Semantic (earlier centre, gentler slope, ceiling below 1)
+   eligible   whether the device can run a semantic encoder
+   coder      name of the semantic coder for this data type                */
+var APPS = [
+  { id:"sensor", name:"Outdoor sensor", types:[
+    { id:"intermittent", name:"Intermittent sensor — event code on change", short:"Intermittent sensor",
+      example:"Outdoor intermittent sensor (paper example 1): a field / environmental sensor that stays silent and sends an event code only when a reading changes.",
+      threshold:0.95, budgetMs:2000, smartSym:48, semSym:160, rate:5000,
+      smartMid:6.5, smartSlope:1.15, semMid:1.0, semSlope:0.55, semCeil:0.988,
+      eligible:true, eligNote:"Field node with a small encoder — Semantic is device-eligible.", coder:"Semantic coder" },
+    { id:"structured", name:"Structured telemetry report", short:"Structured telemetry",
+      example:"Outdoor sensor sending a fixed-format telemetry record on a schedule. The record format is fixed, so there is little for a semantic coder to exploit — and this simple node cannot run one.",
+      threshold:0.95, budgetMs:2000, smartSym:220, semSym:300, rate:5000,
+      smartMid:5.0, smartSlope:1.2, semMid:2.0, semSlope:0.6, semCeil:0.985,
+      eligible:false, eligNote:"Simple node, no semantic encoder on device — Smart-only by the eligibility check.", coder:"Semantic coder" }
+  ]},
+  { id:"surveillance", name:"Surveillance", types:[
+    { id:"keyframe", name:"Remote-site surveillance keyframe", short:"Surveillance keyframe",
+      example:"Outdoor remote-site surveillance keyframe (paper example 2): a camera at an unmanned site sends a keyframe so an operator can judge the scene.",
+      threshold:0.95, budgetMs:5000, smartSym:12000, semSym:900, rate:50000,
+      smartMid:11.0, smartSlope:1.05, semMid:4.5, semSlope:0.6, semCeil:0.982,
+      eligible:true, eligNote:"Camera unit with an encoder — Semantic is device-eligible.", coder:"Semantic coder" },
+    { id:"eventlabel", name:"Surveillance event label", short:"Surveillance event label",
+      example:"The same outdoor camera, but the task is only to report what happened — so Smart sends an event label and Semantic sends scene features.",
+      threshold:0.95, budgetMs:3000, smartSym:64, semSym:220, rate:5000,
+      smartMid:6.0, smartSlope:1.15, semMid:1.5, semSlope:0.55, semCeil:0.986,
+      eligible:true, eligNote:"Camera unit with an encoder — Semantic is device-eligible.", coder:"Semantic coder" }
+  ]},
+  { id:"picture", name:"Picture", types:[
+    { id:"imglabel", name:"Picture label", short:"Picture label",
+      example:"An outdoor camera picture where the task is only the label (what is in the picture). Smart sends the label; Semantic sends image features.",
+      threshold:0.90, budgetMs:3000, smartSym:40, semSym:700, rate:50000,
+      smartMid:5.5, smartSlope:1.2, semMid:0.5, semSlope:0.55, semCeil:0.978,
+      eligible:true, eligNote:"Camera unit with an encoder — Semantic is device-eligible.", coder:"DeepJSCC" },
+    { id:"image", name:"Picture — scene image", short:"Scene image",
+      example:"An outdoor picture where the task needs the scene itself, not just a label. Smart sends a conventionally coded image; Semantic sends image features via DeepJSCC.",
+      threshold:0.90, budgetMs:5000, smartSym:15000, semSym:1100, rate:50000,
+      smartMid:11.5, smartSlope:1.05, semMid:5.0, semSlope:0.6, semCeil:0.975,
+      eligible:true, eligNote:"Camera unit with an encoder — Semantic is device-eligible.", coder:"DeepJSCC" }
+  ]},
+  { id:"speech", name:"Speech", types:[
+    { id:"voicecmd", name:"Voice command — intent", short:"Voice command",
+      example:"A spoken command at an outdoor site. Smart sends the recognised intent code; Semantic sends speech features.",
+      threshold:0.95, budgetMs:800, smartSym:36, semSym:420, rate:20000,
+      smartMid:7.0, smartSlope:1.2, semMid:2.0, semSlope:0.55, semCeil:0.984,
+      eligible:true, eligNote:"Handset / site unit with an encoder — Semantic is device-eligible.", coder:"Semantic coder" },
+    { id:"keyword", name:"Keyword alert", short:"Keyword alert",
+      example:"An outdoor unit that must not miss a spoken keyword alert. The bar is set high — 99% — because a missed alert is the costly failure.",
+      threshold:0.99, budgetMs:800, smartSym:32, semSym:380, rate:20000,
+      smartMid:9.5, smartSlope:1.25, semMid:5.5, semSlope:0.6, semCeil:0.993,
+      eligible:true, eligNote:"Handset / site unit with an encoder — Semantic is device-eligible.", coder:"Semantic coder" }
+  ]},
+  { id:"text", name:"Text", types:[
+    { id:"shortmsg", name:"Short text message", short:"Short message",
+      example:"A short operational text message from an outdoor device. Smart sends the conventionally coded text; Semantic sends text features.",
+      threshold:0.90, budgetMs:2000, smartSym:320, semSym:180, rate:5000,
+      smartMid:5.0, smartSlope:1.2, semMid:1.5, semSlope:0.6, semCeil:0.972,
+      eligible:true, eligNote:"Device can run the text semantic coder — Semantic is device-eligible.", coder:"Semantic coder" },
+    { id:"record", name:"Structured text record", short:"Structured record",
+      example:"A fixed-format text record from an outdoor device — meter-style readings in a set layout.",
+      threshold:0.95, budgetMs:2000, smartSym:260, semSym:200, rate:5000,
+      smartMid:5.0, smartSlope:1.2, semMid:2.0, semSlope:0.6, semCeil:0.978,
+      eligible:true, eligNote:"Device can run the text semantic coder — Semantic is device-eligible.", coder:"Semantic coder" }
+  ]},
+  { id:"control", name:"Control", types:[
+    { id:"onoff", name:"Remote control on/off", short:"Control on/off",
+      example:"Outdoor remote control on/off (paper example 3) — for example a remote valve or pump command. For control, always Smart: the command is already a code.",
+      threshold:0.99, budgetMs:500, smartSym:24, semSym:24, rate:5000,
+      smartMid:8.0, smartSlope:1.3, semMid:4.0, semSlope:0.6, semCeil:0.992,
+      eligible:true, eligNote:"Eligibility is not the deciding factor here — the standing rule for control is always Smart.", coder:"Semantic coder" },
+    { id:"setpoint", name:"Control setpoint value", short:"Control setpoint",
+      example:"An outdoor control setpoint (for example a target level or rate) sent to a remote actuator. Treated as control: always Smart.",
+      threshold:0.99, budgetMs:500, smartSym:40, semSym:40, rate:5000,
+      smartMid:8.5, smartSlope:1.3, semMid:4.5, semSlope:0.6, semCeil:0.992,
+      eligible:true, eligNote:"Eligibility is not the deciding factor here — the standing rule for control is always Smart.", coder:"Semantic coder" }
+  ]}
+];
+
+/* Modelled Auto cost parameters (not measurements) */
+var COST_COMPLEXITY = 0.15, COST_SWITCHING = 0.10, WIN_MARGIN = 0.05;
+
+/* ================= State ================= */
+var state = { appId:"sensor", typeId:"intermittent", mode:"head", channel:"ntn550", chart:"success", iotNumber:10000 };
+var lastResults = null;   /* array of row objects from the last Run */
+var lastMeta = null;      /* settings snapshot for downloads / log */
+var logLines = [];
+
+/* ================= Helpers ================= */
+function $(id){ return document.getElementById(id); }
+function currentApp(){ for (var i=0;i<APPS.length;i++) if (APPS[i].id===state.appId) return APPS[i]; return APPS[0]; }
+function currentType(){ var a=currentApp(); for (var i=0;i<a.types.length;i++) if (a.types[i].id===state.typeId) return a.types[i]; return a.types[0]; }
+function logistic(x){ return 1/(1+Math.exp(-x)); }
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+function fmtPct(v){ return (v*100).toFixed(1)+"%"; }
+function fmtMs(v){ if (v>=10000) return (v/1000).toFixed(1)+" s"; if (v>=1000) return (v/1000).toFixed(2)+" s"; return Math.round(v)+" ms"; }
+function fmtInt(v){ return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,","); }
+
+/* Seeded PRNG (mulberry32) so a run is reproducible for its seed. */
+function makeRng(seed){
+  var a = seed>>>0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a>>>15), 1 | a);
+    t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t;
+    return ((t ^ (t>>>14))>>>0)/4294967296;
+  };
+}
+
+/* Link facts for the selected channel. For NTN, propagation comes from the
+   orbit (mean slant range at a typical mid-pass elevation is ~1.35x the
+   altitude) and the SNR penalty is elevation loss + Doppler residual. For
+   the other channels the penalty and delays are the channel constants.   */
+function linkFacts(chanKey){
+  var ch = CHANNELS[chanKey];
+  if (ch.kind === "ntn"){
+    var slantKm = ch.altKm * 1.35;
+    var oneWayMs = slantKm / C_KM_S * 1000;
+    return { ch:ch, slantKm:slantKm, oneWayMs:oneWayMs, rttMs:oneWayMs * 2, penaltyDb: ch.elevLossDb + ch.dopplerDb };
+  }
+  return { ch:ch, slantKm:null, oneWayMs:ch.oneWayMs, rttMs:ch.rttMs, penaltyDb:ch.penaltyDb };
+}
+
+/* ================= Simulation =================
+   Modelled, not measured. Smart: steep conventional cliff + ARQ retries
+   (each retry re-pays the NTN round trip). Semantic: graceful curve with a
+   ceiling below 1, one shot, no ARQ. Effective SNR already has elevation
+   loss and Doppler residual taken off.                                 */
+function simulateRow(snrDb, type, chanKey, rng, trials){
+  var ch = CHANNELS[chanKey];
+  var lf = linkFacts(chanKey);
+  var effSnr = snrDb - lf.penaltyDb;
+
+  var smartP = logistic((effSnr - type.smartMid) * type.smartSlope);
+  var semP   = type.semCeil * logistic((effSnr - type.semMid) * type.semSlope);
+
+  /* Sampling noise for the stated number of trials (modelled Monte Carlo),
+     widened on channels that vary more (fading, NTN passes). */
+  function noise(p){ var sd = Math.sqrt(Math.max(p*(1-p),0.0004)/trials) * (ch.noiseMult || 1); return (rng()*2-1)*sd*1.4; }
+  var smartSuccess = clamp(smartP + noise(smartP), 0.001, 0.9999);
+  var semSuccess   = clamp(semP + noise(semP), 0.001, 0.9999);
+
+  /* Latency. Smart packet success drives ARQ attempts; each extra attempt
+     costs a full round trip plus a 20 ms backoff. Semantic sends once. */
+  var pktP = clamp(logistic((effSnr - (type.smartMid - 1.5)) * type.smartSlope), 0.02, 0.999);
+  var attempts = Math.min(1/Math.max(pktP,0.02), 40);
+  var smartTxMs = type.smartSym / type.rate * 1000;
+  var semTxMs   = type.semSym / type.rate * 1000;
+  var smartLatency = lf.oneWayMs + smartTxMs * attempts + (attempts - 1) * (lf.rttMs + 20);
+  var semLatency   = lf.oneWayMs + semTxMs + 6; /* small joint-decoding allowance */
+
+  var smartPass = (smartSuccess >= type.threshold) && (smartLatency <= type.budgetMs);
+  var semPass   = (semSuccess >= type.threshold) && (semLatency <= type.budgetMs);
+
+  /* Efficiency: channel symbols per successful task (lower is better). */
+  var smartSPS = type.smartSym / smartSuccess;
+  var semSPS   = type.semSym / semSuccess;
+  var rawGain  = (smartSPS - semSPS) / smartSPS;                 /* fraction */
+  var adjGain  = (1 + rawGain) * (1 - COST_COMPLEXITY) * (1 - COST_SWITCHING) - 1;
+
+  /* Auto decision — Smart vs Semantic only. */
+  var isControl = (currentApp().id === "control");
+  var choice, choiceKind, reason;
+  if (isControl){
+    if (smartPass){ choice = "Current Smart system"; choiceKind = "smart"; reason = "Control — always Smart."; }
+    else { choice = "Keep Smart (fallback)"; choiceKind = "keep"; reason = "Control — always Smart; Smart is below its 99% bar here, so Auto keeps Smart and flags the range."; }
+  } else if (!smartPass && !semPass){
+    choice = "Keep Smart (fallback)"; choiceKind = "keep";
+    reason = "Neither system passes — Auto keeps the Current Smart system as the default fallback.";
+  } else if (semPass && !type.eligible){
+    choice = smartPass ? "Current Smart system" : "Keep Smart (fallback)"; choiceKind = smartPass ? "smart" : "keep";
+    reason = "Semantic passes but this device cannot run a semantic encoder — eligibility check keeps Smart.";
+  } else if (semPass && !smartPass){
+    choice = "Semantic system"; choiceKind = "sem";
+    reason = "Semantic is the only system that passes — Auto switches to it.";
+  } else if (semPass && smartPass && adjGain > WIN_MARGIN){
+    choice = "Semantic system"; choiceKind = "sem";
+    reason = "Both pass, and Semantic still wins on symbols per successful task after the 15% complexity penalty, 10% switching cost and 5% margin.";
+  } else if (smartPass){
+    choice = "Current Smart system"; choiceKind = "smart";
+    reason = semPass ? "Both pass, but Semantic does not beat Smart by enough after costs — Smart stays." : "Only Smart passes the pass check.";
+  } else {
+    choice = "Keep Smart (fallback)"; choiceKind = "keep";
+    reason = "Auto keeps the Current Smart system as the default fallback.";
+  }
+
+  return {
+    snr: snrDb, effSnr: effSnr,
+    smartSuccess: smartSuccess, semSuccess: semSuccess,
+    smartLatencyMs: smartLatency, semLatencyMs: semLatency,
+    smartAttempts: attempts,
+    smartPass: smartPass, semPass: semPass,
+    smartSPS: smartSPS, semSPS: semSPS, rawGain: rawGain, adjGain: adjGain,
+    choice: choice, choiceKind: choiceKind, reason: reason,
+    smartUnusable: !smartPass
+  };
+}
+
+function runModel(){
+  var min = parseFloat($("snr-min").value), max = parseFloat($("snr-max").value), step = parseFloat($("snr-step").value);
+  if (isNaN(min)) min = -5; if (isNaN(max)) max = 20; if (isNaN(step) || step<=0) step = 5;
+  if (max < min){ var t = min; min = max; max = t; }
+  var seed = parseInt($("seed").value,10); if (isNaN(seed) || seed<1) seed = 7;
+  var trials = parseInt($("trials").value,10); if (isNaN(trials) || trials<50) trials = 2000;
+  var type = currentType();
+  var rng = makeRng(seed * 1000 + Math.round((min+40)*10));
+  var rows = [];
+  for (var s = min; s <= max + 1e-9; s += step){
+    rows.push(simulateRow(Math.round(s*10)/10, type, state.channel, rng, trials));
+  }
+  lastResults = rows;
+  lastMeta = {
+    version: "Paper version — based on Harness v7",
+    evidence: "Simulated / modelled — not measured encoder results",
+    application: currentApp().name, dataType: type.name, dataTypeShort: type.short,
+    semanticCoder: type.coder, threshold: type.threshold, latencyBudgetMs: type.budgetMs,
+    channel: CHANNELS[state.channel].name, channelKey: state.channel,
+    altitudeKm: (CHANNELS[state.channel].kind === "ntn" ? CHANNELS[state.channel].altKm : null),
+    snrPenaltyDb: +linkFacts(state.channel).penaltyDb.toFixed(2),
+    mode: state.mode, seed: seed, trials: trials, iotNumber: state.iotNumber, iotNumberMaxPerKm2: 1000000,
+    costs: { complexityPenalty: COST_COMPLEXITY, switchingCost: COST_SWITCHING, winningMargin: WIN_MARGIN, note: "Modelled parameters" },
+    snrFrom: min, snrTo: max, snrStep: step
+  };
+  var lf = linkFacts(state.channel);
+  logLines.push("Run — " + currentApp().name + " / " + type.short + " · " + lf.ch.name + " · seed " + seed + " · " + trials + " trials · SNR penalty " + lf.penaltyDb.toFixed(1) + " dB · one-way propagation " + lf.oneWayMs.toFixed(1) + " ms, round trip " + lf.rttMs.toFixed(1) + " ms · threshold " + fmtPct(type.threshold) + ", latency budget " + fmtMs(type.budgetMs) + ".");
+  renderAll();
+}
+
+/* ================= Rendering ================= */
+function renderLinkFacts(){
+  var lf = linkFacts(state.channel), ch = lf.ch;
+  var facts = [];
+  if (ch.kind === "ntn"){
+    $("chan-intro").innerHTML = "The paper's worked examples use this channel, with outdoor devices. How its modelled effects enter the results: elevation loss and Doppler residual are taken off the SNR in every result, and propagation plus ARQ retry delay are inside every latency figure. Latency is measured <strong>inside a pass</strong> — a task raised during a pass gap waits for the next pass, and that wait comes on top of the delivery latency below. The retry delay is why the Current Smart system fails earlier on NTN than its success curve alone would suggest: each ARQ retry re-pays the full satellite round trip.";
+    facts = [
+      { k:"Altitude", v: fmtInt(ch.altKm) + " km", d: ch.footprint },
+      { k:"Propagation delay", v: lf.oneWayMs.toFixed(1) + " ms one-way", d: "Round trip " + lf.rttMs.toFixed(1) + " ms at a typical mid-pass slant range of ~" + fmtInt(lf.slantKm) + " km." },
+      { k:"ARQ retry delay", v: "+" + (lf.rttMs + 20).toFixed(1) + " ms per retry", d: "Round trip " + lf.rttMs.toFixed(1) + " ms plus 20 ms backoff, re-paid by the Current Smart system for every retry. Semantic sends once — no ARQ." },
+      { k:"Pass availability / gaps", v: Math.round(ch.availability*100) + "% of the day", d: "In view ~" + ch.passMin + " min per pass, then a gap of ~" + ch.gapMin + " min. A task raised in a gap waits for the next pass — that wait is separate from the in-pass delivery latency in the results." },
+      { k:"Elevation loss", v: ch.elevLossDb.toFixed(1) + " dB", d: "Taken off the SNR in every result — low-elevation parts of a pass are weaker." },
+      { k:"Doppler residual", v: ch.dopplerDb.toFixed(1) + " dB", d: "What is left after Doppler pre-compensation on a fast-moving LEO pass — also taken off the SNR." }
+    ];
+  } else {
+    $("chan-intro").textContent = "This is a playable channel in the model — it is not the paper's example channel (the paper's worked examples use Simple NTN LEO, with outdoor devices). Its modelled penalty is taken off the SNR in every result, and its delay is inside every latency figure. There are no satellite passes here, so no pass gaps; the Current Smart system's ARQ retries still cost a round trip plus backoff each.";
+    facts = [
+      { k:"Channel", v: ch.name, d: ch.desc },
+      { k:"SNR penalty", v: lf.penaltyDb.toFixed(1) + " dB", d: "Taken off the SNR in every result for this channel." },
+      { k:"Propagation delay", v: lf.oneWayMs.toFixed(2) + " ms one-way", d: "Round trip " + lf.rttMs.toFixed(1) + " ms — terrestrial, so far shorter than a satellite hop." },
+      { k:"ARQ retry delay", v: "+" + (lf.rttMs + 20).toFixed(1) + " ms per retry", d: "Round trip plus 20 ms backoff, re-paid by the Current Smart system for every retry. Semantic sends once — no ARQ." },
+      { k:"Pass availability / gaps", v: "Not applicable", d: "No satellite passes on this channel — the link is there whenever the device is in coverage." }
+    ];
+  }
+  $("ntn-facts").innerHTML = facts.map(function(f){
+    return '<div class="fact"><div class="k">'+f.k+'</div><div class="v">'+f.v+'</div><div class="d">'+f.d+'</div></div>';
+  }).join("");
+}
+
+function contiguousRanges(rows, pred){
+  var ranges = [], start = null, prev = null;
+  rows.forEach(function(r){
+    if (pred(r)){ if (start===null) start = r.snr; prev = r.snr; }
+    else if (start!==null){ ranges.push([start,prev]); start=null; }
+  });
+  if (start!==null) ranges.push([start,prev]);
+  return ranges;
+}
+function rangeText(ranges, step){
+  if (!ranges.length) return "none in this sweep";
+  return ranges.map(function(rg){
+    return rg[0]===rg[1] ? (rg[0]+" dB") : (rg[0]+" to "+rg[1]+" dB");
+  }).join("; ");
+}
+
+function renderBanner(){
+  var rows = lastResults, type = currentType();
+  var unusable = contiguousRanges(rows, function(r){ return r.smartUnusable; });
+  var semWins  = contiguousRanges(rows, function(r){ return r.choiceKind==="sem"; });
+  var seq = rows.map(function(r){
+    var tag = r.choiceKind==="sem" ? "Semantic" : (r.choiceKind==="keep" ? "Keep Smart" : "Smart");
+    return r.snr + " dB: " + tag;
+  }).join("  ·  ");
+  $("banner-seq").textContent = "Auto by SNR — " + seq;
+  var main;
+  if (currentApp().id === "control"){
+    main = "For this control task the Current Smart system is the Auto choice at every SNR where it passes. The smart-unusable range — where Smart is below its " + fmtPct(type.threshold) + " task-success threshold or over its " + fmtMs(type.budgetMs) + " latency budget — is " + rangeText(unusable) + ", shown shaded on the chart and red-tinted in the table.";
+  } else if (semWins.length){
+    main = "Auto switches to the Semantic system at " + rangeText(semWins) + " for this setting. The smart-unusable range — where the Current Smart system is below its " + fmtPct(type.threshold) + " task-success threshold or over its " + fmtMs(type.budgetMs) + " latency budget — is " + rangeText(unusable) + ", shown shaded on the chart and red-tinted in the table.";
+  } else {
+    main = "Auto does not switch for this setting — the Current Smart system stays in charge wherever it passes. The smart-unusable range — where Smart is below its " + fmtPct(type.threshold) + " task-success threshold or over its " + fmtMs(type.budgetMs) + " latency budget — is " + rangeText(unusable) + ", shown shaded on the chart and red-tinted in the table.";
+  }
+  $("banner-main").textContent = main;
+  $("banner-fallback").textContent = "Where neither system passes, Auto keeps the Current Smart system as the default fallback (shown as “Keep Smart”) instead of forcing a choice.";
+}
+
+/* ---- Charts (hand-authored SVG from the modelled rows) ---- */
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function buildChart(){
+  var rows = lastResults; if (!rows || !rows.length){ $("chart-box").innerHTML=""; return; }
+  var type = currentType();
+  var isLat = (state.chart === "latency");
+  var W = 860, H = 380, L = 66, R = 16, T = 32, B = 44;
+  var iw = W - L - R, ih = H - T - B;
+  var snrMin = rows[0].snr, snrMax = rows[rows.length-1].snr;
+  if (snrMax === snrMin) snrMax = snrMin + 1;
+  function X(snr){ return L + (snr - snrMin)/(snrMax - snrMin) * iw; }
+
+  var ink = cssVar("--ink"), ink3 = cssVar("--ink-3"), line = cssVar("--line"),
+      smartC = cssVar("--smart"), semC = cssVar("--sem"), badC = cssVar("--bad"), badBg = cssVar("--bad-bg");
+
+  var yMin, yMax, yTicks, Y, yLabel;
+  if (!isLat){
+    yMin = 0; yMax = 1; yTicks = [0,0.25,0.5,0.75,1];
+    Y = function(v){ return T + (1 - (clamp(v,0,1) - yMin)/(yMax-yMin)) * ih; };
+    yLabel = function(v){ return Math.round(v*100)+"%"; };
+  } else {
+    var all = [];
+    rows.forEach(function(r){ all.push(r.smartLatencyMs, r.semLatencyMs); });
+    var mx = Math.max.apply(null, all.concat([type.budgetMs]));
+    yMax = Math.pow(10, Math.ceil(Math.log10(mx))); yMin = 1;
+    yTicks = []; for (var p=1; p<=yMax; p*=10) yTicks.push(p);
+    Y = function(v){ var lv = Math.log10(Math.max(v,1)), lmax = Math.log10(yMax); return T + (1 - lv/lmax) * ih; };
+    yLabel = function(v){ return v>=1000 ? (v/1000)+" s" : v+" ms"; };
+  }
+  function val(r, which){ return isLat ? (which==="smart" ? r.smartLatencyMs : r.semLatencyMs) : (which==="smart" ? r.smartSuccess : r.semSuccess); }
+
+  var s = "";
+  s += '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+(isLat?"Latency":"Task success")+' versus SNR chart for the Current Smart system and the Semantic system">';
+  /* Smart-unusable shading (success chart; on latency chart shade the same SNR spans) */
+  var stepDb = rows.length>1 ? (rows[1].snr - rows[0].snr) : 5;
+  rows.forEach(function(r){
+    if (r.smartUnusable){
+      var x0 = X(Math.max(r.snr - stepDb/2, snrMin)), x1 = X(Math.min(r.snr + stepDb/2, snrMax));
+      s += '<rect x="'+x0.toFixed(1)+'" y="'+T+'" width="'+(x1-x0).toFixed(1)+'" height="'+ih+'" fill="'+badBg+'" opacity="0.65"/>';
+    }
+  });
+  /* Grid + axes */
+  yTicks.forEach(function(t){
+    var y = Y(t);
+    s += '<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="'+line+'" stroke-width="1"/>';
+    s += '<text x="'+(L-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11.5" fill="'+ink3+'" font-family="ui-monospace, Menlo, monospace">'+yLabel(t)+'</text>';
+  });
+  rows.forEach(function(r){
+    var x = X(r.snr);
+    s += '<text x="'+x+'" y="'+(H-24)+'" text-anchor="middle" font-size="11.5" fill="'+ink3+'" font-family="ui-monospace, Menlo, monospace">'+r.snr+'</text>';
+  });
+  s += '<text x="'+(L+iw/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="12" fill="'+ink3+'">SNR (dB) — shaded spans are the smart-unusable range</text>';
+  s += '<text x="'+L+'" y="14" text-anchor="start" font-size="12" font-weight="600" fill="'+ink3+'">'+(isLat ? "Delivery latency (log scale)" : "Task success")+'</text>';
+
+  /* Threshold / budget line */
+  var thrY = isLat ? Y(type.budgetMs) : Y(type.threshold);
+  s += '<line x1="'+L+'" y1="'+thrY+'" x2="'+(W-R)+'" y2="'+thrY+'" stroke="'+badC+'" stroke-width="1.6" stroke-dasharray="2 4"/>';
+  s += '<text x="'+(W-R)+'" y="'+(thrY-6)+'" text-anchor="end" font-size="11.5" fill="'+badC+'" font-weight="600">'+(isLat ? ("Latency budget " + fmtMs(type.budgetMs)) : ("Threshold " + fmtPct(type.threshold)))+'</text>';
+
+  function path(which, color, dash){
+    var showSmart = (state.mode==="head" || state.mode==="auto" || state.mode==="smart");
+    var showSem   = (state.mode==="head" || state.mode==="auto" || state.mode==="semantic");
+    if ((which==="smart" && !showSmart) || (which==="sem" && !showSem)) return "";
+    var dim = (state.mode==="smart" && which==="sem") || (state.mode==="semantic" && which==="smart");
+    var d = rows.map(function(r,i){ return (i===0?"M":"L") + X(r.snr).toFixed(1) + " " + Y(val(r,which)).toFixed(1); }).join(" ");
+    var out = '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="2.6" '+(dash?'stroke-dasharray="7 4" ':'')+'opacity="'+(dim?0.25:1)+'"/>';
+    rows.forEach(function(r){
+      out += '<circle cx="'+X(r.snr).toFixed(1)+'" cy="'+Y(val(r,which)).toFixed(1)+'" r="3.6" fill="'+color+'" opacity="'+(dim?0.25:1)+'"><title>'+r.snr+' dB — '+(which==="smart"?"Current Smart system":"Semantic system")+': '+(isLat ? fmtMs(val(r,which)) : fmtPct(val(r,which)))+'</title></circle>';
+    });
+    return out;
+  }
+  s += path("smart", smartC, false);
+  s += path("sem", semC, true);
+  s += "</svg>";
+  $("chart-box").innerHTML = s;
+
+  $("chart-legend").innerHTML =
+    '<span><span class="swatch"></span>Current Smart system</span>' +
+    '<span><span class="swatch sem"></span>Semantic system (' + type.coder + ')</span>' +
+    '<span><span class="swatch thr"></span>' + (isLat ? "Latency budget" : "Task-success threshold") + '</span>' +
+    '<span><span class="swatch shade"></span>Smart-unusable range</span>';
+
+  var lfNow = linkFacts(state.channel);
+  var penaltyNote = (lfNow.ch.kind === "ntn")
+    ? "Effective SNR already has elevation loss and Doppler residual taken off (" + lfNow.penaltyDb.toFixed(1) + " dB together)."
+    : "Effective SNR already has this channel's modelled penalty taken off (" + lfNow.penaltyDb.toFixed(1) + " dB).";
+  $("chart-note").textContent = isLat
+    ? "Delivery latency: one-way propagation plus transmission, plus a full round trip and 20 ms backoff for every ARQ retry (Smart only)" + (lfNow.ch.kind === "ntn" ? ", measured inside a pass" : "") + ". At low SNR the retry delay — not the success curve — is what pushes Smart over its budget first."
+    : penaltyNote + " Semantic degrades gracefully at low SNR but levels off below 100%; Smart is near-perfect once its conventional cliff is cleared, which is why Auto can switch back to Smart at high SNR.";
+}
+
+function renderTable(){
+  var type = currentType();
+  var html = lastResults.map(function(r){
+    var cls = r.choiceKind==="sem" ? "row-sem" : (r.choiceKind==="keep" ? "row-keep" : "");
+    var cCls = r.choiceKind==="sem" ? "sem" : (r.choiceKind==="keep" ? "keep" : "smart");
+    return '<tr class="'+cls+'">' +
+      '<td class="num" data-label="SNR (dB)"><strong>'+r.snr+'</strong></td>' +
+      '<td class="num" data-label="Smart success">'+fmtPct(r.smartSuccess)+' <span class="'+(r.smartPass?"pass":"fail")+'">'+(r.smartPass?"pass":"fail")+'</span></td>' +
+      '<td class="num" data-label="Semantic success">'+fmtPct(r.semSuccess)+' <span class="'+(r.semPass?"pass":"fail")+'">'+(r.semPass?"pass":"fail")+'</span></td>' +
+      '<td class="num" data-label="Threshold">'+fmtPct(type.threshold)+'</td>' +
+      '<td class="num" data-label="Smart latency">'+fmtMs(r.smartLatencyMs)+'</td>' +
+      '<td class="num" data-label="Semantic latency">'+fmtMs(r.semLatencyMs)+'</td>' +
+      '<td class="num" data-label="Symbols / task (Smart · Sem)">'+fmtInt(type.smartSym)+' · '+fmtInt(type.semSym)+'</td>' +
+      '<td class="num" data-label="Total symbols for max number (Smart · Sem)">'+fmtInt(type.smartSym * (state.iotNumber||1))+' · '+fmtInt(type.semSym * (state.iotNumber||1))+'</td>' +
+      '<td data-label="Auto choice"><span class="choice '+cCls+'">'+r.choice+'</span><br><span style="font-size:12px;color:var(--ink-2);white-space:normal;display:inline-block;min-width:170px">'+r.reason+'</span></td>' +
+      '</tr>';
+  }).join("");
+  $("results-body").innerHTML = html;
+}
+
+function renderLog(){
+  $("run-log").textContent = logLines.slice(-9).join("\n");
+}
+
+function renderAll(){
+  renderLinkFacts();
+  renderBanner();
+  buildChart();
+  renderTable();
+  renderLog();
+  renderIotNumberNote();
+}
+function renderIotNumberNote(){
+  var el = $("iot-number-note"); if (!el) return;
+  var type = currentType(); var n = state.iotNumber || 1;
+  el.innerHTML = "<strong>Menu selection:</strong> " + currentApp().name + " / " + type.name +
+    " · Number of IoT devices: <strong>" + fmtInt(n) + "</strong> (maximum 1,000,000 per km²)" +
+    " · Total symbols for maximum number: Smart <strong>" + fmtInt(type.smartSym * n) + "</strong> · Semantic <strong>" + fmtInt(type.semSym * n) + "</strong>" +
+    " · Per-task success, thresholds and Auto choice are unchanged by this number.";
+}
+
+/* ================= Controls wiring ================= */
+function buildLevel1(){
+  /* Level 1 pills removed 2026-10-30: the IoT application menu above is now
+     the only Level 1 control, to avoid duplicating the same choice. */
+  return;
+}
+function buildLevel2(){
+  /* Level 2 pills removed 2026-10-30: the IoT type menu above is now the
+     only Level 2 control. This function now renders only the detail box. */
+  var t = currentType();
+  $("l2-detail").innerHTML = "<strong>Selected:</strong> " + t.example +
+    "<br>Task-success threshold <span class='thr-chip'>" + fmtPct(t.threshold) + "</span> · Latency budget <span class='thr-chip'>" + fmtMs(t.budgetMs) + "</span> · Semantic coder for this data: <strong>" + t.coder + "</strong> · " + t.eligNote;
+}
+/* One delegated click handler for every pill and tab. Pills are rebuilt on
+   every Level 1 / Level 2 change, so per-button listeners attached at build
+   time are fragile; a single handler on the document, using closest(),
+   works for rebuilt buttons too, including taps on the small text inside a pill. */
+document.addEventListener("click", function(e){
+  var b = e.target.closest ? e.target.closest("button") : null;
+  if (!b) return;
+  var group = b.closest(".pills, .tabs");
+  function press(btn){
+    if (!group) return;
+    var all = group.querySelectorAll("button");
+    for (var j=0;j<all.length;j++) all[j].setAttribute("aria-pressed", all[j]===btn ? "true" : "false");
+  }
+  function selectTab(btn){
+    var all = document.querySelectorAll(".tab");
+    for (var j=0;j<all.length;j++) all[j].setAttribute("aria-selected", all[j]===btn ? "true" : "false");
+  }
+  if (b.getAttribute("data-app")){
+    state.appId = b.getAttribute("data-app");
+    state.typeId = currentApp().types[0].id;
+    buildLevel1(); buildLevel2(); markStale();
+  } else if (b.getAttribute("data-type")){
+    state.typeId = b.getAttribute("data-type");
+    buildLevel2(); markStale();
+  } else if (b.getAttribute("data-mode")){
+    state.mode = b.getAttribute("data-mode"); press(b); markStale();
+  } else if (b.getAttribute("data-chan")){
+    state.channel = b.getAttribute("data-chan"); press(b); markStale();
+  } else if (b.getAttribute("data-chart")){
+    state.chart = b.getAttribute("data-chart"); selectTab(b); buildChart();
+  }
+});
+
+/* ================= Menu-driven IoT number and type =================
+   Added 2026-10-30, using the same frontend-design rules as the cleanup:
+   system type only, 44px controls, no new external dependency. The menus
+   are a second way to make the SAME Level 1 / Level 2 choice — they do not
+   add new applications, thresholds or symbol counts. The number field is
+   capped at 1,000,000 (the 3GPP / IMT-2020 mMTC density target per km2)
+   and only scales total symbols; per-task results and Auto are unchanged. */
+function buildIotMenus(){
+  var appSel = $("iot-app-menu"); if (!appSel) return;
+  appSel.innerHTML = APPS.map(function(a,i){
+    return '<option value="'+a.id+'"'+(a.id===state.appId?' selected':'')+'>'+(i+1)+'. '+a.name+'</option>';
+  }).join("");
+  var typeSel = $("iot-type-menu");
+  typeSel.innerHTML = currentApp().types.map(function(tp,i){
+    return '<option value="'+tp.id+'"'+(tp.id===state.typeId?' selected':'')+'>'+(i+1)+'. '+tp.name+'</option>';
+  }).join("");
+}
+function syncIotMenus(){ buildIotMenus(); }
+function iotNumberFromField(){
+  var v = parseInt($("iot-number").value, 10);
+  if (v !== 10000 && v !== 100000 && v !== 1000000) v = 10000;
+  $("iot-number").value = v;
+  state.iotNumber = v;
+  return v;
+}
+document.addEventListener("change", function(e){
+  var el = e.target;
+  if (el.id === "iot-app-menu"){
+    state.appId = el.value;
+    state.typeId = currentApp().types[0].id;
+    buildLevel1(); buildLevel2(); buildIotMenus(); markStale();
+  } else if (el.id === "iot-type-menu"){
+    state.typeId = el.value;
+    buildLevel2(); buildIotMenus(); markStale();
+  } else if (el.id === "iot-number"){
+    iotNumberFromField(); markStale();
+  }
+});
+/* Keep menus in step when a pill is tapped: wrap the pill handler's rebuilds
+   by syncing after any delegated pill click. */
+document.addEventListener("click", function(e){
+  var b = e.target.closest ? e.target.closest("button") : null;
+  if (!b) return;
+  if (b.getAttribute("data-app") || b.getAttribute("data-type")){
+    setTimeout(syncIotMenus, 0);
+  }
+});
+
+/* Green / white Run convention (same as the link-budget page): any change
+   to a selection pill or a Configure field marks the results stale — Run
+   turns solid green and the note says so — and the chart, banner and table
+   keep showing the previous run. Pressing Run recomputes everything from
+   the current settings, then Run returns to white. */
+function markStale(){
+  $("run-btn").classList.add("ready");
+  $("run-btn").textContent = "Run — settings changed";
+  var n = $("run-note");
+  n.textContent = "Settings changed — the results below are from the previous run. Press Run to update them.";
+  n.classList.add("stale");
+  $("dl-note").textContent = "";
+}
+function markFresh(){
+  $("run-btn").classList.remove("ready");
+  $("run-btn").textContent = "Run";
+  var n = $("run-note");
+  n.textContent = "Results below match the settings above.";
+  n.classList.remove("stale");
+  $("dl-note").textContent = "";
+}
+
+$("run-btn").addEventListener("click", function(){ runModel(); markFresh(); });
+
+/* Configure fields: typing or changing a value marks the run stale (Run
+   turns green); nothing recomputes until Run is pressed. */
+["snr-min","snr-max","snr-step","seed","trials"].forEach(function(id){
+  $(id).addEventListener("input", markStale);
+  $(id).addEventListener("change", markStale);
+});
+
+
+/* ================= Downloads ================= */
+function download(filename, text, mime){
+  var blob = new Blob([text], { type: mime });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 800);
+}
+function slugName(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+
+$("dl-csv").addEventListener("click", function(){
+  if (!lastResults) return;
+  var lf = linkFacts(state.channel), t = currentType();
+  var lines = [];
+  lines.push("# Semantic vs Smart Code Implementation for mIoT — Paper version — based on Harness v7");
+  lines.push("# Simulated / modelled results — not measured encoder results");
+  lines.push("# Application: " + lastMeta.application + " | Data type: " + lastMeta.dataType + " | Semantic coder: " + lastMeta.semanticCoder);
+  var chanLine = "# Channel: " + lastMeta.channel + " | SNR penalty dB: " + lastMeta.snrPenaltyDb + " | Propagation one-way ms: " + lf.oneWayMs.toFixed(2) + " | Round trip ms: " + lf.rttMs.toFixed(2);
+  if (lf.ch.kind === "ntn") chanLine += " | Elevation loss dB: " + lf.ch.elevLossDb + " | Doppler residual dB: " + lf.ch.dopplerDb + " | Pass availability: " + Math.round(lf.ch.availability*100) + "% of day, pass " + lf.ch.passMin + " min, gap " + lf.ch.gapMin + " min";
+  lines.push(chanLine);
+  lines.push("# Threshold: " + lastMeta.threshold + " | Latency budget ms: " + lastMeta.latencyBudgetMs + " | Seed: " + lastMeta.seed + " | Trials: " + lastMeta.trials + " | IoT devices (menu number, max 1,000,000 per km2): " + lastMeta.iotNumber);
+  lines.push("# Auto costs (modelled parameters): complexity penalty 15%, switching cost 10%, winning margin 5% | Fallback: Keep Smart | Control: always Smart");
+  lines.push("snr_db,smart_success,semantic_success,threshold,smart_latency_ms,semantic_latency_ms,latency_budget_ms,smart_symbols_per_task,semantic_symbols_per_task,total_smart_symbols_for_max_number,total_semantic_symbols_for_max_number,smart_pass,semantic_pass,auto_choice");
+  lastResults.forEach(function(r){
+    lines.push([r.snr, r.smartSuccess.toFixed(4), r.semSuccess.toFixed(4), lastMeta.threshold,
+      Math.round(r.smartLatencyMs), Math.round(r.semLatencyMs), lastMeta.latencyBudgetMs,
+      t.smartSym, t.semSym, t.smartSym * lastMeta.iotNumber, t.semSym * lastMeta.iotNumber, r.smartPass, r.semPass, '"' + r.choice + '"'].join(","));
+  });
+  download("semantic-vs-smart_" + slugName(lastMeta.dataTypeShort) + "_" + slugName(lastMeta.channel) + ".csv", lines.join("\n"), "text/csv");
+  logLines.push("CSV downloaded — " + lastMeta.dataTypeShort + ", " + lastMeta.channel + " (Current Smart system and Semantic system only).");
+  renderLog();
+});
+
+$("dl-json").addEventListener("click", function(){
+  if (!lastResults) return;
+  var lf = linkFacts(state.channel);
+  var chanBlock = {
+    name: lf.ch.name, snrPenaltyDb: +lf.penaltyDb.toFixed(2),
+    propagationOneWayMs: +lf.oneWayMs.toFixed(2), roundTripMs: +lf.rttMs.toFixed(2),
+    arqRetryDelayMs: +(lf.rttMs + 20).toFixed(2)
+  };
+  if (lf.ch.kind === "ntn"){
+    chanBlock.altitudeKm = lf.ch.altKm; chanBlock.slantRangeKm = Math.round(lf.slantKm);
+    chanBlock.elevationLossDb = lf.ch.elevLossDb; chanBlock.dopplerResidualDb = lf.ch.dopplerDb;
+    chanBlock.passDurationMin = lf.ch.passMin; chanBlock.passGapMin = lf.ch.gapMin;
+    chanBlock.passAvailabilityPctOfDay = Math.round(lf.ch.availability*100);
+  }
+  var payload = {
+    meta: lastMeta,
+    channel: chanBlock,
+    systems: ["Current Smart system", "Semantic system"],
+    rows: lastResults.map(function(r){
+      return { snrDb: r.snr, effectiveSnrDb: +r.effSnr.toFixed(2),
+        smartSuccess: +r.smartSuccess.toFixed(4), semanticSuccess: +r.semSuccess.toFixed(4),
+        smartLatencyMs: Math.round(r.smartLatencyMs), semanticLatencyMs: Math.round(r.semLatencyMs),
+        smartPass: r.smartPass, semanticPass: r.semPass,
+        smartSymbolsPerSuccess: Math.round(r.smartSPS), semanticSymbolsPerSuccess: Math.round(r.semSPS),
+        totalSmartSymbolsForMaxNumber: t.smartSym * lastMeta.iotNumber, totalSemanticSymbolsForMaxNumber: t.semSym * lastMeta.iotNumber,
+        autoChoice: r.choice, autoReason: r.reason };
+    })
+  };
+  download("semantic-vs-smart_" + slugName(lastMeta.dataTypeShort) + "_" + slugName(lastMeta.channel) + ".json", JSON.stringify(payload, null, 2), "application/json");
+  logLines.push("JSON downloaded — " + lastMeta.dataTypeShort + ", " + lastMeta.channel + " (Current Smart system and Semantic system only).");
+  renderLog();
+});
+
+/* ================= Init ================= */
+buildLevel1();
+buildLevel2();
+buildIotMenus();
+renderIotNumberNote();
+logLines.push("Frontend cleanup 2026-10-30 — delegated clicks, system type, flat panels. Model unchanged.");
+logLines.push("Menu-only 2026-10-30 — Level 1/Level 2 pills removed; menus are the only application/type controls. Model unchanged.");
+logLines.push("Paper version — based on Harness v7. Two systems only: Current Smart system (conventional codec) and Semantic system (semantic codec). All channels playable — AWGN, Fading (Rayleigh/Rician), 3GPP simplified, Simple NTN LEO — with NTN LEO selected as the paper's example channel.");
+try { runModel(); markFresh(); } catch (err) {
+  $("run-note").textContent = "The model did not start — reload the file in Safari or Chrome. Error: " + err.message;
+  $("run-note").classList.add("stale");
+}
+</script>
+</body>
+</html>
