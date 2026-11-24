@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Labeled GitHub Project Index — Rao S. Yenamandra (ysrao)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f2f4f6; --surface:#ffffff; --surface-2:#eef2f6;
+    --ink:#16222f; --ink-2:#43536a; --ink-3:#6b7a8d;
+    --line:#d5dde6; --line-strong:#b9c6d4;
+    --blue:#0b5cad; --blue-dark:#084a8a; --blue-soft:#e3eef9;
+    --amber:#92400e; --amber-bg:#fdf3e0; --amber-line:#e3b34c; --amber-chip:#f59e0b;
+    --gap-bg:#f6ecec; --gap-line:#c98a8a; --gap-ink:#7a2e2e;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(16,34,54,.06),0 4px 14px rgba(16,34,54,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0d141c; --surface:#16202c; --surface-2:#1b2837;
+      --ink:#e8eef5; --ink-2:#aebccf; --ink-3:#8494a9;
+      --line:#2a3a4d; --line-strong:#3b5069;
+      --blue:#5ea3e8; --blue-dark:#8dbdf2; --blue-soft:#1c3049;
+      --amber:#f2c069; --amber-bg:#2e2410; --amber-line:#8a6a1f; --amber-chip:#b97f14;
+      --gap-bg:#2c1a1a; --gap-line:#7c4444; --gap-ink:#e5a3a3;
+      --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;font-size:16px}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 18px}
+
+  /* ---------- header ---------- */
+  header.top{background:var(--surface);border-bottom:3px solid var(--blue)}
+  .top-inner{padding:30px 0 22px}
+  h1{font-family:"Source Serif 4",Georgia,serif;font-weight:700;
+    font-size:clamp(1.7rem,4.5vw,2.4rem);line-height:1.15;margin:0 0 8px;letter-spacing:-.01em}
+  .lede{color:var(--ink-2);max-width:46rem;margin:0 0 14px;font-size:1.02rem}
+  .lede b{color:var(--ink)}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.86rem;color:var(--ink-3);
+    font-family:"IBM Plex Mono",ui-monospace,monospace}
+  .meta-row a{color:var(--blue);text-decoration:none}
+  .meta-row a:hover{text-decoration:underline}
+
+  /* ---------- legend ---------- */
+  .legend{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 18px;margin:20px 0 4px;box-shadow:var(--shadow)}
+  .legend h2{font-size:.82rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+    margin:0 0 8px;font-weight:600}
+  .legend ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr;gap:5px}
+  @media(min-width:680px){.legend ul{grid-template-columns:1fr 1fr}}
+  .legend li{font-size:.92rem;color:var(--ink-2)}
+  .tag{display:inline-block;font-weight:600;color:var(--ink);background:var(--blue-soft);
+    border-radius:5px;padding:1px 7px;margin-right:6px;font-size:.85rem;white-space:nowrap}
+  .tag.run{color:var(--blue-dark)}
+  .jiraffe-note{display:flex;gap:10px;align-items:flex-start;background:var(--amber-bg);
+    border:1px solid var(--amber-line);border-radius:var(--radius);padding:12px 16px;margin-top:12px}
+  .jiraffe-note p{margin:0;font-size:.93rem;color:var(--ink)}
+  .jiraffe-note .dot{flex:none;width:12px;height:12px;border-radius:50%;background:var(--amber-chip);margin-top:5px}
+
+  /* ---------- controls ---------- */
+  .controls{position:sticky;top:0;z-index:20;background:var(--bg);padding:14px 0 10px}
+  .search{width:100%;min-height:44px;border:1px solid var(--line-strong);border-radius:8px;
+    background:var(--surface);color:var(--ink);padding:10px 14px;font:inherit;font-size:1rem}
+  .search:focus{outline:2px solid var(--blue);outline-offset:1px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{min-height:38px;padding:7px 14px;border-radius:999px;border:1px solid var(--line-strong);
+    background:var(--surface);color:var(--ink-2);font:inherit;font-size:.9rem;cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  @media (prefers-color-scheme: dark){ .chip[aria-pressed="true"]{color:#0d141c} }
+  .count{font-size:.88rem;color:var(--ink-3);margin:10px 0 0;font-family:"IBM Plex Mono",monospace}
+
+  /* ---------- sections & cards ---------- */
+  section{margin:26px 0 6px}
+  section>h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.35rem;font-weight:700;
+    margin:0 0 4px;padding-bottom:7px;border-bottom:2px solid var(--line-strong)}
+  section>p.sec-note{color:var(--ink-2);font-size:.94rem;margin:6px 0 4px;max-width:46rem}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+  @media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .card.wide{grid-column:1/-1}
+  .card.jiraffe{border:1.5px solid var(--amber-line);background:linear-gradient(var(--amber-bg),var(--amber-bg)) padding-box,var(--surface)}
+  .card.jiraffe{background:var(--surface);box-shadow:var(--shadow),inset 0 0 0 1px var(--amber-line)}
+  .card-head{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 10px}
+  .card h3{font-size:1.08rem;font-weight:600;margin:0;line-height:1.3;flex:1 1 12rem}
+  .badge{flex:none;font-size:.74rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    background:var(--amber-chip);color:#231600;border-radius:5px;padding:3px 8px;margin-top:2px}
+  @media (prefers-color-scheme: dark){ .badge{color:#ffe9bd;background:#7c5a10} }
+  .repo{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.8rem;color:var(--ink-3);
+    margin:3px 0 0;word-break:break-all}
+  .card p.desc{color:var(--ink-2);font-size:.94rem;margin:8px 0 0}
+  .links{list-style:none;margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--line);
+    display:flex;flex-direction:column;gap:7px;margin-top:auto}
+  .links{padding-top:12px}
+  .desc + .links{margin-top:12px}
+  .links li{margin:0}
+  .links a{display:flex;align-items:baseline;gap:8px;min-height:38px;padding:7px 10px;
+    border-radius:7px;text-decoration:none;color:var(--ink);border:1px solid var(--line);
+    background:var(--surface-2);font-size:.92rem;line-height:1.35}
+  .links a:hover{border-color:var(--blue);background:var(--blue-soft)}
+  .links a:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  .links .kind{flex:none;font-weight:700;font-size:.78rem;letter-spacing:.03em;text-transform:uppercase;
+    color:var(--blue-dark);min-width:7.2rem}
+  @media(max-width:480px){.links .kind{min-width:6.4rem}}
+  .links .what{flex:1}
+  .links .arrow{flex:none;color:var(--ink-3)}
+  .variant-group{margin:12px 0 0}
+  .variant-group h4{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+    margin:0 0 7px;font-weight:600}
+  .no-results{display:none;background:var(--surface);border:1px dashed var(--line-strong);
+    border-radius:var(--radius);padding:22px;text-align:center;color:var(--ink-2);margin-top:16px}
+  .no-results.show{display:block}
+
+  /* ---------- gaps ---------- */
+  .gaps{border:1.5px dashed var(--gap-line);background:var(--gap-bg);border-radius:var(--radius);
+    padding:18px 20px;margin:30px 0 8px}
+  .gaps h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.3rem;margin:0 0 6px;color:var(--gap-ink)}
+  .gaps p{margin:6px 0;color:var(--ink);font-size:.95rem;max-width:48rem}
+  .gaps ul{margin:10px 0 4px;padding-left:1.2rem}
+  .gaps li{margin:8px 0;color:var(--ink)}
+  .gaps code{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--surface);
+    border:1px solid var(--gap-line);border-radius:5px;padding:1px 6px}
+  .gaps .status{font-weight:600;color:var(--gap-ink)}
+
+  footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 34px;
+    color:var(--ink-3);font-size:.88rem}
+  footer a{color:var(--blue)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <h1>Rao S. Yenamandra — GitHub Project Index</h1>
+    <p class="lede">One index for everything public under <b>github.com/ysrao</b> — the repositories and the
+      Project Hub at <b>ysrao.github.io</b> together, in a single list. Every link says what it opens
+      and, where a project has more than one version, which version it is.</p>
+    <div class="meta-row">
+      <span>11 public repositories</span>
+      <span>·</span>
+      <span>Hub: <a href="https://ysrao.github.io/" target="_blank" rel="noopener">ysrao.github.io</a></span>
+      <span>·</span>
+      <span>Profile: <a href="https://github.com/ysrao" target="_blank" rel="noopener">github.com/ysrao</a></span>
+      <span>·</span>
+      <span>Verified 24 Nov 2026</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="legend" aria-label="How to read the link labels">
+    <h2>How the labels work</h2>
+    <ul>
+      <li><span class="tag run">Run the page</span> opens the live page in your browser (github.io) — nothing to install.</li>
+      <li><span class="tag">View the code</span> opens the source on github.com.</li>
+      <li><span class="tag">Read the results</span> opens a results or report page — figures and findings, not the tool itself.</li>
+      <li><span class="tag">Run in Colab</span> opens the notebook that produced the traces, ready to re-run.</li>
+    </ul>
+    <div class="jiraffe-note">
+      <span class="dot" aria-hidden="true"></span>
+      <p><b>Jiraffe week — Nov 6–13, 2026.</b> Cards with the amber <b>“Jiraffe week”</b> badge were changed
+        during that week, including the SF multicell twin and the tokenisation ROI calculator.</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label class="sr" for="q" style="position:absolute;left:-9999px">Search projects</label>
+    <input class="search" id="q" type="search" placeholder="Search the index — try “semantic”, “twin”, “28 GHz”…" autocomplete="off" />
+    <div class="chips" role="group" aria-label="Filter projects">
+      <button class="chip" data-filter="all" aria-pressed="true">All projects</button>
+      <button class="chip" data-filter="jiraffe" aria-pressed="false">Jiraffe week only</button>
+      <button class="chip" data-filter="twin" aria-pressed="false">Digital twins</button>
+      <button class="chip" data-filter="semantic" aria-pressed="false">Semantic comms</button>
+      <button class="chip" data-filter="ran" aria-pressed="false">RAN optimisation</button>
+      <button class="chip" data-filter="tools" aria-pressed="false">Calculators &amp; tools</button>
+    </div>
+    <p class="count" id="count" aria-live="polite"></p>
+  </div>
+
+  <!-- ================= FEATURED: SF MULTICELL ================= -->
+  <section data-section>
+    <h2>Featured — the SF multicell twin, variant by variant</h2>
+    <p class="sec-note">One project, four different pages. They are <em>not</em> interchangeable: the physics model,
+      the band and the city scene differ, so each run link below is labelled with the variant it opens.</p>
+    <div class="grid">
+      <article class="card wide jiraffe" data-cat="twin jiraffe" data-search="sf multicell twin san francisco sionna 3gpp 28 ghz open scene vegetation draggable towers v7 v8 v16 ray traced">
+        <div class="card-head">
+          <h3>5G NR Multicell Twin — San Francisco</h3>
+          <span class="badge">Jiraffe week</span>
+        </div>
+        <p class="repo">github.com/ysrao/twin5GNR-multicell-SF · 1 km² tile, Telegraph Hill / North Beach (37.801105, −122.404175)</p>
+        <p class="desc">A three-site, nine-sector 5G NR layout at 3.6 GHz over a San Francisco city scene, with a
+          28 GHz small-cell layer. All figures are ray-traced or modelled simulations, not measurements.
+          Pick the variant you want — each link opens a different page:</p>
+
+        <div class="variant-group">
+          <h4>Run a variant</h4>
+          <ul class="links" style="border-top:none;padding-top:0;margin-top:0">
+            <li><a href="https://ysrao.github.io/twin5GNR-multicell-SF/twin5GNR-multicell-SionnaRT-OpenScene-Nov14.html" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what"><b>Open-scene version (v16)</b> — Sionna RT on the open city scene built from DataSF building footprints; the paper version</span><span class="arrow">↗</span></a></li>
+            <li><a href="https://ysrao.github.io/twin5GNR-multicell-SF/twin5GNR-multicell-SionnaRT-Veg.html" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what"><b>Sionna ray-traced version with vegetation (v7)</b> — fused-mesh scene plus the ITU-R P.833 tree layer from 1,919 surveyed street trees</span><span class="arrow">↗</span></a></li>
+            <li><a href="https://ysrao.github.io/twin5GNR-multicell-SF/twin5GNR-multicell-v7-3gpp.html" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what"><b>3GPP-only version with tower dragging (v7)</b> — no ray tracing; TR 38.901 formula model, drag the towers and the map recomputes live</span><span class="arrow">↗</span></a></li>
+            <li><a href="https://ysrao.github.io/twin5GNR-multicell-SF/twin5GNR-multicell-28GHz.html" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what"><b>28 GHz small-cell version (v8)</b> — sixteen small cells × 3 sectors on the same tile, ray-traced at 28 GHz</span><span class="arrow">↗</span></a></li>
+            <li><a href="https://ysrao.github.io/twin5GNR-multicell-SF/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what"><b>Landing page</b> — the project’s own front page, listing all versions above</span><span class="arrow">↗</span></a></li>
+          </ul>
+        </div>
+        <div class="variant-group">
+          <h4>Code, notebook &amp; data</h4>
+          <ul class="links" style="border-top:none;padding-top:0;margin-top:0">
+            <li><a href="https://github.com/ysrao/twin5GNR-multicell-SF" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">Repository — scene, site file, scripts and all four variant pages</span><span class="arrow">↗</span></a></li>
+            <li><a href="https://colab.research.google.com/github/ysrao/twin5GNR-multicell-SF/blob/main/notebook/twin5GNR_open_scene_T4.ipynb" target="_blank" rel="noopener"><span class="kind">Run in Colab</span><span class="what">Notebook — every trace behind the open-scene page: full tile, tower-B window, sensitivity runs, tower-shift sweep (free T4 GPU)</span><span class="arrow">↗</span></a></li>
+            <li><a href="https://github.com/ysrao/twin5GNR-multicell-SF/tree/main/data/results" target="_blank" rel="noopener"><span class="kind">Read the results</span><span class="what">Result files in the repo — per-receiver RSRP for the full tile and the tower-B window, plus the Apple M3 cross-check runs</span><span class="arrow">↗</span></a></li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= TWINS ================= -->
+  <section data-section>
+    <h2>5G NR digital twins</h2>
+    <p class="sec-note">The remaining twins live inside the <b>DigitalTwin</b> repository — each card names its folder there,
+      and “View the code” opens that folder, not the repo root.</p>
+    <div class="grid">
+
+      <article class="card" data-cat="twin" data-search="twin5gnr single tower rancho bernardo five bands coverage capacity">
+        <div class="card-head"><h3>twin5GNR — single-tower 5G NR twin</h3></div>
+        <p class="repo">github.com/ysrao/DigitalTwin → twin5GNR/</p>
+        <p class="desc">Ray-traced coverage and capacity for one tower across five bands (0.7 / 2.5 / 3.6 / 7.125 / 28 GHz), four Rancho Bernardo sites, downlink + uplink.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/DigitalTwin/twin5GNR/twin_viewer.html" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">Single-tower twin viewer</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/DigitalTwin/tree/main/twin5GNR" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">twin5GNR folder in the DigitalTwin repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="twin" data-search="twin5gnr v5 rancho bernardo upgrade planner current vs change">
+        <div class="card-head"><h3>twin5GNR v5 — Rancho Bernardo upgrade planner</h3></div>
+        <p class="repo">github.com/ysrao/DigitalTwin → twin5GNRv5-RB/</p>
+        <p class="desc">Per-tower Current vs Change planner at street and rooftop level: what an upgrade does to rates and coverage before you spend on it.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/DigitalTwin/twin5GNRv5-RB/twin_viewer_v5.html" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">Upgrade planner (v5 viewer)</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/DigitalTwin/tree/main/twin5GNRv5-RB" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">twin5GNRv5-RB folder in the DigitalTwin repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card jiraffe" data-cat="twin jiraffe" data-search="twin5gnr sf vexel mesh report heat maps vegetation jiraffe">
+        <div class="card-head">
+          <h3>twin5GNR SF — twin on the Vexcel mesh</h3>
+          <span class="badge">Jiraffe week</span>
+        </div>
+        <p class="repo">github.com/ysrao/DigitalTwin → twin5GNR_SF/ · changed Nov 6, 2026 (vegetation section)</p>
+        <p class="desc">First twin run on a commercial high-resolution mesh (Vexcel 1 km², downtown San Francisco): RSRP and throughput heat maps for 5 bands at rooftop and street level, with the full report.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/DigitalTwin/twin5GNR_SF/report.html" target="_blank" rel="noopener"><span class="kind">Read the results</span><span class="what">Report page — heat maps, findings and the results package</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/DigitalTwin/tree/main/twin5GNR_SF" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">twin5GNR_SF folder in the DigitalTwin repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="twin" data-search="multi-tier ran twin console macro pico femto slice dimensioning">
+        <div class="card-head"><h3>Multi-tier RAN twin console</h3></div>
+        <p class="repo">github.com/ysrao/DigitalTwin → multi-tier-twin/</p>
+        <p class="desc">Macro / pico / femto multi-tier twin console used for the slice-dimensioning studies.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/DigitalTwin/multi-tier-twin/twin_console_v5.html" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">Multi-tier twin console</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/DigitalTwin/tree/main/multi-tier-twin" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">multi-tier-twin folder in the DigitalTwin repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="twin" data-search="morphology twin slice dimensioning urban suburban rural code only">
+        <div class="card-head"><h3>Morphology twin — slice dimensioning</h3></div>
+        <p class="repo">github.com/ysrao/DigitalTwin → Morphology-twin-slice/</p>
+        <p class="desc">Deterministic RAN digital twin for paired slice-dimensioning studies on reference urban, suburban and rural layouts. Code only — this one has no web page.</p>
+        <ul class="links">
+          <li><a href="https://github.com/ysrao/DigitalTwin/tree/main/Morphology-twin-slice" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">Morphology-twin-slice folder (no live page exists)</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="twin" data-search="digitaltwin repository root all twins repo">
+        <div class="card-head"><h3>DigitalTwin — the repository itself</h3></div>
+        <p class="repo">github.com/ysrao/DigitalTwin</p>
+        <p class="desc">The umbrella repo holding the five twin projects above. Open the root only if you want everything at once; the cards above deep-link to each project’s own folder and page.</p>
+        <ul class="links">
+          <li><a href="https://github.com/ysrao/DigitalTwin" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">DigitalTwin repository root — all twin folders</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= SEMANTIC ================= -->
+  <section data-section>
+    <h2>Semantic &amp; task-oriented communication</h2>
+    <div class="grid">
+
+      <article class="card" data-cat="semantic" data-search="semantic encoder iot learned hand-crafted flood india uncertainty bootstrap mcnemar bench training">
+        <div class="card-head"><h3>Semantic encoder for IoT sensors</h3></div>
+        <p class="repo">github.com/ysrao/semantic-encoder-iot · updated Nov 24, 2026 (uncertainty code)</p>
+        <p class="desc">Simulation bench and training code for “Semantic and Task-Oriented Encoder/Decoder Pair for IoT Sensors” (Yenamandra, Nsofu, Ram) — learned vs hand-crafted encoders across flood, dust, cyclone and metering cases, including the India flood record.</p>
+        <ul class="links">
+          <li><a href="https://github.com/ysrao/semantic-encoder-iot" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">Repository — bench, training code and per-case folders (code repo; no live page)</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/semantic-encoder-iot/blob/main/uncertainty/uncertainty_results.json" target="_blank" rel="noopener"><span class="kind">Read the results</span><span class="what">Uncertainty results file — the bootstrap / McNemar numbers behind the paper’s “How sure are the gaps?” paragraph</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="semantic" data-search="semantic miot ntn spacomm results byte reduction flood recall evaluation">
+        <div class="card-head"><h3>Semantic mIoT over NTN — evaluation results</h3></div>
+        <p class="repo">github.com/ysrao/ntn-eval · github.com/ysrao/semantic-miot-ntn (paper-cited)</p>
+        <p class="desc">Trace-driven results for task-oriented semantic communication over non-terrestrial networks (SPACOMM 2027): 42.6× byte reduction, flood-warning recall 0.93 vs 0.16, supportable devices per beam and energy — negative findings kept in.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/ntn-eval/" target="_blank" rel="noopener"><span class="kind">Read the results</span><span class="what">Results page — the full evaluation, figures and assumptions</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/semantic-miot-ntn" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">semantic-miot-ntn — the paper-cited repository</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ntn-eval" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">ntn-eval — the evaluation package that generates the results page</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="semantic" data-search="semantic vs smart paper version icnews smart system semantic system">
+        <div class="card-head"><h3>Semantic paper version — Smart vs Semantic for mIoT</h3></div>
+        <p class="repo">ysrao.github.io → semantic-vs-smart-paper/</p>
+        <p class="desc">The ICNEWS paper artefact: two systems only — the current Smart system vs the Semantic system — all channels playable, NTN as the paper example. This is the camera-ready artefact link for ICNEWS Paper 411, if accepted.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/semantic-vs-smart-paper/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">Paper version — the two-system comparison only</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ysrao.github.io/tree/main/semantic-vs-smart-paper" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">semantic-vs-smart-paper folder in the hub repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="semantic" data-search="semantic harness v7 full benchmark auto-switch snr baseline comms">
+        <div class="card-head"><h3>Semantic harness v7 — full benchmark harness</h3></div>
+        <p class="repo">ysrao.github.io → semantic-vs-smart-baseline-comms/</p>
+        <p class="desc">The full frozen v7 harness: Smart vs Semantic with Auto-switch, per application, data type, channel and SNR. Broader than the paper version above — do not confuse the two.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/semantic-vs-smart-baseline-comms/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">Full harness — every application, channel and SNR combination</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ysrao.github.io/tree/main/semantic-vs-smart-baseline-comms" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">semantic-vs-smart-baseline-comms folder in the hub repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= RAN ================= -->
+  <section data-section>
+    <h2>RAN optimisation &amp; the Virtual RIC</h2>
+    <div class="grid">
+
+      <article class="card" data-cat="ran" data-search="twin in the loop rapp virtual ric rapp optimisation sionna runner notebook">
+        <div class="card-head"><h3>Twin-in-the-Loop rApp on a Virtual RIC</h3></div>
+        <p class="repo">github.com/ysrao/twin-in-the-loop-rapp</p>
+        <p class="desc">“Twin-in-the-Loop Optimisation as an rApp on a Virtual RIC” — standalone runner notebook (Sionna RT + SYS), console page and rApp engine modules. Split out of the multicell repo on Nov 16, 2026 into its own repository.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/twin-in-the-loop-rapp/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">rApp console page</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/twin-in-the-loop-rapp" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">Repository — runner notebook and rApp engine modules</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="ran" data-search="ranopt ai ppo deep reinforcement learning ran optimization simulator">
+        <div class="card-head"><h3>RANOpt-AI — PPO for RAN optimisation</h3></div>
+        <p class="repo">github.com/ysrao/RANOpt-AI</p>
+        <p class="desc">Deep reinforcement learning for RAN parameter optimisation: interactive simulator, the Rev 17.8 paper and decks.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/RANOpt-AI/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">RANOpt-AI simulator and paper page</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/RANOpt-AI" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">RANOpt-AI repository</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="ran" data-search="ran slice optimization ransliceopt ransliceai drl slicing demos">
+        <div class="card-head"><h3>RAN slice optimisation — the earlier DRL demos</h3></div>
+        <p class="repo">github.com/ysrao/RANSLICEOPT · github.com/ysrao/DigitalTwin-RANSliceAI</p>
+        <p class="desc">Earlier DRL slicing optimisers and demos, in two separate repositories — each link below is labelled with which one it opens.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/RANSLICEOPT/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">RANSLICEOPT demo page</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://ysrao.github.io/DigitalTwin-RANSliceAI/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">RANSliceAI demo page (PPO/MDP implementation)</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/RANSLICEOPT" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">RANSLICEOPT repository</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/DigitalTwin-RANSliceAI" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">DigitalTwin-RANSliceAI repository</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= TOOLS ================= -->
+  <section data-section>
+    <h2>Calculators &amp; tools</h2>
+    <div class="grid">
+
+      <article class="card jiraffe" data-cat="tools jiraffe" data-search="tokenisation roi calculator tokenised 6g site india south africa jiraffe">
+        <div class="card-head">
+          <h3>Tokenisation / ROI calculator</h3>
+          <span class="badge">Jiraffe week</span>
+        </div>
+        <p class="repo">github.com/ysrao/tokenisation-roi-calculator · changed Nov 7, 2026 (v29–v30)</p>
+        <p class="desc">Modelled return on investment for a tokenised 6G site in India and South Africa: spectrum leasing, radio sharing and edge GPU-hours. Modelled figures, not measured.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/tokenisation-roi-calculator/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">ROI calculator — set the inputs, read the modelled return</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/tokenisation-roi-calculator" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">tokenisation-roi-calculator repository</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="tools" data-search="lte 5g nr link budget calculator mapl">
+        <div class="card-head"><h3>LTE / 5G NR link-budget calculator</h3></div>
+        <p class="repo">ysrao.github.io → lte-5g-nr-link-budget/</p>
+        <p class="desc">Interactive link-budget calculator for LTE and 5G NR, with MAPL comparison and budget detail tables.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/lte-5g-nr-link-budget/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">Link-budget calculator</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ysrao.github.io/tree/main/lte-5g-nr-link-budget" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">lte-5g-nr-link-budget folder in the hub repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="tools" data-search="cbrs tokenizer token calculator">
+        <div class="card-head"><h3>CBRS tokenizer</h3></div>
+        <p class="repo">ysrao.github.io → cbrs-tokenizer/</p>
+        <p class="desc">Interactive CBRS token calculator, with token inputs and a draft token panel.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/cbrs-tokenizer/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">CBRS token calculator</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ysrao.github.io/tree/main/cbrs-tokenizer" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">cbrs-tokenizer folder in the hub repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="tools" data-search="radio config editor digital twin single tower form sionna">
+        <div class="card-head"><h3>Radio Config Editor — DT single tower</h3></div>
+        <p class="repo">ysrao.github.io → radio-config-editor/</p>
+        <p class="desc">Browser form for the RAN digital twin radio stack: carriers, propagation, power, topology, traffic and slices. Exports radio_config.py and run.sh for the Sionna twin.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/radio-config-editor/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">Radio config editor form</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ysrao.github.io/tree/main/radio-config-editor" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">radio-config-editor folder in the hub repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card" data-cat="tools" data-search="bank llm dimensioning calculator ai architecture cost">
+        <div class="card-head"><h3>Bank LLM dimensioning calculator</h3></div>
+        <p class="repo">ysrao.github.io → bank-llm-dimensioning-calculator/</p>
+        <p class="desc">Interactive calculator for dimensioning a bank’s LLMs, from the AI Architecture note: load inputs, verdict and cost breakdown.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/bank-llm-dimensioning-calculator/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">LLM dimensioning calculator</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ysrao.github.io/tree/main/bank-llm-dimensioning-calculator" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">bank-llm-dimensioning-calculator folder in the hub repo</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+      <article class="card jiraffe" data-cat="tools jiraffe" data-search="project hub ysrao.github.io hub generator projects.json jiraffe">
+        <div class="card-head">
+          <h3>Project Hub — ysrao.github.io itself</h3>
+          <span class="badge">Jiraffe week</span>
+        </div>
+        <p class="repo">github.com/ysrao/ysrao.github.io · hub generator added Nov 11, 2026; last rebuilt Nov 23, 2026</p>
+        <p class="desc">The hub site this index draws on. It rebuilds itself daily from the live repository list: new public repos appear on their own and dead links drop off. Several tools above live as folders inside this one repository.</p>
+        <ul class="links">
+          <li><a href="https://ysrao.github.io/" target="_blank" rel="noopener"><span class="kind">Run the page</span><span class="what">The Project Hub — Rao’s own one-page index on github.io</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao/ysrao.github.io" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">ysrao.github.io repository — hub source and the tool folders</span><span class="arrow">↗</span></a></li>
+          <li><a href="https://github.com/ysrao" target="_blank" rel="noopener"><span class="kind">View the code</span><span class="what">GitHub profile — all 11 public repositories, unfiltered</span><span class="arrow">↗</span></a></li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <div class="no-results" id="noResults">
+    <p style="margin:0"><b>No project matches that.</b><br />Try a shorter word — “twin”, “semantic”, “RAN” — or clear the filter.</p>
+  </div>
+
+  <!-- ================= GAPS ================= -->
+  <div class="gaps" role="note" aria-label="Known gaps — not on this GitHub account">
+    <h2>Gaps — known work that is <em>not</em> on this GitHub account</h2>
+    <p>Two items from the Jiraffe-week work do not live under github.com/ysrao at all. They are listed here so the
+      index is complete and honest about what it cannot link to — <span class="status">there is deliberately no link
+      for either of them</span>, because from this account they are not reachable.</p>
+    <ul>
+      <li><code>scene_sf</code> — the San Francisco scene work held in the <b>Jiraffe</b> account.
+        <span class="status">Jiraffe-only — not reachable from the ysrao GitHub account.</span>
+        (The scene that <em>is</em> public is the open DataSF scene inside the twin5GNR-multicell-SF repo, linked above.)</li>
+      <li><b>The cell-sites CSV</b> — the cell-site list used in the Jiraffe-week work, also held in the
+        <b>Jiraffe</b> account. <span class="status">Jiraffe-only — not reachable from the ysrao GitHub account.</span></li>
+    </ul>
+    <p>Both live in Rao’s second Muse account (Jiraffe). Until they are copied into a ysrao repository,
+      they stay gaps — named here, and not presented anywhere on this page as openable.</p>
+  </div>
+
+  <footer>
+    <p style="margin:0 0 6px"><b>How this index was verified.</b> Checked on 24 Nov 2026 against the live account —
+      the GitHub API listing for <a href="https://github.com/ysrao" target="_blank" rel="noopener">github.com/ysrao</a>
+      (11 public repositories) and the Project Hub at
+      <a href="https://ysrao.github.io/" target="_blank" rel="noopener">ysrao.github.io</a> (last rebuilt 23 Nov 2026).
+      Every project above appears in one or both of those sources; nothing else was added.
+      The SF multicell variants are labelled from that project’s own landing page.</p>
+    <p style="margin:0">Main website: <a href="https://raosyenamandra.in" target="_blank" rel="noopener">raosyenamandra.in</a></p>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  var q = document.getElementById('q');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('[data-section]'));
+  var count = document.getElementById('count');
+  var noResults = document.getElementById('noResults');
+  var activeFilter = 'all';
+
+  function apply(){
+    var term = (q.value || '').trim().toLowerCase();
+    var shown = 0;
+    cards.forEach(function(card){
+      var cats = (card.getAttribute('data-cat') || '').split(' ');
+      var okFilter = (activeFilter === 'all') || cats.indexOf(activeFilter) !== -1;
+      var hay = (card.textContent + ' ' + (card.getAttribute('data-search') || '')).toLowerCase();
+      var okTerm = !term || hay.indexOf(term) !== -1;
+      var vis = okFilter && okTerm;
+      card.hidden = !vis;
+      if (vis) shown++;
+    });
+    sections.forEach(function(sec){
+      var any = Array.prototype.some.call(sec.querySelectorAll('.card'), function(c){ return !c.hidden; });
+      sec.hidden = !any;
+    });
+    noResults.classList.toggle('show', shown === 0);
+    count.textContent = 'Showing ' + shown + ' of ' + cards.length + ' projects' +
+      (activeFilter !== 'all' ? ' · filter: ' + activeFilter : '') +
+      (term ? ' · search: “' + term + '”' : '');
+  }
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.setAttribute('aria-pressed','false'); });
+      chip.setAttribute('aria-pressed','true');
+      activeFilter = chip.getAttribute('data-filter');
+      apply();
+    });
+  });
+  q.addEventListener('input', apply);
+  apply();
+})();
+</script>
+</body>
+</html>
